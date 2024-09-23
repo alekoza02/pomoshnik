@@ -1,9 +1,12 @@
 import pygame
+from numpy import array
 
 NON_ESEGUIRE = False
 
 if NON_ESEGUIRE:    
     from _modulo_costruttore_scene import Font
+    from pygame.event import Event
+    from _modulo_UI import Logica
 
 from GRAFICA._modulo_database import Dizionario; diction = Dizionario()
 
@@ -11,8 +14,6 @@ class Label_Text:
     def __init__(self, x, y, text, scala, pappardella) -> None:
         
         self.schermo = pappardella["screen"]
-
-        self.bg = pappardella["bg_def"]
 
         self.x: float = pappardella["moltiplicatore_x"] * x / 100 + pappardella["offset"]
         self.y: float = pappardella["ori_y"] * y / 100
@@ -28,7 +29,7 @@ class Label_Text:
         self.color_text = (200, 200, 200)
     
 
-    def disegnami(self):
+    def disegnami(self, offset_x: int = 0, offset_y: int = 0, center=False):
 
         self.font.scala_font(self.scala)
 
@@ -50,9 +51,11 @@ class Label_Text:
             offset_orizzontale_apice = 0
             offset_orizzontale_pedice = 0
 
-
             for substringa_analizzata in elenco_substringhe:
-    
+
+                centratura_x = - (center * original_spacing_x * len(substringa_analizzata.testo) / 2)
+                centratura_y = 0
+        
                 if substringa_analizzata.apice:
                     offset_highlight = - 0.5
 
@@ -76,14 +79,14 @@ class Label_Text:
                     self.font.scala_font(0.5)
 
                 if substringa_analizzata.highlight:
-                    self.schermo.blit(self.font.font_pyg_r.render("" + "█" * (len(substringa_analizzata.testo)) + "", True, self.color_bg), (self.text_x + original_spacing_x * ( offset_highlight + offset_usato), self.text_y - original_spacing_y // 2 + offset_frase + offset_pedice_apice))
+                    self.schermo.blit(self.font.font_pyg_r.render("" + "█" * (len(substringa_analizzata.testo)) + "", True, self.color_bg), (self.text_x + original_spacing_x * ( offset_highlight + offset_usato) + offset_x + centratura_x, self.text_y - original_spacing_y // 2 + offset_frase + offset_pedice_apice + offset_y + centratura_y))
 
                 if substringa_analizzata.bold:
-                    self.schermo.blit(self.font.font_pyg_b.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.text_x + original_spacing_x * offset_usato, self.text_y - original_spacing_y // 2 + offset_frase + offset_pedice_apice))
+                    self.schermo.blit(self.font.font_pyg_b.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.text_x + original_spacing_x * offset_usato + offset_x + centratura_x, self.text_y - original_spacing_y // 2 + offset_frase + offset_pedice_apice + offset_y + centratura_y))
                 elif substringa_analizzata.italic:
-                    self.schermo.blit(self.font.font_pyg_i.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.text_x + original_spacing_x * offset_usato, self.text_y - original_spacing_y // 2 + offset_frase + offset_pedice_apice))
+                    self.schermo.blit(self.font.font_pyg_i.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.text_x + original_spacing_x * offset_usato + offset_x + centratura_x, self.text_y - original_spacing_y // 2 + offset_frase + offset_pedice_apice + offset_y + centratura_y))
                 else:
-                    self.schermo.blit(self.font.font_pyg_r.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.text_x + original_spacing_x * offset_usato, self.text_y - original_spacing_y // 2 + offset_frase + offset_pedice_apice))
+                    self.schermo.blit(self.font.font_pyg_r.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.text_x + original_spacing_x * offset_usato + offset_x + centratura_x, self.text_y - original_spacing_y // 2 + offset_frase + offset_pedice_apice + offset_y + centratura_y))
                 
                 if substringa_analizzata.pedice or substringa_analizzata.apice:
                     self.font.scala_font(2)
@@ -100,6 +103,75 @@ class Label_Text:
                     
         self.font.scala_font(1 / self.scala)
 
+
+
+class Bottone(Label_Text):
+    def __init__(self, x, y, w, h, function, text, scala, pappardella) -> None:
+        super().__init__(x, y, text, scala, pappardella)
+
+        self.bg = array(pappardella["bg_def"])
+        
+        self.contorno = 2
+
+        self.w = pappardella["moltiplicatore_x"] * w / 100 + pappardella["offset"]
+        self.h = pappardella["ori_y"] * h / 100
+
+        self.callback = function
+
+        self.animazione = Animazione(100)
+        self.hover = False
+
+        self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
+
+    
+    def disegnami(self, logica: 'Logica'):
+
+        colore = self.bg.copy()
+
+        colore = self.animazione_press(logica.dt, colore)
+        colore = self.animazione_hover(colore)
+
+        pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, 20)
+
+        super().disegnami(self.w / 2, self.h / 2, center=True)
+
+    
+    def eventami(self, events: list['Event'], logica: 'Logica'):
+
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.bounding_box.collidepoint(event.pos):
+                    self.callback(self)
+                    self.animazione.riavvia()
+
+        self.hover = True if self.bounding_box.collidepoint(logica.mouse_pos) else False
+                    
+
+
+    def animazione_press(self, dt: int, colore):
+        if self.animazione.attiva and self.animazione.dt < self.animazione.durata:
+            
+            self.contorno = 0
+            colore += 20
+            self.animazione.dt += dt
+
+            if self.animazione.dt > self.animazione.durata:
+                self.animazione.attiva = False
+                self.animazione.dt = 0
+
+        else: 
+            self.contorno = 2
+        
+        return colore
+
+
+    def animazione_hover(self, colore):
+        if self.hover:
+            self.contorno = 0
+            colore += 10
+        else:
+            self.contorno = 1
+        return colore
 
 
 class SubStringa:
@@ -237,3 +309,14 @@ class SubStringa:
         substringhe_create.append(SubStringa(self.colore, self.bold, self.italic, self.apice, self.pedice, self.highlight, self.testo[valvola:]))
         
         return substringhe_create
+
+
+class Animazione:
+    def __init__(self, durata) -> None:
+        self.attiva = False
+        self.durata = durata
+        self.dt = 0
+
+    def riavvia(self):
+        self.attiva = True
+        self.dt = 0

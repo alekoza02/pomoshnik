@@ -1,7 +1,12 @@
 import pygame
 import os
 
-from GRAFICA._modulo_elementi_grafici import Label_Text
+from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone
+from GRAFICA._modulo_bottoni_callbacks import BottoniCallbacks
+
+NON_ESEGUIRE = False
+if NON_ESEGUIRE:
+    from GRAFICA._modulo_UI import Logica
 
 class Costruttore:
     def __init__(self, screen, offset, moltiplicatore_x, rapporto_x, rapporto_y) -> None:
@@ -25,6 +30,8 @@ class Costruttore:
             "offset": self.offset
         }
 
+        bott_calls = BottoniCallbacks()
+
         self.costruisci_main()
 
 
@@ -39,14 +46,23 @@ class Costruttore:
         self.scene["main"].label["memory"] = Label_Text(78.1, 99, "memory", 1, self.pappardella)
         self.scene["main"].label["clock"] = Label_Text(89.5, 99, "clock", 1, self.pappardella)
         
+        self.scene["main"].bottoni["debug"] = Bottone(50, 50, 20, 20, BottoniCallbacks.print_hello, "/red{Cliccami!}", 3, self.pappardella)
+
 
 class Scena:
     def __init__(self) -> None:
         self.label: dict[str, Label_Text] = {}
+        self.bottoni: dict[str, Bottone] = {}
 
 
-    def disegna_scena(self):
+    def disegna_scena(self, logica: 'Logica'):
         [label.disegnami() for indice, label in self.label.items()]
+        [bottoni.disegnami(logica) for indice, bottoni in self.bottoni.items()]
+
+    
+    def gestisci_eventi(self, eventi: list[pygame.event.Event], logica: 'Logica'):
+        [bottoni.eventami(eventi, logica) for indice, bottoni in self.bottoni.items()]
+
 
 
 class Font:

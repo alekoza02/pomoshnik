@@ -126,7 +126,8 @@ class UI:
 
         self.event_manager.event_manage_ui(eventi, self.logica)
 
-        self.costruttore.scene["main"].disegna_scena()
+        self.costruttore.scene["main"].disegna_scena(self.logica)
+        self.costruttore.scene["main"].gestisci_eventi(eventi, self.logica)
 
 
     def end_cycle(self) -> None:
