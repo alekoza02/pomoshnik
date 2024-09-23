@@ -105,7 +105,7 @@ class Label_Text:
 
 
 
-class Bottone(Label_Text):
+class Bottone_Push(Label_Text):
     def __init__(self, x, y, w, h, function, text, scala, pappardella) -> None:
         super().__init__(x, y, text, scala, pappardella)
 
@@ -147,7 +147,6 @@ class Bottone(Label_Text):
         self.hover = True if self.bounding_box.collidepoint(logica.mouse_pos) else False
                     
 
-
     def animazione_press(self, dt: int, colore):
         if self.animazione.attiva and self.animazione.dt < self.animazione.durata:
             
@@ -172,6 +171,78 @@ class Bottone(Label_Text):
         else:
             self.contorno = 1
         return colore
+
+
+
+class Bottone_Toggle(Label_Text):
+    def __init__(self, x, y, state, text, scala, pappardella) -> None:
+        super().__init__(x, y, text, scala, pappardella)
+
+        self.bg = array(pappardella["bg_def"])
+        
+        self.contorno = 2
+
+        self.w = pappardella["moltiplicatore_x"] * 1 / 100 + pappardella["offset"]
+        self.h = self.w
+
+        self.state_toggle = state
+
+        self.animazione = Animazione(-1)
+        self.hover = False
+
+        self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
+
+
+    def disegnami(self):
+        
+        colore = self.bg.copy()
+
+        colore = self.animazione_press(colore)
+        colore = self.animazione_hover(colore)
+
+        pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, 5)
+
+        if self.state_toggle:
+            pygame.draw.rect(self.schermo, [80, 170, 80], [self.x + 4, self.y + 4, self.w - 8, self.h - 8], self.contorno, 5)
+
+
+        super().disegnami(self.w * 3.5, self.h / 2, center=True)
+    
+
+    def eventami(self, events: list['Event'], logica: 'Logica'):
+
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.bounding_box.collidepoint(event.pos):
+                    
+                    if self.state_toggle:
+                        self.state_toggle = False
+                    else:
+                        self.state_toggle = True
+
+        self.hover = True if self.bounding_box.collidepoint(logica.mouse_pos) else False
+
+
+    def animazione_press(self, colore):
+        if self.state_toggle:
+            
+            self.contorno = 0
+            colore += 20
+
+        else: 
+            self.contorno = 2
+        
+        return colore
+
+
+    def animazione_hover(self, colore):
+        if self.hover:
+            self.contorno = 0
+            colore += 10
+        elif not self.state_toggle:
+            self.contorno = 2
+        return colore
+
 
 
 class SubStringa:
