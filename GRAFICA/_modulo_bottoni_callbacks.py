@@ -5,4 +5,4 @@ if NON_ESEGUIRE:
 
 class BottoniCallbacks:
     def print_hello(bottone: 'Bottone_Push'):
-        bottone.text = "/green{Cliccato!}"
+        bottone.testo = "/green{Cliccato!}"

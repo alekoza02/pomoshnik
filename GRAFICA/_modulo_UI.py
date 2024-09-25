@@ -19,6 +19,7 @@ class Logica:
         Inizializzazione di variabili che mi danno infomrazioni sull'UI / comandi da eseguire
         '''
         self.dragging = False
+        self.init_dragging = False
         self.original_start_pos = (0,0)
         self.dragging_start_pos = (0,0)
         self.dragging_end_pos = (0,0)
@@ -124,10 +125,9 @@ class UI:
 
         eventi = pygame.event.get()
 
-        self.event_manager.event_manage_ui(eventi, self.logica)
-
+        self.event_manager.event_manage_ui(eventi, self.costruttore.scene["main"], self.logica)
         self.costruttore.scene["main"].disegna_scena(self.logica)
-        self.costruttore.scene["main"].gestisci_eventi(eventi, self.logica)
+        
 
 
     def end_cycle(self) -> None:
@@ -158,7 +158,7 @@ class UI:
 
     def pc_attributes(self):
         
-        self.costruttore.scene["main"].label["memory"].text = "/high{ " + f' Memory: {psutil.Process().memory_info().rss / 1024**2:>7.2f} MB' + " }"
+        self.costruttore.scene["main"].label["memory"].testo = r"\high{ " + f' Memory: {psutil.Process().memory_info().rss / 1024**2:>7.2f} MB' + " }"
         
         if psutil.Process().memory_info().rss / 1024**2 > 4000:
             self.costruttore.scene["main"].label["memory"].color_bg = (255, 100, 100)
@@ -169,7 +169,7 @@ class UI:
 
         self.cpu_sample.pop(0)
         self.cpu_sample.append(psutil.cpu_percent(interval=0))
-        self.costruttore.scene["main"].label["cpu"].text = "/high{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }"
+        self.costruttore.scene["main"].label["cpu"].testo = r"\high{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }"
 
         self.costruttore.scene["main"].label["cpu"].color_bg = (100, 100, 100)
 
@@ -181,7 +181,7 @@ class UI:
 
         # -----------------------------------------------------------------------------
         
-        self.costruttore.scene["main"].label["fps"].text = "/high{ " + f"FPS: {self.current_fps:>6.2f}" + " }"
+        self.costruttore.scene["main"].label["fps"].testo = r"\high{ " + f"FPS: {self.current_fps:>6.2f}" + " }"
         
         self.costruttore.scene["main"].label["fps"].color_bg = (100, 100, 100)
         
@@ -193,7 +193,7 @@ class UI:
         
         # -----------------------------------------------------------------------------
         
-        self.costruttore.scene["main"].label["clock"].text = "/high{ " + f" {strftime("%X, %x")}" " }"
+        self.costruttore.scene["main"].label["clock"].testo = r"\high{ " + f" {strftime("%X, %x")}" " }"
         
         self.costruttore.scene["main"].label["clock"].color_bg = (100, 100, 100)
         
@@ -220,7 +220,7 @@ class UI:
                 case 10: simbolo_corretto = "󰂅" if battery.power_plugged else "󰁹";  # 100%
 
 
-            self.costruttore.scene["main"].label["battery"].text = "/high{ " + f"{simbolo_corretto} {battery.percent:>5.1f}%" + " }"
+            self.costruttore.scene["main"].label["battery"].testo = r"\high{ " + f"{simbolo_corretto} {battery.percent:>5.1f}%" + " }"
 
             self.costruttore.scene["main"].label["battery"].color_bg = (100, 100, 100)
 

@@ -1,7 +1,7 @@
 import pygame
 import os
 
-from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle
+from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, Entrata
 from GRAFICA._modulo_bottoni_callbacks import BottoniCallbacks
 
 NON_ESEGUIRE = False
@@ -40,29 +40,36 @@ class Costruttore:
         
         self.scene["main"] = Scena()
 
-        self.scene["main"].label["cpu"] = Label_Text(58.5, 99, "cpu", 1, self.pappardella)
-        self.scene["main"].label["fps"] = Label_Text(65.5, 99, "fps", 1, self.pappardella)
-        self.scene["main"].label["battery"] = Label_Text(72.5, 99, "battery", 1, self.pappardella)
-        self.scene["main"].label["memory"] = Label_Text(78.1, 99, "memory", 1, self.pappardella)
-        self.scene["main"].label["clock"] = Label_Text(89.5, 99, "clock", 1, self.pappardella)
+        self.scene["main"].label["cpu"] = Label_Text(58.5, 98.5, "cpu", 1, self.pappardella)
+        self.scene["main"].label["fps"] = Label_Text(65.5, 98.5, "fps", 1, self.pappardella)
+        self.scene["main"].label["battery"] = Label_Text(72.5, 98.5, "battery", 1, self.pappardella)
+        self.scene["main"].label["memory"] = Label_Text(78.1, 98.5, "memory", 1, self.pappardella)
+        self.scene["main"].label["clock"] = Label_Text(89.5, 98.5, "clock", 1, self.pappardella)
         
+        self.scene["main"].label["debug_visualizer"] = Label_Text(40, 50, "Ciao?", 1, self.pappardella)
+        
+        self.scene["main"].entrate["debug_visualizer1"] = Entrata(10, 50, 20, 2, "Prova testo", 1, self.pappardella)
+
 
 class Scena:
     def __init__(self) -> None:
         self.label: dict[str, Label_Text] = {}
         self.bottoni_p: dict[str, Bottone_Push] = {}
         self.bottoni_t: dict[str, Bottone_Toggle] = {}
+        self.entrate: dict[str, Entrata] = {}
 
 
     def disegna_scena(self, logica: 'Logica'):
         [label.disegnami() for indice, label in self.label.items()]
-        [bottoni.disegnami(logica) for indice, bottoni in self.bottoni_p.items()]
-        [bottoni.disegnami() for indice, bottoni in self.bottoni_t.items()]
+        [bottone.disegnami(logica) for indice, bottone in self.bottoni_p.items()]
+        [bottone.disegnami() for indice, bottone in self.bottoni_t.items()]
+        [entrate.disegnami(logica) for indice, entrate in self.entrate.items()]
 
     
     def gestisci_eventi(self, eventi: list[pygame.event.Event], logica: 'Logica'):
-        [bottoni.eventami(eventi, logica) for indice, bottoni in self.bottoni_p.items()]
-        [bottoni.eventami(eventi, logica) for indice, bottoni in self.bottoni_t.items()]
+        [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_p.items()]
+        [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_t.items()]
+        [entrata.eventami(eventi, logica) for indice, entrata in self.entrate.items()]
 
 
 
