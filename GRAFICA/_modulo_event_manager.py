@@ -1,4 +1,5 @@
 import pygame
+import time
 
 NON_ESEGUIRE = False
 
@@ -41,6 +42,22 @@ class EventManager:
                 if event.button == 1:
                     logica.click_sinistro = True
                     
+                    if time.perf_counter() - logica.elapsed_waiting_click_sinistro >= 0.2:
+                        logica.wait_for_doppio_click = True
+
+                    if logica.wait_for_doppio_click:
+                        logica.wait_for_doppio_click = False
+                        logica.elapsed_waiting_click_sinistro = time.perf_counter()
+                    else:
+                        logica.wait_for_doppio_click = True
+                        logica.elapsed_waiting_click_sinistro = time.perf_counter() - logica.elapsed_waiting_click_sinistro
+
+                    if logica.elapsed_waiting_click_sinistro > 0 and logica.elapsed_waiting_click_sinistro < 0.2:
+                        logica.doppio_click_sinistro = True
+                        logica.mouse_pos_doppio_click = pygame.mouse.get_pos()
+                    else:
+                        logica.doppio_click_sinistro = False
+                        
                     logica.init_dragging = True
                     logica.original_start_pos = logica.mouse_pos
                     logica.dragging_end_pos = logica.mouse_pos

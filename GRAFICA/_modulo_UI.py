@@ -33,6 +33,12 @@ class Logica:
         self.scena = 0
         
         self.click_sinistro = False
+        
+        self.doppio_click_sinistro = False
+        self.elapsed_waiting_click_sinistro = 0
+        self.wait_for_doppio_click = True
+        self.mouse_pos_doppio_click = (0, 0)
+
         self.click_destro = False
         
         self.ctrl = False
@@ -149,8 +155,6 @@ class UI:
         key_combo = [pygame.K_ESCAPE, pygame.K_SPACE]
         if all(keys[key] for key in key_combo):
             self.running = 0
-
-        self.costruttore.font.scala_font(-1)
             
         pygame.display.flip()
         
@@ -161,9 +165,7 @@ class UI:
         self.costruttore.scene["main"].label["memory"].testo = r"\high{ " + f' Memory: {psutil.Process().memory_info().rss / 1024**2:>7.2f} MB' + " }"
         
         if psutil.Process().memory_info().rss / 1024**2 > 4000:
-            self.costruttore.scene["main"].label["memory"].color_bg = (255, 100, 100)
-        else:
-            self.costruttore.scene["main"].label["memory"].color_bg = (100, 100, 100)
+            self.costruttore.scene["main"].label["memory"].testo = r"\red{" + self.costruttore.scene["main"].label["memory"].testo + "}"
 
         # -----------------------------------------------------------------------------
 
@@ -171,31 +173,25 @@ class UI:
         self.cpu_sample.append(psutil.cpu_percent(interval=0))
         self.costruttore.scene["main"].label["cpu"].testo = r"\high{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }"
 
-        self.costruttore.scene["main"].label["cpu"].color_bg = (100, 100, 100)
-
         if sum(self.cpu_sample) / len(self.cpu_sample) > 30:
-            self.costruttore.scene["main"].label["cpu"].color_bg = (150, 150, 100)
+            self.costruttore.scene["main"].label["cpu"].testo = r"\yellow{" + self.costruttore.scene["main"].label["cpu"].testo + "}"
 
         if sum(self.cpu_sample) / len(self.cpu_sample) > 70:
-            self.costruttore.scene["main"].label["cpu"].color_bg = (255, 100, 100)
+            self.costruttore.scene["main"].label["cpu"].testo = r"\red{" + self.costruttore.scene["main"].label["cpu"].testo + "}"
 
         # -----------------------------------------------------------------------------
         
         self.costruttore.scene["main"].label["fps"].testo = r"\high{ " + f"FPS: {self.current_fps:>6.2f}" + " }"
         
-        self.costruttore.scene["main"].label["fps"].color_bg = (100, 100, 100)
-        
         if self.current_fps < 60:
-            self.costruttore.scene["main"].label["fps"].color_bg = (150, 150, 100)
+            self.costruttore.scene["main"].label["fps"].testo = r"\yellow{" + self.costruttore.scene["main"].label["fps"].testo + "}"
 
         if self.current_fps < 24:
-            self.costruttore.scene["main"].label["fps"].color_bg = (255, 100, 100)
+            self.costruttore.scene["main"].label["fps"].testo = r"\red{" + self.costruttore.scene["main"].label["fps"].testo + "}"
         
         # -----------------------------------------------------------------------------
         
         self.costruttore.scene["main"].label["clock"].testo = r"\high{ " + f" {strftime("%X, %x")}" " }"
-        
-        self.costruttore.scene["main"].label["clock"].color_bg = (100, 100, 100)
         
         # -----------------------------------------------------------------------------
 
@@ -222,13 +218,11 @@ class UI:
 
             self.costruttore.scene["main"].label["battery"].testo = r"\high{ " + f"{simbolo_corretto} {battery.percent:>5.1f}%" + " }"
 
-            self.costruttore.scene["main"].label["battery"].color_bg = (100, 100, 100)
-
             if battery.percent < 20:
-                self.costruttore.scene["main"].label["battery"].color_bg = (150, 150, 100)
+                self.costruttore.scene["main"].label["battery"].testo = r"\yellow{" + self.costruttore.scene["main"].label["battery"].testo + "}"
 
             if battery.percent < 10:
-                self.costruttore.scene["main"].label["battery"].color_bg = (255, 100, 100)
+                self.costruttore.scene["main"].label["battery"].testo = r"\red{" + self.costruttore.scene["main"].label["battery"].testo + "}"
 
 
     @staticmethod
