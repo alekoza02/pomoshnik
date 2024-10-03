@@ -91,6 +91,7 @@ class EventManager:
                         logica.dragging_dy = - logica.dragging_end_pos[1] + logica.dragging_start_pos[1] # sistema di riferimento invertito
 
 
+        # ENTRATE DI ENTRATE
         # raccolta di tutti i testi già presenti nelle entrate
         test_entr_attiva: list[str] = [indice for indice, elemento in scena.entrate.items() if elemento.selezionato]
 
@@ -99,7 +100,6 @@ class EventManager:
             self.entrata_attiva = scena.entrate[test_entr_attiva[0]]
             # gestione eventi entrata attiva
             self.entrata_attiva.eventami_scrittura(eventi, logica)
-
-
+            
         # gestione eventi di tutte le UI
         scena.gestisci_eventi(eventi, logica)

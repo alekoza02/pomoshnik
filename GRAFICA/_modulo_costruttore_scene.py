@@ -45,6 +45,7 @@ class Costruttore:
         
         self.scene["main"].scrolls["debug_visualizer"] = Scroll(10, 20, 37, 30, "Prova testo", 1.3, self.pappardella)
         # self.scene["main"].bottoni_t["bottone"] = Bottone_Toggle(50, 50, False, "Prova testo", 1.3, self.pappardella)
+        self.scene["main"].entrate["entrata"] = Entrata(80, 30, 10, 2, "ciao", 1, self.pappardella)
 
 
 class Scena:

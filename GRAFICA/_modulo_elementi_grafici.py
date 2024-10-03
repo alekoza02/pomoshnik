@@ -285,7 +285,7 @@ class Entrata(Label_Text):
 
     def disegnami(self, logica: 'Logica'):
 
-        if self.hide:
+        if not self.hide:
 
             colore = self.bg.copy()
 
@@ -295,7 +295,7 @@ class Entrata(Label_Text):
             pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, 5)
 
             if self.selezionato:
-                pygame.draw.rect(self.schermo, [20, 100, 100], [self.x + self.font.font_pixel_dim[0] * self.selected[0] + self.offset_grafico_testo, self.y, self.font.font_pixel_dim[0] * (self.selected[1] - self.selected[0]), self.h], 0, 5)
+                pygame.draw.rect(self.schermo, [90, 90, 90], [self.x + self.font.font_pixel_dim[0] * self.selected[0] + self.offset_grafico_testo, self.y, self.font.font_pixel_dim[0] * (self.selected[1] - self.selected[0]), self.h], 0, 5)
 
             # testo
             self.schermo.blit(self.font.font_pyg_r.render(self.testo, True, self.color_text), (self.text_x + self.offset_grafico_testo, self.text_y + self.h / 2 - self.font.font_pixel_dim[1] / 2))
@@ -309,7 +309,7 @@ class Entrata(Label_Text):
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
         
-        if self.hide:
+        if not self.hide:
 
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -352,7 +352,7 @@ class Entrata(Label_Text):
 
     def eventami_scrittura(self, events: list['Event'], logica: 'Logica'):
         
-        if self.hide:
+        if not self.hide:
 
             def move_selected(dir: bool, amount: int = 1):
                 if dir:
@@ -496,6 +496,11 @@ class Entrata(Label_Text):
                         self.puntatore_pos = len(self.testo)
                         reset_animation = True
 
+                    
+                    # ESC
+                    if event.key == pygame.K_ESCAPE:
+                        self.selected = [0, 0]
+
 
                     if event.key == pygame.K_BACKSPACE or event.key == pygame.K_DELETE:
                         reset_animation = True
@@ -552,8 +557,6 @@ class Entrata(Label_Text):
 
                             else: 
 
-                                self.puntatore_pos -= 1
-
                                 if logica.shift:
 
                                     move_selected(0)
@@ -561,6 +564,8 @@ class Entrata(Label_Text):
                                 else:
                                     reset_animation = True
                                     self.selected = [0, 0]
+
+                                self.puntatore_pos -= 1
 
 
                     if event.key == pygame.K_RIGHT:
@@ -583,8 +588,6 @@ class Entrata(Label_Text):
 
                             else: 
 
-                                self.puntatore_pos += 1
-
                                 if logica.shift:
 
                                     move_selected(1)
@@ -592,6 +595,8 @@ class Entrata(Label_Text):
                                 else:
                                     reset_animation = True
                                     self.selected = [0, 0]
+
+                                self.puntatore_pos += 1
 
 
             if logica.backspace:
@@ -696,14 +701,16 @@ class Scroll:
         self.titolo = "Scroll console..."
         self.testo: str = text
         self.color_text = (200, 200, 200)
-        self.color_text_selected = (30, 30, 30)
+        self.color_text_selected = (40, 100, 40)
 
         self.bg = array(pappardella["bg_def"])
-        self.bg_selected = (200, 200, 200)
+        self.bg_selected = (60, 70, 70)
         
         self.contorno = 2
 
-        self.elementi = [i for i in range(30)]
+        self.no_dragging_animation = False
+
+        self.elementi = [i for i in range(100)]
         self.ele_mask = [False for _ in range(len(self.elementi))]
         self.ele_selected_index = 0
         self.ele_first = 0
@@ -715,7 +722,6 @@ class Scroll:
         y_bottone = self.font.font_pixel_dim[1] * 100 / pappardella["ori_y"]    
         y_centratura_toggle = 100 * (((self.font.font_pixel_dim[1]) - (pappardella["moltiplicatore_x"] * 1 / 100 + pappardella["offset"])) / 2) / pappardella["ori_y"] 
         self.ele_toggle = [Bottone_Toggle(x + w * 0.01, y + y_centratura_toggle + y_bottone * (i + 2), False, "", 1, pappardella) for i in range(self.ele_max)]
-        
 
         self.offset_grafico_testo = self.w * 0.02 + self.ele_toggle[0].w
 
@@ -735,6 +741,7 @@ class Scroll:
 
     def disegnami(self, logica: 'Logica'):
 
+        # creazione titolo
         self.font.scala_font(1.5)
         
         pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
@@ -743,6 +750,7 @@ class Scroll:
         
         self.font.scala_font(1 / 1.5)
 
+        # creazione elementi (righe)
         alt_font = self.font.font_pixel_dim[1]
 
         for chunck in range(int((self.h - alt_font * 2) // alt_font)):
@@ -758,13 +766,14 @@ class Scroll:
             pygame.draw.rect(self.schermo, colore, [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * chunck, self.w - self.offset_grafico_testo, alt_font], 0, 5)
     
 
+        # creazione elementi (testo)
         self.ele_max = int((self.h - self.font.font_pixel_dim[1] * 2) // self.font.font_pixel_dim[1])
         for ele_iterator in range(self.ele_max):
             
             if self.ele_first + ele_iterator >= len(self.elementi):
                 break
 
-            testo = f"{self.elementi[self.ele_first + ele_iterator] = }"
+            testo = f"{self.elementi[self.ele_first + ele_iterator]}"
 
             if self.ele_selected_index == ele_iterator + self.ele_first:
                 colore = self.color_text_selected
@@ -773,14 +782,28 @@ class Scroll:
                 
 
             self.schermo.blit(self.font.font_pyg_r.render(testo, True, colore), (self.text_x + self.offset_grafico_testo + 5, self.text_y + (alt_font * (2 + ele_iterator))))
+        
 
+        # creazione toggles
         [bottone.disegnami() for bottone in self.ele_toggle]
+
+        # disegno elementi grafici di drag
+        if logica.dragging and not self.no_dragging_animation:
+            pygame.draw.rect(self.schermo, self.bg_selected, [logica.mouse_pos[0], logica.mouse_pos[1], self.w - self.offset_grafico_testo, self.font.font_pixel_dim[1]], 0, 5)
+            self.schermo.blit(self.font.font_pyg_r.render(f"{self.elementi[self.ele_selected_index]}", True, self.color_text_selected), (logica.mouse_pos[0] + 5, logica.mouse_pos[1]))
+
+            # mostro dove finisce l'elemento
+            elemento_finale = round((logica.mouse_pos[1] - self.y - self.font.font_pixel_dim[1] // 2) // self.font.font_pixel_dim[1]) - 2 + 1 # il +1 è per risolvere un problema grafico in cui il calcolo non tiene conto che l'operazione non è ancora stata eseguita
+            pygame.draw.rect(self.schermo, [255, 200, 0], [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * elemento_finale, self.w - self.offset_grafico_testo, 1], 0, 5)
+
 
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
         
+        # aggiorna tutto quello che succede alle toggle box
         [bottone.eventami(events, logica) for bottone in self.ele_toggle]
         
+        # nascondo le toggle box che non corrispondono a nessun elemento (fine corsa)
         for i in range(self.ele_max):
             if self.ele_first + i < len(self.elementi):
                 self.ele_toggle[i].hide = False
@@ -795,9 +818,21 @@ class Scroll:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                 
                     if event.button == 1:
+                        # selezione elemento
                         self.ele_selected_index = self.ele_first + round((logica.mouse_pos[1] - self.y) // self.font.font_pixel_dim[1]) - 2
+                        self.no_dragging_animation = False
+
+                        # abilita / disabilita visualizzazione dragging element nel caso di swap posizioni
+                        if self.ele_selected_index > len(self.elementi) - 1:
+                            self.no_dragging_animation = True
+
+                        # impedisce la selezione di elementi oltre al range consentito
+                        if self.ele_selected_index >= len(self.elementi) - 1:
+                            self.ele_selected_index = len(self.elementi) - 1
+
 
                     if event.button == 4:
+                        # scroll down
                         if self.ele_first > 0:
                             self.ele_first -= 1
 
@@ -805,11 +840,59 @@ class Scroll:
                                 bottone.state_toggle = status
 
                     if event.button == 5:
+                        # scroll up
                         if self.ele_first < len(self.elementi) - 1:
                             self.ele_first += 1
 
                             for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
                                 bottone.state_toggle = status
+
+
+                if event.type == pygame.MOUSEBUTTONUP:
+
+                    if event.button == 1:
+
+                        # calcola l'indice dove verrà inserito un valore (offset di mezzo elemento)
+                        rilascio = self.ele_first + round((logica.mouse_pos[1] - self.y - self.font.font_pixel_dim[1] // 2) // self.font.font_pixel_dim[1]) - 2
+                        
+                        if rilascio < len(self.elementi) - 1: # se il rilascio avviene entro il range di elementi
+
+                            if self.ele_selected_index != rilascio: # se l'elemento spostato e la destinazione sono diversi
+
+                                offset = True if rilascio < self.ele_selected_index else False # offset nel caso di percorrenza opposta (index slide reverse list)
+                                
+                                # aggiusto i dati di elementi e le relative maschere
+                                self.elementi.insert(rilascio + 1, self.elementi[self.ele_selected_index])
+                                self.ele_mask.insert(rilascio + 1, self.ele_mask[self.ele_selected_index])
+
+                                self.elementi.pop(self.ele_selected_index + offset)
+                                self.ele_mask.pop(self.ele_selected_index + offset)
+
+                                self.ele_selected_index = rilascio + offset
+
+                                if self.ele_selected_index > len(self.elementi):
+                                    self.ele_selected_index = len(self.elementi) - 1
+
+                                # aggiorno i bottoni dopo lo swap di posizioni
+                                for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
+                                    bottone.state_toggle = status
+
+                        elif rilascio == len(self.elementi) - 1: # caso particolare in cui il rilascio avviene all'ultimo valore
+
+                            if self.ele_selected_index != rilascio:
+
+                                offset = True if rilascio < self.ele_selected_index else False
+                                
+                                self.elementi.append(self.elementi[self.ele_selected_index])
+                                self.ele_mask.append(self.ele_mask[self.ele_selected_index])
+
+                                self.elementi.pop(self.ele_selected_index + offset)
+                                self.ele_mask.pop(self.ele_selected_index + offset)
+
+                                self.ele_selected_index = len(self.elementi) - 1
+
+                                for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
+                                    bottone.state_toggle = status
 
 
 

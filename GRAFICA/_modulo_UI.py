@@ -71,9 +71,9 @@ class UI:
         scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 
         # custom mouse
-        pygame.mouse.set_visible(False)
-        path = os.path.join('TEXTURES', 'mouse.png') 
-        self.custom_mouse_icon = pygame.image.load(path)
+        # pygame.mouse.set_visible(False)
+        # path = os.path.join('TEXTURES', 'mouse.png') 
+        # self.custom_mouse_icon = pygame.image.load(path)
 
         # impostazione dimensione schermi e rapporti
         self.w: int = int(screen_info.current_w * scale_factor)
@@ -90,7 +90,7 @@ class UI:
         self.BG: tuple[int] = (30, 30, 30)
         
         self.clock = pygame.time.Clock()
-        self.max_fps: int = 0
+        self.max_fps: int = 24
         self.current_fps: int = 0
         self.running: int = 1
 
@@ -142,7 +142,7 @@ class UI:
         Altrimenti aggiornamento pagina
         '''
 
-        self.mouse_icon()
+        # self.mouse_icon()
 
         # aggiornamento
         self.current_fps = self.clock.get_fps()
