@@ -9,7 +9,7 @@ def main():
         app.start_cycle()
 
         # DEBUG ZONE
-        # app.costruttore.scene["main"].label["debug_visualizer"].testo = f"{app.costruttore.scene["main"].entrate["debug_visualizer1"].testo}"
+        # app.costruttore.scene["main"].label["vis"].testo = f"{app.costruttore.scene["main"].entrate["entrata"].testo}"
         # DEBUG ZONE
 
         app.end_cycle()

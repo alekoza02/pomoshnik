@@ -1,5 +1,6 @@
 import pygame
 from numpy import array
+from MATEMATICA._modulo_mate_utils import MateUtils
 import pyperclip
 import os
 
@@ -109,17 +110,24 @@ class Label_Text:
 
 
 class Bottone_Push(Label_Text):
-    def __init__(self, x, y, w, h, function, text, scala, pappardella, hide=False) -> None:
+    def __init__(self, x, y, w, h, function, text, scala, pappardella, hide=False, disable=False) -> None:
         super().__init__(x, y, text, scala, pappardella)
 
         self.bg = array(pappardella["bg_def"])
         
         self.contorno = 2
 
-        self.w = pappardella["moltiplicatore_x"] * w / 100 + pappardella["offset"]
+        self.w = pappardella["moltiplicatore_x"] * w / 100
         self.h = pappardella["ori_y"] * h / 100
 
         self.callback = function
+
+        if self.callback is None:
+            
+            def Fuffa(): ...
+
+            self.callback = Fuffa
+
 
         self.animazione = Animazione(100, "once")
         self.hover = False
@@ -127,6 +135,11 @@ class Bottone_Push(Label_Text):
         self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
 
         self.hide: bool = hide
+        self.disable: bool = disable
+        self.suppress_animation: bool = False
+
+
+        self.smussatura = 20
 
     
     def disegnami(self, logica: 'Logica'):
@@ -134,23 +147,26 @@ class Bottone_Push(Label_Text):
         if not self.hide:
 
             colore = self.bg.copy()
+            
+            if not self.disable:
+                colore = self.animazione_press(logica.dt, colore)
+                colore = self.animazione_hover(colore)
 
-            colore = self.animazione_press(logica.dt, colore)
-            colore = self.animazione_hover(colore)
+            colore = [s_colore if s_colore <= 255 else 255 for s_colore in colore]
 
-            pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, 20)
+            pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
 
             super().disegnami(self.w / 2, self.h / 2, center=True)
 
     
     def eventami(self, events: list['Event'], logica: 'Logica'):
 
-        if not self.hide:
+        if not self.hide or not self.disable:
 
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if self.bounding_box.collidepoint(event.pos):
-                        self.callback(self)
+                        self.callback()
                         self.animazione.riavvia()
 
             self.hover = True if self.bounding_box.collidepoint(logica.mouse_pos) else False
@@ -160,21 +176,26 @@ class Bottone_Push(Label_Text):
         
         if self.animazione.update(dt):
 
-            self.contorno = 0
-            colore += 20
+            if not self.suppress_animation:
+                colore += 20
+                self.contorno = 0
 
         else: 
-            self.contorno = 2
+            if not self.suppress_animation:
+                self.contorno = 2
         
         return colore
 
 
     def animazione_hover(self, colore):
         if self.hover:
-            self.contorno = 0
-            colore += 10
+            if not self.suppress_animation:
+                colore += 10
+                self.contorno = 0
         else:
-            self.contorno = 2
+            if not self.suppress_animation:
+                self.contorno = 2
+
         return colore
 
 
@@ -257,7 +278,7 @@ class Bottone_Toggle(Label_Text):
 
 
 class Entrata(Label_Text):
-    def __init__(self, x, y, w, h, text, scala, pappardella, hide=False) -> None:
+    def __init__(self, x, y, w, h, text, scala, pappardella, hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False) -> None:
         super().__init__(x, y, text, scala, pappardella)
 
         self.bg = array(pappardella["bg_def"])
@@ -270,10 +291,16 @@ class Entrata(Label_Text):
         self.testo = text
         self.offset_grafico_testo = 5
         self.puntatore_pos = 0
-        self.selected: list[int] = [0, 0]
+        self.highlight_region: list[int] = [0, 0]
 
         self.selezionato = False
         self.hover = False
+
+        self.lunghezza_max = lunghezza_max
+        self.solo_numeri = solo_numeri
+        self.num_valore_minimo = num_valore_minimo
+        self.num_valore_massimo = num_valore_massimo
+        self.is_hex = is_hex
 
         self.animazione_puntatore = Animazione(1000, "loop")
         self.animazione_puntatore.attiva = True
@@ -295,7 +322,7 @@ class Entrata(Label_Text):
             pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, 5)
 
             if self.selezionato:
-                pygame.draw.rect(self.schermo, [90, 90, 90], [self.x + self.font.font_pixel_dim[0] * self.selected[0] + self.offset_grafico_testo, self.y, self.font.font_pixel_dim[0] * (self.selected[1] - self.selected[0]), self.h], 0, 5)
+                pygame.draw.rect(self.schermo, [90, 90, 90], [self.x + self.font.font_pixel_dim[0] * self.highlight_region[0] + self.offset_grafico_testo, self.y, self.font.font_pixel_dim[0] * (self.highlight_region[1] - self.highlight_region[0]), self.h], 0, 5)
 
             # testo
             self.schermo.blit(self.font.font_pyg_r.render(self.testo, True, self.color_text), (self.text_x + self.offset_grafico_testo, self.text_y + self.h / 2 - self.font.font_pixel_dim[1] / 2))
@@ -311,24 +338,27 @@ class Entrata(Label_Text):
         
         if not self.hide:
 
+            if self.selezionato:
+                self.eventami_scrittura(events, logica)
+
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         if self.bounding_box.collidepoint(event.pos):
                             
                             if self.selezionato:
-                                self.selected = [0, 0]
+                                self.highlight_region = [0, 0]
                                 self.update_puntatore_pos(event.pos)
                             else:    
                                 self.selezionato = True
-                                self.selected = [len(self.testo), 0]
+                                self.highlight_region = [len(self.testo), 0]
                                 self.puntatore_pos = len(self.testo)
 
                             self.animazione_puntatore.riavvia()
 
                         else:
                             self.selezionato = False
-                            self.selected = [0, 0]
+                            self.highlight_region = [0, 0]
                             
 
                 if event.type == pygame.MOUSEBUTTONUP:
@@ -341,8 +371,8 @@ class Entrata(Label_Text):
                 # selected
                 if logica.dragging and self.selezionato:
 
-                    self.selected[0] = self.get_puntatore_pos(logica.mouse_pos[0])
-                    self.selected[1] = self.get_puntatore_pos(logica.original_start_pos[0])
+                    self.highlight_region[0] = self.get_puntatore_pos(logica.mouse_pos[0])
+                    self.highlight_region[1] = self.get_puntatore_pos(logica.original_start_pos[0])
                     self.update_puntatore_pos(logica.mouse_pos)
                     self.animazione_puntatore.riavvia()
 
@@ -356,18 +386,18 @@ class Entrata(Label_Text):
 
             def move_selected(dir: bool, amount: int = 1):
                 if dir:
-                    if self.selected == [0, 0]:
-                        self.selected = [self.puntatore_pos, self.puntatore_pos]
+                    if self.highlight_region == [0, 0]:
+                        self.highlight_region = [self.puntatore_pos, self.puntatore_pos]
 
-                    if self.selected[0] < len(self.testo):
-                        self.selected[0] += amount
+                    if self.highlight_region[0] < len(self.testo):
+                        self.highlight_region[0] += amount
                 
                 else:
-                    if self.selected == [0, 0]:
-                        self.selected = [self.puntatore_pos, self.puntatore_pos]
+                    if self.highlight_region == [0, 0]:
+                        self.highlight_region = [self.puntatore_pos, self.puntatore_pos]
 
-                    if self.selected[0] > 0:
-                        self.selected[0] -= amount
+                    if self.highlight_region[0] > 0:
+                        self.highlight_region[0] -= amount
 
 
             def find_ricercatore(self: Entrata, dir: bool):
@@ -398,80 +428,90 @@ class Entrata(Label_Text):
 
             # SINGOLI TASTI
             # --------------------------------------------------------------------------------------------------------------------------
+            lunghezza_testo_execute = False
+
+            if self.lunghezza_max is None:
+                lunghezza_testo_execute = True
+            
+            elif len(self.testo) < self.lunghezza_max:
+                lunghezza_testo_execute = True
+
             for event in events:
                 
-                if event.type == pygame.TEXTINPUT:         
-                    
-                    apertura = ""
-                    chiusura = ""
+                if event.type == pygame.TEXTINPUT:
 
-                    if event.text == '{' or event.text == "[" or event.text == "(" or event.text == '"':
-                        apertura = event.text
-                        match event.text:
-                            case "{": chiusura = "}"
-                            case "[": chiusura = "]"
-                            case "(": chiusura = ")"
-                            case '"': chiusura = '"'
+                    if lunghezza_testo_execute:
+                        apertura = ""
+                        chiusura = ""
+
+                        if event.text == '{' or event.text == "[" or event.text == "(" or event.text == '"':
+                            apertura = event.text
+                            match event.text:
+                                case "{": chiusura = "}"
+                                case "[": chiusura = "]"
+                                case "(": chiusura = ")"
+                                case '"': chiusura = '"'
 
 
 
-                    if self.selected != [0, 0]:
+                        if self.highlight_region != [0, 0]:
 
-                        min_s = min(self.selected[0], self.selected[1])
-                        max_s = max(self.selected[0], self.selected[1])
+                            min_s = min(self.highlight_region[0], self.highlight_region[1])
+                            max_s = max(self.highlight_region[0], self.highlight_region[1])
+                            
+                            if apertura != "":
+                                self.testo = self.testo[:min_s] + apertura + self.testo[min_s : max_s] + chiusura + self.testo[max_s:]
+                                self.highlight_region[0] += 1
+                                self.highlight_region[1] += 1
+                                self.puntatore_pos += 1
+
+                            else:
+            
+                                self.testo = self.testo[:min_s] + event.text + self.testo[max_s:]
+                                self.puntatore_pos = len(self.testo[:min_s]) + len(event.text)
+                                self.highlight_region = [0, 0]
+
+                        else:
+                            if apertura != "":
+                                self.testo = self.testo[:self.puntatore_pos] + apertura + chiusura + self.testo[self.puntatore_pos:]
+                            else:
+                                self.testo = self.testo[:self.puntatore_pos] + event.text + self.testo[self.puntatore_pos:]
+            
+                            self.puntatore_pos += len(event.text)
+
                         
-                        if apertura != "":
-                            self.testo = self.testo[:min_s] + apertura + self.testo[min_s : max_s] + chiusura + self.testo[max_s:]
-                            self.selected[0] += 1
-                            self.selected[1] += 1
-                            self.puntatore_pos += 1
-
-                        else:
-        
-                            self.testo = self.testo[:min_s] + event.text + self.testo[max_s:]
-                            self.puntatore_pos = len(self.testo[:min_s]) + len(event.text)
-                            self.selected = [0, 0]
-
-                    else:
-                        if apertura != "":
-                            self.testo = self.testo[:self.puntatore_pos] + apertura + chiusura + self.testo[self.puntatore_pos:]
-                        else:
-                            self.testo = self.testo[:self.puntatore_pos] + event.text + self.testo[self.puntatore_pos:]
-        
-                        self.puntatore_pos += len(event.text)
-
-                    
-                    reset_animation = True
+                        reset_animation = True
                 
                 if event.type == pygame.KEYDOWN:
 
                     # copia, incolla e taglia       
                     if logica.ctrl and event.key == pygame.K_c:
                         
-                        min_s = min(self.selected[0], self.selected[1])
-                        max_s = max(self.selected[0], self.selected[1])
+                        min_s = min(self.highlight_region[0], self.highlight_region[1])
+                        max_s = max(self.highlight_region[0], self.highlight_region[1])
 
                         pyperclip.copy(self.testo[min_s : max_s])
                     
-                        self.selected = [0, 0]
+                        self.highlight_region = [0, 0]
 
-                    if logica.ctrl and event.key == pygame.K_v:
+                    if lunghezza_testo_execute:
+                        if logica.ctrl and event.key == pygame.K_v:
                         
-                        incolla = pyperclip.paste()
-                        self.testo = f"{self.testo[:self.puntatore_pos]}{incolla}{self.testo[self.puntatore_pos:]}"
-                        self.puntatore_pos = len(self.testo[:self.puntatore_pos]) + len(incolla)
+                            incolla = pyperclip.paste()
+                            self.testo = f"{self.testo[:self.puntatore_pos]}{incolla}{self.testo[self.puntatore_pos:]}"
+                            self.puntatore_pos = len(self.testo[:self.puntatore_pos]) + len(incolla)
 
-                        self.selected = [0, 0]
+                            self.highlight_region = [0, 0]
                     
                     if logica.ctrl and event.key == pygame.K_x:
                         
-                        if self.selected != [0, 0]:
-                            min_s = min(self.selected[0], self.selected[1])
-                            max_s = max(self.selected[0], self.selected[1])
+                        if self.highlight_region != [0, 0]:
+                            min_s = min(self.highlight_region[0], self.highlight_region[1])
+                            max_s = max(self.highlight_region[0], self.highlight_region[1])
 
                             pyperclip.copy(self.testo[min_s : max_s])
                         
-                            self.selected = [0, 0]
+                            self.highlight_region = [0, 0]
                             
                             self.testo = self.testo[:min_s] + self.testo[max_s:]
                             self.puntatore_pos = len(self.testo[:min_s])
@@ -480,9 +520,9 @@ class Entrata(Label_Text):
                     # HOME and END
                     if event.key == pygame.K_HOME:
                         if logica.shift:
-                            self.selected = [self.puntatore_pos, 0]
+                            self.highlight_region = [self.puntatore_pos, 0]
                         else:
-                            self.selected = [0, 0]
+                            self.highlight_region = [0, 0]
                         self.puntatore_pos = 0
                         reset_animation = True
 
@@ -490,30 +530,30 @@ class Entrata(Label_Text):
 
                     if event.key == pygame.K_END:
                         if logica.shift:
-                            self.selected = [self.puntatore_pos, len(self.testo)]
+                            self.highlight_region = [self.puntatore_pos, len(self.testo)]
                         else:
-                            self.selected = [0, 0]
+                            self.highlight_region = [0, 0]
                         self.puntatore_pos = len(self.testo)
                         reset_animation = True
 
                     
                     # ESC
                     if event.key == pygame.K_ESCAPE:
-                        self.selected = [0, 0]
+                        self.highlight_region = [0, 0]
 
 
                     if event.key == pygame.K_BACKSPACE or event.key == pygame.K_DELETE:
                         reset_animation = True
 
-                        if self.selected[1] - self.selected[0] != 0:
+                        if self.highlight_region[1] - self.highlight_region[0] != 0:
 
-                            min_s = min(self.selected[0], self.selected[1])
-                            max_s = max(self.selected[0], self.selected[1])
+                            min_s = min(self.highlight_region[0], self.highlight_region[1])
+                            max_s = max(self.highlight_region[0], self.highlight_region[1])
 
                             self.testo = self.testo[:min_s] + self.testo[max_s:]
 
                             self.puntatore_pos = min_s
-                            self.selected = [0, 0]
+                            self.highlight_region = [0, 0]
 
                         
                         elif event.key == pygame.K_DELETE:
@@ -551,7 +591,7 @@ class Entrata(Label_Text):
                 
                                 else:
                                     reset_animation = True
-                                    self.selected = [0, 0]
+                                    self.highlight_region = [0, 0]
 
                                 self.puntatore_pos = puntatore_left
 
@@ -563,7 +603,7 @@ class Entrata(Label_Text):
                 
                                 else:
                                     reset_animation = True
-                                    self.selected = [0, 0]
+                                    self.highlight_region = [0, 0]
 
                                 self.puntatore_pos -= 1
 
@@ -582,7 +622,7 @@ class Entrata(Label_Text):
                 
                                 else:
                                     reset_animation = True
-                                    self.selected = [0, 0]
+                                    self.highlight_region = [0, 0]
 
                                 self.puntatore_pos = puntatore_right
 
@@ -594,7 +634,7 @@ class Entrata(Label_Text):
                 
                                 else:
                                     reset_animation = True
-                                    self.selected = [0, 0]
+                                    self.highlight_region = [0, 0]
 
                                 self.puntatore_pos += 1
 
@@ -634,6 +674,28 @@ class Entrata(Label_Text):
                     logica.acc_right -= 50
             else: 
                 logica.acc_right = 0
+
+
+            if self.solo_numeri:
+                numero_equivalente = MateUtils.inp2flo(self.testo, None)
+
+                if numero_equivalente is None:
+                    self.color_text = array([255, 0, 0])
+
+                else:
+                    self.color_text = array((200, 200, 200))
+
+                    if numero_equivalente > self.num_valore_massimo:
+                        self.change_text(f"{self.num_valore_massimo}")
+                    elif numero_equivalente < self.num_valore_minimo:
+                        self.change_text(f"{self.num_valore_minimo}")
+
+
+            if self.is_hex:
+                if MateUtils.hex2rgb(self.testo, std_return=None) is None:
+                    self.color_text = array([255, 0, 0])
+                else:
+                    self.color_text = array([200, 200, 200])
 
 
             if reset_animation:
@@ -677,6 +739,10 @@ class Entrata(Label_Text):
         elif not self.selezionato:
             self.contorno = 2
         return colore
+    
+
+    def change_text(self, text):
+        self.testo = text
 
 
 
@@ -893,6 +959,208 @@ class Scroll:
 
                                 for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
                                     bottone.state_toggle = status
+
+
+
+class ColorPicker(Bottone_Push):
+    def __init__(self, x, y, initial_color, text, scala, pappardella, hide=False) -> None:
+        
+        width = 5
+
+        super().__init__(x, y, width, 3, self.apri_picker, "", scala, pappardella, hide)
+
+        self.title = text
+        self.suppress_animation = True
+        self.contorno = 0
+        
+        self.palette = Palette(x + width / 2, y, initial_color, pappardella)
+        self.picked_color = initial_color
+
+    
+    def disegnami(self, logica):
+        super().disegnami(logica)
+        self.palette.disegnami(logica)
+    
+
+    def eventami(self, events, logica):
+        super().eventami(events, logica)
+        self.palette.eventami(logica, events)
+
+        if not self.palette.toggle:
+            self.bg = array(self.palette.colore_scelto) * self.palette.intensity
+            self.picked_color = array(self.palette.colore_scelto) * self.palette.intensity
+
+    
+    def apri_picker(self):
+        self.palette.toggle = False if self.palette.toggle else True
+
+    
+    def get_color(self):
+        return self.picked_color
+
+
+class Palette():
+    def __init__(self, x, y, initial_color, pappardella):
+
+        width = 20
+
+        self.w = pappardella["moltiplicatore_x"] * width / 100 + pappardella["offset"]
+        self.h = pappardella["ori_y"] * 20 / 100
+        
+        x_pos = (x - width / 2)
+        if x_pos <= 0:
+            x_pos = 0
+        if x_pos >= (100 - width):
+            x_pos = (100 - width)
+        self.x = pappardella["moltiplicatore_x"] * x_pos / 100 + pappardella["offset"]
+        
+        y_pos = (y - 20)
+        if y_pos <= 0:
+            y_pos = (y + 20 + 3)
+
+        self.y = pappardella["ori_y"] * y_pos / 100
+
+        
+        self.bounding_box = pygame.Rect(self.x - 100, self.y - 100, self.w + 200, self.h + 200)
+
+        
+        self.schermo = pappardella["screen"]
+
+        self.bg = pappardella["bg_def"]
+        self.colore_scelto = initial_color
+        self.intensity = 1
+        self.update_color_value = False
+
+
+        self.toggle = False
+
+        ###### generazione colori ###### 
+
+        def generate_color_function(color):
+            def return_selected_color():
+                self.colore_scelto = array(color)
+                self.update_color_value = True
+            return return_selected_color
+        
+        colori = [
+            [255, 0, 0], [255, 125, 0], [255, 255, 0], [125, 255, 0], [0, 255, 0], [0, 255, 125], [0, 255, 255], [0, 125, 255], [0, 0, 255], [125, 0, 255], [255, 0, 255],
+            [255 + 32, 0 + 32, 0 + 32], [255 + 32, 125 + 32, 0 + 32], [255 + 32, 255 + 32, 0 + 32], [125 + 32, 255 + 32, 0 + 32], [0 + 32, 255 + 32, 0 + 32], [0 + 32, 255 + 32, 125 + 32], [0 + 32, 255 + 32, 255 + 32], [0 + 32, 125 + 32, 255 + 32], [0 + 32, 0 + 32, 255 + 32], [125 + 32, 0 + 32, 255 + 32], [255 + 32, 0 + 32, 255 + 32],
+            [255 + 64, 0 + 64, 0 + 64], [255 + 64, 125 + 64, 0 + 64], [255 + 64, 255 + 64, 0 + 64], [125 + 64, 255 + 64, 0 + 64], [0 + 64, 255 + 64, 0 + 64], [0 + 64, 255 + 64, 125 + 64], [0 + 64, 255 + 64, 255 + 64], [0 + 64, 125 + 64, 255 + 64], [0 + 64, 0 + 64, 255 + 64], [125 + 64, 0 + 64, 255 + 64], [255 + 64, 0 + 64, 255 + 64],
+            [255 + 96, 0 + 96, 0 + 96], [255 + 96, 125 + 96, 0 + 96], [255 + 96, 255 + 96, 0 + 96], [125 + 96, 255 + 96, 0 + 96], [0 + 96, 255 + 96, 0 + 96], [0 + 96, 255 + 96, 125 + 96], [0 + 96, 255 + 96, 255 + 96], [0 + 96, 125 + 96, 255 + 96], [0 + 96, 0 + 96, 255 + 96], [125 + 96, 0 + 96, 255 + 96], [255 + 96, 0 + 96, 255 + 96],
+            [255 + 128, 0 + 128, 0 + 128], [255 + 128, 125 + 128, 0 + 128], [255 + 128, 255 + 128, 0 + 128], [125 + 128, 255 + 128, 0 + 128], [0 + 128, 255 + 128, 0 + 128], [0 + 128, 255 + 128, 125 + 128], [0 + 128, 255 + 128, 255 + 128], [0 + 128, 125 + 128, 255 + 128], [0 + 128, 0 + 128, 255 + 128], [125 + 128, 0 + 128, 255 + 128], [255 + 128, 0 + 128, 255 + 128],
+            [255 + 160, 0 + 160, 0 + 160], [255 + 160, 125 + 160, 0 + 160], [255 + 160, 255 + 160, 0 + 160], [125 + 160, 255 + 160, 0 + 160], [0 + 160, 255 + 160, 0 + 160], [0 + 160, 255 + 160, 125 + 160], [0 + 160, 255 + 160, 255 + 160], [0 + 160, 125 + 160, 255 + 160], [0 + 160, 0 + 160, 255 + 160], [125 + 160, 0 + 160, 255 + 160], [255 + 160, 0 + 160, 255 + 160],
+            [255 + 192, 0 + 192, 0 + 192], [255 + 192, 125 + 192, 0 + 192], [255 + 192, 255 + 192, 0 + 192], [125 + 192, 255 + 192, 0 + 192], [0 + 192, 255 + 192, 0 + 192], [0 + 192, 255 + 192, 125 + 192], [0 + 192, 255 + 192, 255 + 192], [0 + 192, 125 + 192, 255 + 192], [0 + 192, 0 + 192, 255 + 192], [125 + 192, 0 + 192, 255 + 192], [255 + 192, 0 + 192, 255 + 192],
+            [255 + 224, 0 + 224, 0 + 224], [255 + 224, 125 + 224, 0 + 224], [255 + 224, 255 + 224, 0 + 224], [125 + 224, 255 + 224, 0 + 224], [0 + 224, 255 + 224, 0 + 224], [0 + 224, 255 + 224, 125 + 224], [0 + 224, 255 + 224, 255 + 224], [0 + 224, 125 + 224, 255 + 224], [0 + 224, 0 + 224, 255 + 224], [125 + 224, 0 + 224, 255 + 224], [255 + 224, 0 + 224, 255 + 224],
+            [255 + 255, 0 + 255, 0 + 255], [255 + 255, 125 + 255, 0 + 255], [255 + 255, 255 + 255, 0 + 255], [125 + 255, 255 + 255, 0 + 255], [0 + 255, 255 + 255, 0 + 255], [0 + 255, 255 + 255, 125 + 255], [0 + 255, 255 + 255, 255 + 255], [0 + 255, 125 + 255, 255 + 255], [0 + 255, 0 + 255, 255 + 255], [125 + 255, 0 + 255, 255 + 255], [255 + 255, 0 + 255, 255 + 255],
+        ]
+
+        for index_a, colore in enumerate(colori):
+            for index_b, componente in enumerate(colore):
+                if componente > 255:
+                    colori[index_a][index_b] = 255
+
+        color_functions = [generate_color_function(color) for color in colori]
+
+        larghezza_orizzontale_percentuale = 100 * width * 1.75 / (pappardella["moltiplicatore_x"])
+        altezza_orizzontale_percentuale = 100 * (width + 5) / pappardella["ori_y"]
+
+        self.colori_bottoni = [Bottone_Push(x_pos + (i % 11) * width / 15, y_pos + (i // 11) * (width + 5) / 15, larghezza_orizzontale_percentuale, altezza_orizzontale_percentuale, foo, "", 1, pappardella) for i, foo in zip(range(len(color_functions)), color_functions)]
+        
+        for bottone, colore in zip(self.colori_bottoni, colori):
+            bottone.original_color = array(colore)
+            bottone.suppress_animation = True
+            bottone.contorno = 0
+            bottone.smussatura = 0
+
+        ###### generazione intensità ###### 
+
+        def generate_intens_function(intensity):
+            def return_selected_intensity():
+                self.intensity = intensity
+                self.update_color_value = True
+            return return_selected_intensity
+        
+        intensities = [0.0, 0.12, 0.24, 0.36, 0.48, 0.6, 0.76, 0.88, 1.0]
+        intensities = intensities[::-1]
+
+        intensities_functions = [generate_intens_function(intens) for intens in intensities]
+        
+        self.intens_bottoni = [Bottone_Push(x_pos + width * 0.775, y_pos + (i % 11) * (width + 5) / 15, larghezza_orizzontale_percentuale, altezza_orizzontale_percentuale, foo, "", 1, pappardella) for i, foo in zip(range(len(color_functions)), intensities_functions)]
+
+        for bottone, colore in zip(self.intens_bottoni, intensities):
+            bottone.bg = array([colore, colore , colore]) * 255
+            bottone.suppress_animation = True
+            bottone.contorno = 0
+            bottone.smussatura = 0
+
+        ###### generazione preview ###### 
+        self.preview_button = Bottone_Push(x_pos + width * 0.885, y_pos, larghezza_orizzontale_percentuale * 1.5, width * .725, None, "", 1, pappardella, disable=True)
+        self.preview_button.contorno = 0
+
+        ###### generazione entrate ###### 
+
+        self.RGB_inputs = [Entrata(x_pos + i * width / 4, y_pos + width * .8, width / 6, 2, f"{self.colore_scelto[i]}", 1, pappardella, lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255) for i in range(3)]
+        
+        for index, entrata in enumerate(self.RGB_inputs):
+            entrata.bg = array([90, 90, 90])
+            entrata.bg[index] = 180
+
+        self.HEX_input = Entrata(x_pos + 3 * width / 4, y_pos + width * .8, width / 5, 2, f"{MateUtils.rgb2hex(self.colore_scelto)}", 1, pappardella, lunghezza_max=7, is_hex=True)
+        self.HEX_input.bg = array([60, 60, 60])
+
+
+    def disegnami(self, logica):
+
+        if self.toggle:
+
+            pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
+
+            for bottone in self.colori_bottoni:
+                bottone.bg = bottone.original_color * self.intensity
+            
+            [bottone.disegnami(logica) for bottone in self.colori_bottoni]
+            [bottone.disegnami(logica) for bottone in self.intens_bottoni]
+            self.preview_button.bg = array(self.colore_scelto) * self.intensity
+            
+            self.preview_button.disegnami(logica)
+
+            [entrata.disegnami(logica) for entrata in self.RGB_inputs]
+            self.HEX_input.disegnami(logica)
+
+
+    def eventami(self, logica: 'Logica', events):
+
+        if not self.bounding_box.collidepoint(logica.mouse_pos): self.toggle = False
+        for event in events:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: self.toggle = False
+                        
+        if self.toggle:
+            if self.update_color_value:
+                colore_nuovo = array(self.colore_scelto) * self.intensity
+                self.RGB_inputs[0].testo = f"{int(colore_nuovo[0])}" 
+                self.RGB_inputs[1].testo = f"{int(colore_nuovo[1])}" 
+                self.RGB_inputs[2].testo = f"{int(colore_nuovo[2])}" 
+                self.HEX_input.testo = f"{MateUtils.rgb2hex(colore_nuovo)}"
+                self.update_color_value = False
+
+            [bottone.eventami(events, logica) for bottone in self.colori_bottoni]
+            [bottone.eventami(events, logica) for bottone in self.intens_bottoni]
+
+            [entrata.eventami(events, logica) for entrata in self.RGB_inputs]
+            for index, entrata in enumerate(self.RGB_inputs):
+                if entrata.selezionato:
+                    self.colore_scelto[index] = MateUtils.inp2int(entrata.testo)
+                    self.HEX_input.testo = MateUtils.rgb2hex([self.RGB_inputs[0].testo, self.RGB_inputs[1].testo, self.RGB_inputs[2].testo])
+
+
+            self.HEX_input.eventami(events, logica)
+            if self.HEX_input.selezionato:
+                self.colore_scelto = array(MateUtils.hex2rgb(self.HEX_input.testo))
+                
+                for colore, entrata in zip(self.colore_scelto, self.RGB_inputs):
+                    entrata.change_text(f"{colore}")
+
+            self.preview_button.eventami(events, logica)
 
 
 
