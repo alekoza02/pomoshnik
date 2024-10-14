@@ -108,7 +108,6 @@ class Label_Text:
 
 
 
-
 class Bottone_Push(Label_Text):
     def __init__(self, x, y, w, h, function, text, scala, pappardella, hide=False, disable=False) -> None:
         super().__init__(x, y, text, scala, pappardella)
@@ -277,6 +276,65 @@ class Bottone_Toggle(Label_Text):
 
 
 
+class RadioButton():
+    def __init__(self, x, y, cb_n, cb_s, cb_t, title, multiple_choice, scala, pappardella, hide=False):
+        
+        self.x = None 
+        self.y = None
+        self.w = None
+        self.h = None
+
+        self.title = title
+        self.multiple_choice = multiple_choice
+
+        self.hide = hide
+
+        self.toggles: list[Bottone_Toggle] = []
+        for index, state, text  in zip(range(cb_n), cb_s, cb_t):
+            self.toggles.append(Bottone_Toggle(x, y + index * 4, state, text, scala, pappardella, hide))
+
+
+    def disegnami(self):
+        # TODO disegna background
+
+        [bottone.disegnami() for bottone in self.toggles]
+
+
+    def eventami(self, events, logica):
+
+        old_state = self.buttons_state
+
+        [bottone.eventami(events, logica) for bottone in self.toggles]
+        
+        new_state = self.buttons_state
+
+        if not self.multiple_choice:
+            ele_vecchio, ele_nuovo = self.check_for_diff(old_state, new_state)
+
+            if not ele_nuovo is None and not ele_vecchio is None:
+                self.toggles[ele_vecchio].state_toggle = False
+
+
+    @property
+    def buttons_state(self):
+        return [bottone.state_toggle for bottone in self.toggles]
+
+
+    def check_for_diff(self, list1, list2):
+
+        elemento_vecchio = None
+        elemento_nuovo = None
+
+        for index, state1, state2 in zip(range(len(list1)), list1, list2):
+            if state1 != state2:
+                elemento_nuovo = index
+
+            if state1 == state2 and state1 == 1:
+                elemento_vecchio = index
+
+        return elemento_vecchio, elemento_nuovo
+
+
 class Entrata(Label_Text):
     def __init__(self, x, y, w, h, text, scala, pappardella, hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False) -> None:
         super().__init__(x, y, text, scala, pappardella)
@@ -285,7 +343,7 @@ class Entrata(Label_Text):
         
         self.contorno = 2
 
-        self.w = pappardella["moltiplicatore_x"] * w / 100 + pappardella["offset"]
+        self.w = pappardella["moltiplicatore_x"] * w / 100
         self.h = pappardella["ori_y"] * h / 100
 
         self.testo = text
@@ -754,7 +812,7 @@ class Scroll:
         self.x: float = pappardella["moltiplicatore_x"] * x / 100 + pappardella["offset"]
         self.y: float = pappardella["ori_y"] * y / 100
 
-        self.w = pappardella["moltiplicatore_x"] * w / 100 + pappardella["offset"]
+        self.w = pappardella["moltiplicatore_x"] * w / 100
         self.h = pappardella["ori_y"] * h / 100
 
         self.font: Font = Font(24 * pappardella["rapporto_y"] * scala)
@@ -786,7 +844,7 @@ class Scroll:
         # creazione toggles
         pappardella["bg_def"] = (100, 100, 100)
         y_bottone = self.font.font_pixel_dim[1] * 100 / pappardella["ori_y"]    
-        y_centratura_toggle = 100 * (((self.font.font_pixel_dim[1]) - (pappardella["moltiplicatore_x"] * 1 / 100 + pappardella["offset"])) / 2) / pappardella["ori_y"] 
+        y_centratura_toggle = 100 * (((self.font.font_pixel_dim[1]) - (pappardella["moltiplicatore_x"] * 1 / 100)) / 2) / pappardella["ori_y"] 
         self.ele_toggle = [Bottone_Toggle(x + w * 0.01, y + y_centratura_toggle + y_bottone * (i + 2), False, "", 1, pappardella) for i in range(self.ele_max)]
 
         self.offset_grafico_testo = self.w * 0.02 + self.ele_toggle[0].w
@@ -999,12 +1057,13 @@ class ColorPicker(Bottone_Push):
         return self.picked_color
 
 
+
 class Palette():
     def __init__(self, x, y, initial_color, pappardella):
 
         width = 20
 
-        self.w = pappardella["moltiplicatore_x"] * width / 100 + pappardella["offset"]
+        self.w = pappardella["moltiplicatore_x"] * width / 100
         self.h = pappardella["ori_y"] * 20 / 100
         
         x_pos = (x - width / 2)
@@ -1061,10 +1120,18 @@ class Palette():
 
         color_functions = [generate_color_function(color) for color in colori]
 
-        larghezza_orizzontale_percentuale = 100 * width * 1.75 / (pappardella["moltiplicatore_x"])
-        altezza_orizzontale_percentuale = 100 * (width + 5) / pappardella["ori_y"]
+        offset_palette_gradiente = 0.5
 
-        self.colori_bottoni = [Bottone_Push(x_pos + (i % 11) * width / 15, y_pos + (i // 11) * (width + 5) / 15, larghezza_orizzontale_percentuale, altezza_orizzontale_percentuale, foo, "", 1, pappardella) for i, foo in zip(range(len(color_functions)), color_functions)]
+        larghezza_palette_gradiente = width * 0.72
+        altezza_palette_gradiente = width * 0.85
+
+        larghezza_chunck_palette = larghezza_palette_gradiente / 11
+        altezza_chunck_palette = altezza_palette_gradiente / 11
+
+        one_pixel_width = 100 / pappardella["moltiplicatore_x"]
+        one_pixel_height = 100 / pappardella["ori_y"]
+
+        self.colori_bottoni = [Bottone_Push(offset_palette_gradiente + x_pos + (i % 11) * larghezza_chunck_palette, offset_palette_gradiente + y_pos + (i // 11) * altezza_chunck_palette, larghezza_chunck_palette + one_pixel_width, altezza_chunck_palette + one_pixel_height, foo, "", 1, pappardella) for i, foo in zip(range(len(color_functions)), color_functions)]
         
         for bottone, colore in zip(self.colori_bottoni, colori):
             bottone.original_color = array(colore)
@@ -1085,7 +1152,7 @@ class Palette():
 
         intensities_functions = [generate_intens_function(intens) for intens in intensities]
         
-        self.intens_bottoni = [Bottone_Push(x_pos + width * 0.775, y_pos + (i % 11) * (width + 5) / 15, larghezza_orizzontale_percentuale, altezza_orizzontale_percentuale, foo, "", 1, pappardella) for i, foo in zip(range(len(color_functions)), intensities_functions)]
+        self.intens_bottoni = [Bottone_Push(offset_palette_gradiente + x_pos + width * 0.77, offset_palette_gradiente + y_pos + (i % 11) * altezza_chunck_palette, larghezza_chunck_palette, altezza_chunck_palette + one_pixel_height, foo, "", 1, pappardella) for i, foo in zip(range(len(color_functions)), intensities_functions)]
 
         for bottone, colore in zip(self.intens_bottoni, intensities):
             bottone.bg = array([colore, colore , colore]) * 255
@@ -1094,18 +1161,18 @@ class Palette():
             bottone.smussatura = 0
 
         ###### generazione preview ###### 
-        self.preview_button = Bottone_Push(x_pos + width * 0.885, y_pos, larghezza_orizzontale_percentuale * 1.5, width * .725, None, "", 1, pappardella, disable=True)
+        self.preview_button = Bottone_Push(offset_palette_gradiente + x_pos + width * 0.875, offset_palette_gradiente + y_pos, larghezza_chunck_palette * 1.3, altezza_chunck_palette * 9, None, "", 1, pappardella, disable=True)
         self.preview_button.contorno = 0
 
         ###### generazione entrate ###### 
 
-        self.RGB_inputs = [Entrata(x_pos + i * width / 4, y_pos + width * .8, width / 6, 2, f"{self.colore_scelto[i]}", 1, pappardella, lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255) for i in range(3)]
+        self.RGB_inputs = [Entrata(offset_palette_gradiente + x_pos + i * width / 4, offset_palette_gradiente + y_pos + width * .8, width / 6, 2, f"{self.colore_scelto[i]}", 1, pappardella, lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255) for i in range(3)]
         
         for index, entrata in enumerate(self.RGB_inputs):
             entrata.bg = array([90, 90, 90])
             entrata.bg[index] = 180
 
-        self.HEX_input = Entrata(x_pos + 3 * width / 4, y_pos + width * .8, width / 5, 2, f"{MateUtils.rgb2hex(self.colore_scelto)}", 1, pappardella, lunghezza_max=7, is_hex=True)
+        self.HEX_input = Entrata(offset_palette_gradiente + x_pos + 3 * width / 4, offset_palette_gradiente + y_pos + width * .8, width / 5, 2, f"{MateUtils.rgb2hex(self.colore_scelto)}", 1, pappardella, lunghezza_max=7, is_hex=True)
         self.HEX_input.bg = array([60, 60, 60])
 
 
