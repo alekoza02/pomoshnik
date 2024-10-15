@@ -45,10 +45,10 @@ class Costruttore:
         
         # self.scene["main"].scrolls["debug_visualizer"] = Scroll(10, 20, 37, 30, "Prova testo", 1.3, self.pappardella)
         # self.scene["main"].label["vis"] = Label_Text(80, 50, "", 1, self.pappardella)
-        # self.scene["main"].bottoni_t["bottone"] = Bottone_Toggle(50, 50, False, "Prova testo", 1.3, self.pappardella)
         # self.scene["main"].entrate["entrata"] = Entrata(80, 30, 10, 2, "ciao", 1, self.pappardella)
         # self.scene["main"].color_pickers["debug"] = ColorPicker(30, 30, [180, 0, 0], "Pick a color!", 1, self.pappardella)
-        self.scene["main"].bottoni_r["debug"] = RadioButton(30, 30, 5, [0, 0, 0, 0, 0], [f"{i}" for i in range(5)], "Hellou", False, 1, self.pappardella)
+        # self.scene["main"].bottoni_t["bottone"] = Bottone_Toggle(50, 50, 10, 3, False, "Prova testo", 1.3, self.pappardella, type_checkbox=False)
+        # self.scene["main"].bottoni_r["debug"] = RadioButton(30, 30, 30, 10, "x", 5, [0, 0, 0, 0, 0], [f"{i}" for i in range(5)], "Hellou", False, 1, self.pappardella, type_checkbox=False, w_button=3, h_button=3)
 
 
 class Scena:

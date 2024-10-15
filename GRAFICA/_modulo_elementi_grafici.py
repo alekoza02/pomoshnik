@@ -137,7 +137,6 @@ class Bottone_Push(Label_Text):
         self.disable: bool = disable
         self.suppress_animation: bool = False
 
-
         self.smussatura = 20
 
     
@@ -200,15 +199,23 @@ class Bottone_Push(Label_Text):
 
 
 class Bottone_Toggle(Label_Text):
-    def __init__(self, x, y, state, text, scala, pappardella, hide=False) -> None:
+    def __init__(self, x, y, w, h, state, text, scala, pappardella, type_checkbox=True, hide=False) -> None:
+        
         super().__init__(x, y, text, scala, pappardella)
 
         self.bg = array(pappardella["bg_def"])
         
         self.contorno = 2
 
-        self.w = pappardella["moltiplicatore_x"] * 1 / 100
-        self.h = self.w
+        if type_checkbox:
+            self.w = pappardella["moltiplicatore_x"] * 1 / 100
+            self.h = self.w
+        else:
+            self.w = pappardella["moltiplicatore_x"] * w / 100
+            self.h = pappardella["ori_y"] * h / 100
+
+
+        self.checkbox = type_checkbox
 
         self.state_toggle = state
 
@@ -218,6 +225,9 @@ class Bottone_Toggle(Label_Text):
         self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
 
         self.hide: bool = hide
+        self.disable: bool = False
+
+        self.smussatura = 5
 
 
     def disegnami(self):
@@ -229,14 +239,21 @@ class Bottone_Toggle(Label_Text):
             colore = self.animazione_press(colore)
             colore = self.animazione_hover(colore)
 
-            pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, 5)
+            if self.checkbox:
 
-            if self.state_toggle:
-                pygame.draw.rect(self.schermo, [255, 255, 255], [self.x + 4, self.y + 4, self.w - 8, self.h - 8], self.contorno, 5)
+                pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
+
+                if self.state_toggle:
+                    pygame.draw.rect(self.schermo, [255, 255, 255], [self.x + 4, self.y + 4, self.w - 8, self.h - 8], self.contorno, self.smussatura)
 
 
-            super().disegnami(self.font.font_pixel_dim[0] * 2.5, (self.h - self.font.font_pixel_dim[1]) / 2, center=False)
-        
+                super().disegnami(self.font.font_pixel_dim[0] * 2.5, (self.h - self.font.font_pixel_dim[1]) / 2, center=False)
+            
+            else:
+
+                pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
+                super().disegnami(self.w / 2, self.h / 2, center=True)
+
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
 
@@ -277,26 +294,60 @@ class Bottone_Toggle(Label_Text):
 
 
 class RadioButton():
-    def __init__(self, x, y, cb_n, cb_s, cb_t, title, multiple_choice, scala, pappardella, hide=False):
+    def __init__(self, x, y, w, h, main_ax, cb_n, cb_s, cb_t, title, multiple_choice, scala, pappardella, type_checkbox=True, hide=False, w_button=1, h_button=1):
         
-        self.x = None 
-        self.y = None
-        self.w = None
-        self.h = None
+        self.schermo = pappardella["screen"]
 
+        self.x: float = pappardella["moltiplicatore_x"] * x / 100 + pappardella["offset"]
+        self.y: float = pappardella["ori_y"] * y / 100
+        self.w = pappardella["moltiplicatore_x"] * w / 100
+        self.h = pappardella["ori_y"] * h / 100
+
+        self.w_button = w_button
+        self.h_button = h_button
+
+        self.main_ax = main_ax
+        
         self.title = title
         self.multiple_choice = multiple_choice
 
         self.hide = hide
 
+        self.type_checkbox = type_checkbox
+
+        ry = pappardella["moltiplicatore_x"] / pappardella["ori_y"] # rapporto y
+
         self.toggles: list[Bottone_Toggle] = []
         for index, state, text  in zip(range(cb_n), cb_s, cb_t):
-            self.toggles.append(Bottone_Toggle(x, y + index * 4, state, text, scala, pappardella, hide))
+            
+            match self.main_ax:
+                case "x": 
+                    if self.type_checkbox:
+                        spacing = (w - (self.w_button * cb_n)) / (cb_n - 1)
+                        self.toggles.append(Bottone_Toggle(x + index * (self.w_button + spacing), y, self.w_button, self.h_button, state, text, scala, pappardella, type_checkbox=type_checkbox, hide=hide))
+
+                    else:
+                        spacing = (w - (self.w_button * cb_n)) / (cb_n - 1)
+                        self.toggles.append(Bottone_Toggle(x + index * (self.w_button + spacing), y, self.w_button, self.h_button, state, text, scala, pappardella, type_checkbox=type_checkbox, hide=hide))
+
+                case "y":
+                    if self.type_checkbox:
+
+                        spacing = (h - (self.h_button * cb_n * ry)) / (cb_n - 1)
+
+                        self.toggles.append(Bottone_Toggle(x, y + index * (self.h_button * ry + spacing), self.w_button, self.h_button, state, text, scala, pappardella, type_checkbox=type_checkbox, hide=hide))
+                    
+                    else:
+                        spacing = (h - (self.h_button * cb_n)) / (cb_n - 1)
+
+                        self.toggles.append(Bottone_Toggle(x, y + index * (self.h_button + spacing), self.w_button, self.h_button, state, text, scala, pappardella, type_checkbox=type_checkbox, hide=hide))
+
+
+                case _: raise TypeError(f"Invalid mode {self.main_ax}, accepted types: 'x', 'y'.")
 
 
     def disegnami(self):
-        # TODO disegna background
-
+        pygame.draw.rect(self.schermo, [100, 100, 100], [self.x, self.y, self.w, self.h], 0, 5)
         [bottone.disegnami() for bottone in self.toggles]
 
 
@@ -845,7 +896,7 @@ class Scroll:
         pappardella["bg_def"] = (100, 100, 100)
         y_bottone = self.font.font_pixel_dim[1] * 100 / pappardella["ori_y"]    
         y_centratura_toggle = 100 * (((self.font.font_pixel_dim[1]) - (pappardella["moltiplicatore_x"] * 1 / 100)) / 2) / pappardella["ori_y"] 
-        self.ele_toggle = [Bottone_Toggle(x + w * 0.01, y + y_centratura_toggle + y_bottone * (i + 2), False, "", 1, pappardella) for i in range(self.ele_max)]
+        self.ele_toggle = [Bottone_Toggle(x + w * 0.01, y + y_centratura_toggle + y_bottone * (i + 2), 1, 1, False, "", 1, pappardella) for i in range(self.ele_max)]
 
         self.offset_grafico_testo = self.w * 0.02 + self.ele_toggle[0].w
 
