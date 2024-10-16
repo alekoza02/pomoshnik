@@ -2,18 +2,18 @@ class MateUtils:
     
     @staticmethod
     def hex2rgb(colore: str, std_return=[255, 0, 255]) -> list[int]:
-        '''Accetta SOLO il formato: #123456'''
+        '''Accetta SOLO il formato: 123456'''
         try:
-            r = int(colore[1:3], base=16)
-            g = int(colore[3:5], base=16)
-            b = int(colore[5:7], base=16)
+            r = int(colore[0:2], base=16)
+            g = int(colore[2:4], base=16)
+            b = int(colore[4:6], base=16)
             return [r,g,b]
         except ValueError:
             return std_return
 
 
     @staticmethod
-    def rgb2hex(colore: list[int], scala=1, std_return="#ff00ff") -> str:
+    def rgb2hex(colore: list[int], scala=1, std_return="ff00ff") -> str:
         '''Accetta SOLO il formato: [255, 255, 255]'''
         try:
             colore = [int(col * 255) if scala == 255 else int(col) for col in colore]
@@ -28,7 +28,7 @@ class MateUtils:
             if colore[2] == 0:
                 b += "0"
 
-            return f"#{r[2:]}{g[2:]}{b[2:]}"
+            return f"{r[2:]}{g[2:]}{b[2:]}"
         except ValueError:
             return std_return
 

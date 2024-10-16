@@ -14,28 +14,85 @@ from GRAFICA._modulo_database import Dizionario; diction = Dizionario()
 
 
 
-class Label_Text:
-    def __init__(self, x, y, text, scala, pappardella, hide=False) -> None:
+class BaseElement:
+
+    pappardella = None
+
+    def __init__(self, x=0, y=0, w=0, h=0, mantain_proportion=False, text="", scala=1, hide=False) -> None:
         
-        self.schermo = pappardella["screen"]
+        self.schermo = BaseElement.pappardella["screen"]
 
-        self.x: float = pappardella["moltiplicatore_x"] * x / 100 + pappardella["offset"]
-        self.y: float = pappardella["ori_y"] * y / 100
-
-        self.font: Font = Font(24 * pappardella["rapporto_y"] * scala)
-
-        self.text_x: float = self.x
-        self.text_y: float = self.y
+        self.font: Font = Font(24 * BaseElement.pappardella["rapporto_y"] * scala)
 
         self.scala = scala
 
         self.testo: str = text
         self.color_text = (200, 200, 200)
+        self.bg = array(BaseElement.pappardella["bg_def"])
 
         self.hide: bool = hide
-    
 
-    def disegnami(self, offset_x: int = 0, offset_y: int = 0, center=False):
+        self.recalc_geometry("percentage", x, y, w, h, mantain_proportion)
+
+
+    @classmethod
+    def _init_scene(cls, pappardella) -> None:
+        cls.pappardella = pappardella 
+
+
+    def disegnami(self, logica):
+        ...
+
+    
+    def eventami(self, events, logica):
+        ...
+
+
+    def recalc_geometry(self, mode="percentage", new_x=-1, new_y=-1, new_w=-1, new_h=-1, mantain_proportion=False):
+
+        self.mantain_prop = mantain_proportion
+
+        match mode:
+            case "percentage": proportion_x, proportion_y = self.pappardella["moltiplicatore_x"] / 100, self.pappardella["ori_y"] / 100
+            case "pixel": proportion_x, proportion_y = 1, 1
+
+        if self.mantain_prop:
+            if new_x > -1: self.x: float = new_x * proportion_x + self.pappardella["offset"]
+            if new_y > -1: self.y: float = new_y * proportion_x
+            if new_w > -1: self.w: float = new_w * proportion_x
+            if new_h > -1: self.h: float = new_h * proportion_x
+
+        else:
+            if new_x > -1: self.x: float = new_x * proportion_x + self.pappardella["offset"]
+            if new_y > -1: self.y: float = new_y * proportion_y
+            if new_w > -1: self.w: float = new_w * proportion_x
+            if new_h > -1: self.h: float = new_h * proportion_y
+    
+        self.recalc_BB()
+
+
+    def recalc_BB(self, offset_x=0, offset_y=0, offset_w=0, offset_h=0):
+        self.bounding_box = pygame.Rect(self.x + offset_x, self.y + offset_y, self.w + offset_w, self.h + offset_h)
+
+
+    def pixel2percentage(value, axis="x"):
+        if axis == "x": return value * 100 / BaseElement.pappardella["moltiplicatore_x"]
+        if axis == "y": return value * 100 / BaseElement.pappardella["ori_y"]
+
+
+    def percentage2pixel(value, axis="x"):
+        if axis == "x": return value * BaseElement.pappardella["moltiplicatore_x"] / 100
+        if axis == "y": return value * BaseElement.pappardella["ori_y"] / 100
+
+
+
+class Label_Text(BaseElement):
+
+    def __init__(self, x=0, y=0, text="", scala=1, hide=False):
+        super().__init__(x, y, 0, 0, False, text, scala, hide)
+
+
+    def disegnami(self, logica, offset_x: int = 0, offset_y: int = 0, center=False):
 
         if not self.hide:
 
@@ -85,14 +142,14 @@ class Label_Text:
                         self.font.scala_font(0.5)
 
                     if substringa_analizzata.highlight:
-                        self.schermo.blit(self.font.font_pyg_r.render("" + "█" * (len(substringa_analizzata.testo)) + "", True, [100, 100, 100]), (self.text_x + original_spacing_x * ( offset_highlight + offset_usato) + offset_x + centratura_x, self.text_y + offset_frase + offset_pedice_apice + offset_y + centratura_y))
+                        self.schermo.blit(self.font.font_pyg_r.render("" + "█" * (len(substringa_analizzata.testo)) + "", True, [100, 100, 100]), (self.x + original_spacing_x * ( offset_highlight + offset_usato) + offset_x + centratura_x, self.y + offset_frase + offset_pedice_apice + offset_y + centratura_y))
 
                     if substringa_analizzata.bold:
-                        self.schermo.blit(self.font.font_pyg_b.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.text_x + original_spacing_x * offset_usato + offset_x + centratura_x, self.text_y + offset_frase + offset_pedice_apice + offset_y + centratura_y))
+                        self.schermo.blit(self.font.font_pyg_b.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.x + original_spacing_x * offset_usato + offset_x + centratura_x, self.y + offset_frase + offset_pedice_apice + offset_y + centratura_y))
                     elif substringa_analizzata.italic:
-                        self.schermo.blit(self.font.font_pyg_i.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.text_x + original_spacing_x * offset_usato + offset_x + centratura_x, self.text_y + offset_frase + offset_pedice_apice + offset_y + centratura_y))
+                        self.schermo.blit(self.font.font_pyg_i.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.x + original_spacing_x * offset_usato + offset_x + centratura_x, self.y + offset_frase + offset_pedice_apice + offset_y + centratura_y))
                     else:
-                        self.schermo.blit(self.font.font_pyg_r.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.text_x + original_spacing_x * offset_usato + offset_x + centratura_x, self.text_y + offset_frase + offset_pedice_apice + offset_y + centratura_y))
+                        self.schermo.blit(self.font.font_pyg_r.render(substringa_analizzata.testo, True, substringa_analizzata.colore), (self.x + original_spacing_x * offset_usato + offset_x + centratura_x, self.y + offset_frase + offset_pedice_apice + offset_y + centratura_y))
                     
                     if substringa_analizzata.pedice or substringa_analizzata.apice:
                         self.font.scala_font(2)
@@ -107,35 +164,26 @@ class Label_Text:
                     offset_orizzontale = max(offset_orizzontale_apice, offset_orizzontale_pedice)
 
 
+class Bottone_Push(BaseElement):
 
-class Bottone_Push(Label_Text):
-    def __init__(self, x, y, w, h, function, text, scala, pappardella, hide=False, disable=False) -> None:
-        super().__init__(x, y, text, scala, pappardella)
+    def __init__(self, x=0, y=0, w=0, h=0, function=None, mantain_proportion=False, text="", scala=1, hide=False, disable=False):
+        super().__init__(x, y, w, h, mantain_proportion, text, scala, hide)
 
-        self.bg = array(pappardella["bg_def"])
-        
         self.contorno = 2
-
-        self.w = pappardella["moltiplicatore_x"] * w / 100
-        self.h = pappardella["ori_y"] * h / 100
 
         self.callback = function
 
         if self.callback is None:
-            
             def Fuffa(): ...
-
             self.callback = Fuffa
-
 
         self.animazione = Animazione(100, "once")
         self.hover = False
 
-        self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
-
-        self.hide: bool = hide
         self.disable: bool = disable
         self.suppress_animation: bool = False
+
+        self.lable_title = Label_Text(x=x, y=y, text=text, scala=scala)
 
         self.smussatura = 20
 
@@ -154,7 +202,7 @@ class Bottone_Push(Label_Text):
 
             pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
 
-            super().disegnami(self.w / 2, self.h / 2, center=True)
+            self.lable_title.disegnami(logica, self.w / 2, self.h / 2, center=True)
 
     
     def eventami(self, events: list['Event'], logica: 'Logica'):
@@ -197,23 +245,21 @@ class Bottone_Push(Label_Text):
         return colore
 
 
+    def change_text(self, text):
+        self.lable_title.testo = text
 
-class Bottone_Toggle(Label_Text):
-    def __init__(self, x, y, w, h, state, text, scala, pappardella, type_checkbox=True, hide=False) -> None:
+
+class Bottone_Toggle(BaseElement):
+    def __init__(self, x=0, y=0, w=0, h=0, state=False, type_checkbox=True, mantain_proportion=False, text="", scala=1, hide=False):
+        super().__init__(x, y, w, h, mantain_proportion, text, scala, hide)
         
-        super().__init__(x, y, text, scala, pappardella)
-
-        self.bg = array(pappardella["bg_def"])
         
         self.contorno = 2
 
-        if type_checkbox:
-            self.w = pappardella["moltiplicatore_x"] * 1 / 100
-            self.h = self.w
-        else:
-            self.w = pappardella["moltiplicatore_x"] * w / 100
-            self.h = pappardella["ori_y"] * h / 100
+        if type_checkbox:            
+            self.recalc_geometry(new_w=1, new_h=1, mantain_proportion=True)
 
+        self.label_title = Label_Text(x=x, y=y, text=text)
 
         self.checkbox = type_checkbox
 
@@ -222,15 +268,12 @@ class Bottone_Toggle(Label_Text):
         self.animazione = Animazione(-1, "once")
         self.hover = False
 
-        self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
-
-        self.hide: bool = hide
         self.disable: bool = False
 
         self.smussatura = 5
 
 
-    def disegnami(self):
+    def disegnami(self, logica):
 
         if not self.hide:
 
@@ -247,12 +290,12 @@ class Bottone_Toggle(Label_Text):
                     pygame.draw.rect(self.schermo, [255, 255, 255], [self.x + 4, self.y + 4, self.w - 8, self.h - 8], self.contorno, self.smussatura)
 
 
-                super().disegnami(self.font.font_pixel_dim[0] * 2.5, (self.h - self.font.font_pixel_dim[1]) / 2, center=False)
+                self.label_title.disegnami(logica, self.font.font_pixel_dim[0] * 2.5, (self.h - self.font.font_pixel_dim[1]) / 2, center=False)
             
             else:
 
                 pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
-                super().disegnami(self.w / 2, self.h / 2, center=True)
+                self.label_title.disegnami(logica, self.w / 2, self.h / 2, center=True)
 
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
@@ -293,20 +336,14 @@ class Bottone_Toggle(Label_Text):
 
 
 
-class RadioButton():
-    def __init__(self, x, y, w, h, main_ax, cb_n, cb_s, cb_t, title, multiple_choice, scala, pappardella, type_checkbox=True, hide=False, w_button=1, h_button=1):
-        
-        self.schermo = pappardella["screen"]
-
-        self.x: float = pappardella["moltiplicatore_x"] * x / 100 + pappardella["offset"]
-        self.y: float = pappardella["ori_y"] * y / 100
-        self.w = pappardella["moltiplicatore_x"] * w / 100
-        self.h = pappardella["ori_y"] * h / 100
+class RadioButton(BaseElement):
+    def __init__(self, x=0, y=0, w=0, h=0, mantain_proportion=False, axis="x", cb_n=1, cb_s=False, cb_t="Default item", title="", multiple_choice=False, scala=1, hide=False, type_checkbox=True, w_button=1, h_button=1):
+        super().__init__(x, y, w, h, mantain_proportion, title, scala, hide)
 
         self.w_button = w_button
         self.h_button = h_button
 
-        self.main_ax = main_ax
+        self.main_ax = axis
         
         self.title = title
         self.multiple_choice = multiple_choice
@@ -315,7 +352,7 @@ class RadioButton():
 
         self.type_checkbox = type_checkbox
 
-        ry = pappardella["moltiplicatore_x"] / pappardella["ori_y"] # rapporto y
+        ry = BaseElement.pappardella["moltiplicatore_x"] / BaseElement.pappardella["ori_y"] # rapporto y
 
         self.toggles: list[Bottone_Toggle] = []
         for index, state, text  in zip(range(cb_n), cb_s, cb_t):
@@ -324,31 +361,35 @@ class RadioButton():
                 case "x": 
                     if self.type_checkbox:
                         spacing = (w - (self.w_button * cb_n)) / (cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(x + index * (self.w_button + spacing), y, self.w_button, self.h_button, state, text, scala, pappardella, type_checkbox=type_checkbox, hide=hide))
+                        self.toggles.append(Bottone_Toggle(x + index * (self.w_button + spacing), y, self.w_button, self.h_button, state, type_checkbox, text=text, scala=scala, hide=hide))
 
                     else:
                         spacing = (w - (self.w_button * cb_n)) / (cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(x + index * (self.w_button + spacing), y, self.w_button, self.h_button, state, text, scala, pappardella, type_checkbox=type_checkbox, hide=hide))
+                        self.toggles.append(Bottone_Toggle(x + index * (self.w_button + spacing), y, self.w_button, self.h_button, state, type_checkbox, text=text, scala=scala, hide=hide))
 
                 case "y":
                     if self.type_checkbox:
 
                         spacing = (h - (self.h_button * cb_n * ry)) / (cb_n - 1)
 
-                        self.toggles.append(Bottone_Toggle(x, y + index * (self.h_button * ry + spacing), self.w_button, self.h_button, state, text, scala, pappardella, type_checkbox=type_checkbox, hide=hide))
+                        self.toggles.append(Bottone_Toggle(x, y + index * (self.h_button * ry + spacing), self.w_button, self.h_button, state, type_checkbox, text=text, scala=scala, hide=hide))
                     
                     else:
                         spacing = (h - (self.h_button * cb_n)) / (cb_n - 1)
 
-                        self.toggles.append(Bottone_Toggle(x, y + index * (self.h_button + spacing), self.w_button, self.h_button, state, text, scala, pappardella, type_checkbox=type_checkbox, hide=hide))
-
+                        self.toggles.append(Bottone_Toggle(x, y + index * (self.h_button + spacing), self.w_button, self.h_button, state, type_checkbox, text=text, scala=scala, hide=hide))
 
                 case _: raise TypeError(f"Invalid mode {self.main_ax}, accepted types: 'x', 'y'.")
 
+            
+        for ele in self.toggles:
+            ele.bg += array([10, 10, 10])
 
-    def disegnami(self):
-        pygame.draw.rect(self.schermo, [100, 100, 100], [self.x, self.y, self.w, self.h], 0, 5)
-        [bottone.disegnami() for bottone in self.toggles]
+
+
+    def disegnami(self, logica):
+        pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
+        [bottone.disegnami(logica) for bottone in self.toggles]
 
 
     def eventami(self, events, logica):
@@ -386,18 +427,14 @@ class RadioButton():
         return elemento_vecchio, elemento_nuovo
 
 
-class Entrata(Label_Text):
-    def __init__(self, x, y, w, h, text, scala, pappardella, hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False) -> None:
-        super().__init__(x, y, text, scala, pappardella)
 
-        self.bg = array(pappardella["bg_def"])
+class Entrata(BaseElement):
+    def __init__(self, x=0, y=0, w=0, h=0, mantain_proportion=False, text="", scala=1, hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False):
+        super().__init__(x, y, w, h, mantain_proportion, text, scala, hide)
+        
         
         self.contorno = 2
 
-        self.w = pappardella["moltiplicatore_x"] * w / 100
-        self.h = pappardella["ori_y"] * h / 100
-
-        self.testo = text
         self.offset_grafico_testo = 5
         self.puntatore_pos = 0
         self.highlight_region: list[int] = [0, 0]
@@ -414,10 +451,7 @@ class Entrata(Label_Text):
         self.animazione_puntatore = Animazione(1000, "loop")
         self.animazione_puntatore.attiva = True
 
-        self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
 
-        self.hide: bool = hide
-        
 
     def disegnami(self, logica: 'Logica'):
 
@@ -434,7 +468,7 @@ class Entrata(Label_Text):
                 pygame.draw.rect(self.schermo, [90, 90, 90], [self.x + self.font.font_pixel_dim[0] * self.highlight_region[0] + self.offset_grafico_testo, self.y, self.font.font_pixel_dim[0] * (self.highlight_region[1] - self.highlight_region[0]), self.h], 0, 5)
 
             # testo
-            self.schermo.blit(self.font.font_pyg_r.render(self.testo, True, self.color_text), (self.text_x + self.offset_grafico_testo, self.text_y + self.h / 2 - self.font.font_pixel_dim[1] / 2))
+            self.schermo.blit(self.font.font_pyg_r.render(self.testo, True, self.color_text), (self.x + self.offset_grafico_testo, self.y + self.h / 2 - self.font.font_pixel_dim[1] / 2))
 
             # puntatore flickerio
             self.animazione_puntatore.update(logica.dt)
@@ -855,30 +889,13 @@ class Entrata(Label_Text):
 
 
 
-class Scroll:
-    def __init__(self, x, y, w, h, text, scala, pappardella) -> None:
+class Scroll(BaseElement):
+    def __init__(self, x=0, y=0, w=0, h=0, mantain_proportion=False, text="", scala=1, hide=False):
+        super().__init__(x, y, w, h, mantain_proportion, text, scala, hide)
         
-        self.schermo = pappardella["screen"]
-
-        self.x: float = pappardella["moltiplicatore_x"] * x / 100 + pappardella["offset"]
-        self.y: float = pappardella["ori_y"] * y / 100
-
-        self.w = pappardella["moltiplicatore_x"] * w / 100
-        self.h = pappardella["ori_y"] * h / 100
-
-        self.font: Font = Font(24 * pappardella["rapporto_y"] * scala)
-
-        self.text_x: float = self.x
-        self.text_y: float = self.y
-
-        self.scala = scala
-
         self.titolo = "Scroll console..."
-        self.testo: str = text
-        self.color_text = (200, 200, 200)
         self.color_text_selected = (40, 100, 40)
 
-        self.bg = array(pappardella["bg_def"])
         self.bg_selected = (60, 70, 70)
         
         self.contorno = 2
@@ -893,10 +910,12 @@ class Scroll:
         self.ele_max = int((self.h - self.font.font_pixel_dim[1] * 2) // self.font.font_pixel_dim[1])
 
         # creazione toggles
-        pappardella["bg_def"] = (100, 100, 100)
-        y_bottone = self.font.font_pixel_dim[1] * 100 / pappardella["ori_y"]    
-        y_centratura_toggle = 100 * (((self.font.font_pixel_dim[1]) - (pappardella["moltiplicatore_x"] * 1 / 100)) / 2) / pappardella["ori_y"] 
-        self.ele_toggle = [Bottone_Toggle(x + w * 0.01, y + y_centratura_toggle + y_bottone * (i + 2), 1, 1, False, "", 1, pappardella) for i in range(self.ele_max)]
+        y_bottone = self.font.font_pixel_dim[1] * 100 / BaseElement.pappardella["ori_y"]    
+        y_centratura_toggle = 100 * (((self.font.font_pixel_dim[1]) - (BaseElement.pappardella["moltiplicatore_x"] * 1 / 100)) / 2) / BaseElement.pappardella["ori_y"] 
+        self.ele_toggle = [Bottone_Toggle(x=x + w * 0.01, y=y + y_centratura_toggle + y_bottone * (i + 2), state=False, text="") for i in range(self.ele_max)]
+
+        for ele in self.ele_toggle:
+            ele.bg += array([10, 10, 10])
 
         self.offset_grafico_testo = self.w * 0.02 + self.ele_toggle[0].w
 
@@ -921,7 +940,7 @@ class Scroll:
         
         pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
         
-        self.schermo.blit(self.font.font_pyg_r.render(f"{self.titolo}", True, self.color_text), (self.text_x + self.offset_grafico_testo, self.text_y + self.font.font_pixel_dim[1] / 1.5 - self.font.font_pixel_dim[1] / 2))
+        self.schermo.blit(self.font.font_pyg_r.render(f"{self.titolo}", True, self.color_text), (self.x + self.offset_grafico_testo, self.y + self.font.font_pixel_dim[1] / 1.5 - self.font.font_pixel_dim[1] / 2))
         
         self.font.scala_font(1 / 1.5)
 
@@ -956,20 +975,23 @@ class Scroll:
                 colore = self.color_text
                 
 
-            self.schermo.blit(self.font.font_pyg_r.render(testo, True, colore), (self.text_x + self.offset_grafico_testo + 5, self.text_y + (alt_font * (2 + ele_iterator))))
+            self.schermo.blit(self.font.font_pyg_r.render(testo, True, colore), (self.x + self.offset_grafico_testo + 5, self.y + (alt_font * (2 + ele_iterator))))
         
 
         # creazione toggles
-        [bottone.disegnami() for bottone in self.ele_toggle]
+        [bottone.disegnami(logica) for bottone in self.ele_toggle]
 
         # disegno elementi grafici di drag
         if logica.dragging and not self.no_dragging_animation:
-            pygame.draw.rect(self.schermo, self.bg_selected, [logica.mouse_pos[0], logica.mouse_pos[1], self.w - self.offset_grafico_testo, self.font.font_pixel_dim[1]], 0, 5)
-            self.schermo.blit(self.font.font_pyg_r.render(f"{self.elementi[self.ele_selected_index]}", True, self.color_text_selected), (logica.mouse_pos[0] + 5, logica.mouse_pos[1]))
 
-            # mostro dove finisce l'elemento
-            elemento_finale = round((logica.mouse_pos[1] - self.y - self.font.font_pixel_dim[1] // 2) // self.font.font_pixel_dim[1]) - 2 + 1 # il +1 è per risolvere un problema grafico in cui il calcolo non tiene conto che l'operazione non è ancora stata eseguita
-            pygame.draw.rect(self.schermo, [255, 200, 0], [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * elemento_finale, self.w - self.offset_grafico_testo, 1], 0, 5)
+            if self.bounding_box.collidepoint(logica.mouse_pos):
+
+                pygame.draw.rect(self.schermo, self.bg_selected, [logica.mouse_pos[0], logica.mouse_pos[1], self.w - self.offset_grafico_testo, self.font.font_pixel_dim[1]], 0, 5)
+                self.schermo.blit(self.font.font_pyg_r.render(f"{self.elementi[self.ele_selected_index]}", True, self.color_text_selected), (logica.mouse_pos[0] + 5, logica.mouse_pos[1]))
+
+                # mostro dove finisce l'elemento
+                elemento_finale = round((logica.mouse_pos[1] - self.y - self.font.font_pixel_dim[1] // 2) // self.font.font_pixel_dim[1]) - 2 + 1 # il +1 è per risolvere un problema grafico in cui il calcolo non tiene conto che l'operazione non è ancora stata eseguita
+                pygame.draw.rect(self.schermo, [255, 200, 0], [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * elemento_finale, self.w - self.offset_grafico_testo, 1], 0, 5)
 
 
 
@@ -1071,32 +1093,31 @@ class Scroll:
 
 
 
-class ColorPicker(Bottone_Push):
-    def __init__(self, x, y, initial_color, text, scala, pappardella, hide=False) -> None:
+class ColorPicker(BaseElement):
+    def __init__(self, x=0, y=0, w=0, h=0, initial_color=[200, 200, 200], mantain_proportion=False, text="", scala=1, hide=False):
+        super().__init__(x, y, w, h, mantain_proportion, text, scala, hide)
         
-        width = 5
-
-        super().__init__(x, y, width, 3, self.apri_picker, "", scala, pappardella, hide)
+        self.opener = Bottone_Push(x, y, w, h, self.apri_picker, hide=hide)
+        self.opener.suppress_animation = True
+        self.opener.contorno = 0
 
         self.title = text
-        self.suppress_animation = True
-        self.contorno = 0
         
-        self.palette = Palette(x + width / 2, y, initial_color, pappardella)
+        self.palette = Palette(x + w / 2, y, initial_color)
         self.picked_color = initial_color
 
     
     def disegnami(self, logica):
-        super().disegnami(logica)
+        self.opener.disegnami(logica)
         self.palette.disegnami(logica)
     
 
     def eventami(self, events, logica):
-        super().eventami(events, logica)
+        self.opener.eventami(events, logica)
         self.palette.eventami(logica, events)
 
         if not self.palette.toggle:
-            self.bg = array(self.palette.colore_scelto) * self.palette.intensity
+            self.opener.bg = array(self.palette.colore_scelto) * self.palette.intensity
             self.picked_color = array(self.palette.colore_scelto) * self.palette.intensity
 
     
@@ -1109,38 +1130,28 @@ class ColorPicker(Bottone_Push):
 
 
 
-class Palette():
-    def __init__(self, x, y, initial_color, pappardella):
+class Palette(BaseElement):
+    def __init__(self, x=0, y=0, initial_color=[200, 200, 200]):
+        super().__init__(x, y, 0, 0, False, "", 1, False)
 
         width = 20
 
-        self.w = pappardella["moltiplicatore_x"] * width / 100
-        self.h = pappardella["ori_y"] * 20 / 100
-        
         x_pos = (x - width / 2)
         if x_pos <= 0:
             x_pos = 0
         if x_pos >= (100 - width):
             x_pos = (100 - width)
-        self.x = pappardella["moltiplicatore_x"] * x_pos / 100 + pappardella["offset"]
         
         y_pos = (y - 20)
         if y_pos <= 0:
-            y_pos = (y + 20 + 3)
+            y_pos = (y + 3)
 
-        self.y = pappardella["ori_y"] * y_pos / 100
+        self.recalc_geometry("percentage", x_pos, y_pos, width, width)
+        self.recalc_BB(-100, -100, 200, 200)
 
-        
-        self.bounding_box = pygame.Rect(self.x - 100, self.y - 100, self.w + 200, self.h + 200)
-
-        
-        self.schermo = pappardella["screen"]
-
-        self.bg = pappardella["bg_def"]
         self.colore_scelto = initial_color
         self.intensity = 1
         self.update_color_value = False
-
 
         self.toggle = False
 
@@ -1179,10 +1190,14 @@ class Palette():
         larghezza_chunck_palette = larghezza_palette_gradiente / 11
         altezza_chunck_palette = altezza_palette_gradiente / 11
 
-        one_pixel_width = 100 / pappardella["moltiplicatore_x"]
-        one_pixel_height = 100 / pappardella["ori_y"]
+        one_pixel_width = BaseElement.pixel2percentage(1, "x")
+        one_pixel_height = BaseElement.pixel2percentage(1, "y")
 
-        self.colori_bottoni = [Bottone_Push(offset_palette_gradiente + x_pos + (i % 11) * larghezza_chunck_palette, offset_palette_gradiente + y_pos + (i // 11) * altezza_chunck_palette, larghezza_chunck_palette + one_pixel_width, altezza_chunck_palette + one_pixel_height, foo, "", 1, pappardella) for i, foo in zip(range(len(color_functions)), color_functions)]
+        self.colori_bottoni = [Bottone_Push(x=offset_palette_gradiente + x_pos + (i % 11) * larghezza_chunck_palette, 
+                                            y=offset_palette_gradiente + y_pos + (i // 11) * altezza_chunck_palette, 
+                                            w=larghezza_chunck_palette + one_pixel_width, 
+                                            h=altezza_chunck_palette + one_pixel_height, 
+                                            function=foo) for i, foo in zip(range(len(color_functions)), color_functions)]
         
         for bottone, colore in zip(self.colori_bottoni, colori):
             bottone.original_color = array(colore)
@@ -1203,7 +1218,11 @@ class Palette():
 
         intensities_functions = [generate_intens_function(intens) for intens in intensities]
         
-        self.intens_bottoni = [Bottone_Push(offset_palette_gradiente + x_pos + width * 0.77, offset_palette_gradiente + y_pos + (i % 11) * altezza_chunck_palette, larghezza_chunck_palette, altezza_chunck_palette + one_pixel_height, foo, "", 1, pappardella) for i, foo in zip(range(len(color_functions)), intensities_functions)]
+        self.intens_bottoni = [Bottone_Push(x=offset_palette_gradiente + x_pos + width * 0.77, 
+                                            y=offset_palette_gradiente + y_pos + (i % 11) * altezza_chunck_palette, 
+                                            w=larghezza_chunck_palette, 
+                                            h=altezza_chunck_palette + one_pixel_height, 
+                                            function=foo) for i, foo in zip(range(len(color_functions)), intensities_functions)]
 
         for bottone, colore in zip(self.intens_bottoni, intensities):
             bottone.bg = array([colore, colore , colore]) * 255
@@ -1212,18 +1231,32 @@ class Palette():
             bottone.smussatura = 0
 
         ###### generazione preview ###### 
-        self.preview_button = Bottone_Push(offset_palette_gradiente + x_pos + width * 0.875, offset_palette_gradiente + y_pos, larghezza_chunck_palette * 1.3, altezza_chunck_palette * 9, None, "", 1, pappardella, disable=True)
+        self.preview_button = Bottone_Push(x=offset_palette_gradiente + x_pos + width * 0.875, 
+                                           y=offset_palette_gradiente + y_pos, 
+                                           w=larghezza_chunck_palette * 1.3, 
+                                           h=altezza_chunck_palette * 9,
+                                           disable=True)
         self.preview_button.contorno = 0
 
         ###### generazione entrate ###### 
 
-        self.RGB_inputs = [Entrata(offset_palette_gradiente + x_pos + i * width / 4, offset_palette_gradiente + y_pos + width * .8, width / 6, 2, f"{self.colore_scelto[i]}", 1, pappardella, lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255) for i in range(3)]
+        self.RGB_inputs = [Entrata(x=offset_palette_gradiente + x_pos + i * width / 4, 
+                                   y=offset_palette_gradiente + y_pos + width * .8, 
+                                   w=width / 6, 
+                                   h=2, 
+                                   text=f"{self.colore_scelto[i]}", 
+                                   lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255) for i in range(3)]
         
         for index, entrata in enumerate(self.RGB_inputs):
             entrata.bg = array([90, 90, 90])
             entrata.bg[index] = 180
 
-        self.HEX_input = Entrata(offset_palette_gradiente + x_pos + 3 * width / 4, offset_palette_gradiente + y_pos + width * .8, width / 5, 2, f"{MateUtils.rgb2hex(self.colore_scelto)}", 1, pappardella, lunghezza_max=7, is_hex=True)
+        self.HEX_input = Entrata(x=offset_palette_gradiente + x_pos + 3 * width / 4, 
+                                 y=offset_palette_gradiente + y_pos + width * .8, 
+                                 w=width / 5, 
+                                 h=2, 
+                                 text=f"{MateUtils.rgb2hex(self.colore_scelto)}", 
+                                 lunghezza_max=6, is_hex=True)
         self.HEX_input.bg = array([60, 60, 60])
 
 
@@ -1268,18 +1301,17 @@ class Palette():
             for index, entrata in enumerate(self.RGB_inputs):
                 if entrata.selezionato:
                     self.colore_scelto[index] = MateUtils.inp2int(entrata.testo)
+                    self.intensity = 1
                     self.HEX_input.testo = MateUtils.rgb2hex([self.RGB_inputs[0].testo, self.RGB_inputs[1].testo, self.RGB_inputs[2].testo])
 
 
             self.HEX_input.eventami(events, logica)
             if self.HEX_input.selezionato:
                 self.colore_scelto = array(MateUtils.hex2rgb(self.HEX_input.testo))
+                self.intensity = 1
                 
                 for colore, entrata in zip(self.colore_scelto, self.RGB_inputs):
                     entrata.change_text(f"{colore}")
-
-            self.preview_button.eventami(events, logica)
-
 
 
 class SubStringa:
@@ -1458,6 +1490,7 @@ class Animazione:
             return False
         
 
+
 class Font:
     def __init__(self, dim) -> None:
         
@@ -1488,3 +1521,111 @@ class Font:
         self.font_pyg_i = pygame.font.Font(path_i, round(self.dim_font))
         self.font_pyg_b = pygame.font.Font(path_b, round(self.dim_font))
         self.font_pixel_dim = self.font_pyg_r.size("a")
+
+
+
+class DropMenu(BaseElement):
+    def __init__(self, x=0, y=0, w=0, h=0):
+        super().__init__(x, y, w, h, mantain_proportion=False, text="", scala=1, hide=False)
+
+        self.w_working_area = BaseElement.percentage2pixel(w - 2, "x")
+        self.h_working_area = BaseElement.percentage2pixel(h - 6.5, "y")
+
+        self.x_anchor_working_area = BaseElement.percentage2pixel(x + 1, "x") + BaseElement.pappardella["offset"]
+        self.y_anchor_working_area = BaseElement.percentage2pixel(y + 5.5, "y")
+        
+        self.h_chiuso = BaseElement.percentage2pixel(4.5, "y")
+
+        self.contorno = 3
+        self.smussatura = 5
+
+        self.aperto = False
+
+        def apertura_chiusura():
+            self.aperto = False if self.aperto else True
+            if self.aperto:
+                self.bottone_apertura.change_text("v")
+            else:
+                self.bottone_apertura.change_text(">")
+                
+                
+        font_dim = w / 3
+        font_dim = min(font_dim, 3)
+
+        w_apertura = w / 4
+        w_apertura = min(w_apertura, 4.5)
+
+        self.bottone_apertura = Bottone_Push(x, y, w_apertura, font_dim * 1.5, apertura_chiusura, text=">", scala=font_dim)
+        self.titolo = Label_Text(x + w/3, y + font_dim * .75, "Titolo", font_dim / 2)
+
+        self.elements = []
+
+    
+    def disegnami(self, logica: 'Logica'):
+
+        if self.aperto:
+            pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
+
+            # DEBUG VISUALIZE
+            # pygame.draw.rect(self.schermo, [255, 0, 0], [self.x + self.convert_perc2pixel(1, "x"), self.y + self.convert_perc2pixel(5.5, "y"), self.w - self.convert_perc2pixel(2, "x"), self.h - self.convert_perc2pixel(6.5, "y")], self.contorno, self.smussatura)
+            # pygame.draw.circle(self.schermo, [0, 255, 0], [self.x_anchor_working_area, self.y_anchor_working_area], 20)
+            # pygame.draw.circle(self.schermo, [0, 0, 255], [self.x_anchor_working_area + self.w_working_area, self.y_anchor_working_area + self.h_working_area], 20)
+
+        else:
+            pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h_chiuso], self.contorno, self.smussatura)
+
+        self.bottone_apertura.disegnami(logica)
+        self.titolo.disegnami(logica, offset_x=len(self.titolo.testo) * self.titolo.font.font_pixel_dim[0] / 2, center=True)
+        
+        if self.aperto:
+            [element.disegnami(logica) for element in self.elements]
+
+
+    
+    def eventami(self, events, logica: 'Logica'):
+        self.bottone_apertura.eventami(events, logica)
+
+        if self.aperto:
+            [element.eventami(events, logica) for element in self.elements]
+        
+
+    def convert_perc2pixel(self, value, axis):
+        
+        match axis:
+            case "x": return self.pappardella["moltiplicatore_x"] * value / 100
+            case "y": return self.pappardella["ori_y"] * value / 100
+
+
+    def add_element(self, element: Bottone_Push, mantain_prop=False):
+
+        self.basis_change(element, mantain_prop=mantain_prop)
+        self.elements.append(element)
+
+    
+    def basis_change(self, element: Bottone_Push, mantain_prop=False):
+
+        if mantain_prop:
+            larghezza = element.w / self.pappardella["moltiplicatore_x"]
+            altezza = element.h / self.pappardella["moltiplicatore_x"]
+            pos_x = (element.x - self.pappardella["offset"]) / self.pappardella["moltiplicatore_x"]
+            pos_y = element.y / self.pappardella["moltiplicatore_x"]
+
+            element.w = self.w_working_area * larghezza
+            element.h = self.h_working_area * altezza
+            element.x = pos_x * self.w_working_area + self.x_anchor_working_area
+            element.y = pos_y * self.h_working_area + self.y_anchor_working_area
+            
+            element.bounding_box = pygame.Rect(element.x, element.y, element.w, element.h)
+
+        else:
+            larghezza = element.w / self.pappardella["moltiplicatore_x"]
+            altezza = element.h / self.pappardella["ori_y"]
+            pos_x = (element.x - self.pappardella["offset"]) / self.pappardella["moltiplicatore_x"]
+            pos_y = element.y / self.pappardella["ori_y"]
+
+            element.w = self.w_working_area * larghezza
+            element.h = self.h_working_area * altezza
+            element.x = pos_x * self.w_working_area + self.x_anchor_working_area
+            element.y = pos_y * self.h_working_area + self.y_anchor_working_area
+            
+            element.bounding_box = pygame.Rect(element.x, element.y, element.w, element.h)
