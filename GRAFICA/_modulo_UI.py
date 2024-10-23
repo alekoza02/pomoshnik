@@ -64,30 +64,17 @@ class UI:
         Inizializzazione applicazione
         '''
 
-        # DPI aware
         pygame.init()
-        ctypes.windll.user32.SetProcessDPIAware()
-        screen_info = pygame.display.Info()
-        scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        self.init_screen_data()
 
         # custom mouse
         # pygame.mouse.set_visible(False)
         # path = os.path.join('TEXTURES', 'mouse.png') 
         # self.custom_mouse_icon = pygame.image.load(path)
 
-        # impostazione dimensione schermi e rapporti
-        self.w: int = int(screen_info.current_w * scale_factor)
-        self.h: int = int(screen_info.current_h * scale_factor)
-
-        self.aspect_ratio_nativo: float = 2880 / 1800
-        self.moltiplicatore_x: float = self.h * self.aspect_ratio_nativo
-        self.rapporto_ori_x: float = self.w / 2880
-        self.rapporto_ori_y: float = self.h / 1800
-        self.shift_ori: float = (self.w - self.moltiplicatore_x) / 2
-
-        # generazione finestra
-        self.MAIN = pygame.display.set_mode((self.w, self.h))
         self.BG: tuple[int] = (30, 30, 30)
+
+        self.fullscreen = False
         
         self.clock = pygame.time.Clock()
         self.max_fps: int = 24
@@ -96,19 +83,59 @@ class UI:
 
         self.logica = Logica()
         self.event_manager = EventManager()
-        self.costruttore = Costruttore(self.MAIN, self.shift_ori, self.moltiplicatore_x, self.rapporto_ori_x, self.rapporto_ori_y)
+        self.costruttore = Costruttore(self.MAIN, self.w_screen / 2, self.h_screen / 2)
 
         self.cpu_sample: list[int] = [0 for i in range(100)]
 
+    
+    def go_fullscreen(self):
+        self.MAIN = pygame.display.set_mode((self.w_screen, self.h_screen), pygame.FULLSCREEN)
+        self.fullscreen = True
+
+
+    def exit_fullscreen(self):
+        self.MAIN = pygame.display.set_mode((self.w_screen / 2, self.h_screen / 2), pygame.RESIZABLE)
+        self.fullscreen = False
+
+    
+    def init_screen_data(self):
         
+        # DPI aware
+        ctypes.windll.user32.SetProcessDPIAware()
+        screen_info = pygame.display.Info()
+        scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+
+        # impostazione dimensione schermi e rapporti
+        self.w_screen: int = int(screen_info.current_w * scale_factor)
+        self.h_screen: int = int(screen_info.current_h * scale_factor)
+
+        self.w, self.h = self.w_screen / 2, self.h_screen / 2
+
+        # generazione finestra
+        self.MAIN = pygame.display.set_mode((self.w_screen / 2, self.h_screen / 2), pygame.RESIZABLE)
+
+
+    def update_screen_data(self):
+        old_w, old_h = self.w, self.h
+        self.w, self.h = self.MAIN.get_size()
+        return (old_w == self.w and old_h == self.h)
+
+
     def colora_bg(self) -> None:
         '''
         Colora la finestra con il colore dello sfondo (self.BG)
-        Inoltre disegna uno sfondo di colore (25, 25, 25) per gli aspect ratio diversi da 2880 x 1800
         '''
-        self.MAIN.fill((25, 25, 25))
-        pygame.draw.rect(self.MAIN, self.BG, [self.shift_ori, 0, self.w - 2 * self.shift_ori, self.h])
+        self.MAIN.fill((30, 30, 30))
 
+        
+        # for i in range(10):
+        #     pygame.draw.line(self.costruttore.screen, [60, 255, 60], [i*self.w/10, 0], [i*self.w/10, self.h], 1)
+        #     pygame.draw.line(self.costruttore.screen, [60, 60, 255], [0, i*self.h/10], [self.w, i*self.h/10], 1)
+        #     pygame.draw.line(self.costruttore.screen, [60, 255, 60], [0, i*self.w/10], [self.w, i*self.w/10], 1)
+
+        # pygame.draw.line(self.costruttore.screen, [255, 0, 0], [self.w/2, 0], [self.w/2, self.h], 1)
+        # pygame.draw.line(self.costruttore.screen, [255, 0, 0], [0, self.h/2], [self.w, self.h/2], 1)
+        
 
     def mouse_icon(self) -> None:
         '''
@@ -130,6 +157,20 @@ class UI:
         self.logica.mouse_pos = pygame.mouse.get_pos()
 
         eventi = pygame.event.get()
+
+        for event in eventi:
+            if event.type == pygame.QUIT:
+                self.running = False
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:
+                    if self.fullscreen:
+                        self.exit_fullscreen()
+                    else: 
+                        self.go_fullscreen()
+
+        if not self.update_screen_data():
+            self.costruttore.recalc(self.w, self.h)
 
         self.event_manager.event_manage_ui(eventi, self.costruttore.scene["main"], self.logica)
         self.costruttore.scene["main"].disegna_scena(self.logica)
@@ -155,44 +196,44 @@ class UI:
         key_combo = [pygame.K_ESCAPE, pygame.K_SPACE]
         if all(keys[key] for key in key_combo):
             self.running = 0
-            
-        pygame.display.flip()
         
+        
+        pygame.display.flip()
 
 
     def pc_attributes(self):
         
-        self.costruttore.scene["main"].label["memory"].testo = r"\high{ " + f' Memory: {psutil.Process().memory_info().rss / 1024**2:>7.2f} MB' + " }"
+        self.costruttore.scene["main"].label["memory"].change_text(r"\high{ " + f' Memory: {psutil.Process().memory_info().rss / 1024**2:>7.2f} MB' + " }")
         
         if psutil.Process().memory_info().rss / 1024**2 > 4000:
-            self.costruttore.scene["main"].label["memory"].testo = r"\red{" + self.costruttore.scene["main"].label["memory"].testo + "}"
+            self.costruttore.scene["main"].label["memory"].change_text(r"\red{" + self.costruttore.scene["main"].label["memory"].testo + "}")
 
         # -----------------------------------------------------------------------------
 
         self.cpu_sample.pop(0)
         self.cpu_sample.append(psutil.cpu_percent(interval=0))
-        self.costruttore.scene["main"].label["cpu"].testo = r"\high{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }"
+        self.costruttore.scene["main"].label["cpu"].change_text(r"\high{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }")
 
         if sum(self.cpu_sample) / len(self.cpu_sample) > 30:
-            self.costruttore.scene["main"].label["cpu"].testo = r"\yellow{" + self.costruttore.scene["main"].label["cpu"].testo + "}"
+            self.costruttore.scene["main"].label["cpu"].change_text(r"\yellow{" + self.costruttore.scene["main"].label["cpu"].testo + "}")
 
         if sum(self.cpu_sample) / len(self.cpu_sample) > 70:
-            self.costruttore.scene["main"].label["cpu"].testo = r"\red{" + self.costruttore.scene["main"].label["cpu"].testo + "}"
+            self.costruttore.scene["main"].label["cpu"].change_text(r"\red{" + self.costruttore.scene["main"].label["cpu"].testo + "}")
 
         # -----------------------------------------------------------------------------
         
-        self.costruttore.scene["main"].label["fps"].testo = r"\high{ " + f"FPS: {self.current_fps:>6.2f}" + " }"
+        self.costruttore.scene["main"].label["fps"].change_text(r"\high{ " + f"FPS: {self.current_fps:>6.2f}" + " }")
         
         if self.current_fps < 60:
-            self.costruttore.scene["main"].label["fps"].testo = r"\yellow{" + self.costruttore.scene["main"].label["fps"].testo + "}"
+            self.costruttore.scene["main"].label["fps"].change_text(r"\yellow{" + self.costruttore.scene["main"].label["fps"].testo + "}")
 
         if self.current_fps < 24:
-            self.costruttore.scene["main"].label["fps"].testo = r"\red{" + self.costruttore.scene["main"].label["fps"].testo + "}"
+            self.costruttore.scene["main"].label["fps"].change_text(r"\red{" + self.costruttore.scene["main"].label["fps"].testo + "}")
         
         # -----------------------------------------------------------------------------
         
-        self.costruttore.scene["main"].label["clock"].testo = r"\high{ " + f" {strftime("%X, %x")}" " }"
-        
+        self.costruttore.scene["main"].label["clock"].change_text(r"\high{ " + f" {strftime("%X, %x")}" " }")
+
         # -----------------------------------------------------------------------------
 
         battery = psutil.sensors_battery()
