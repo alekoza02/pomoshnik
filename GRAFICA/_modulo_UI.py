@@ -127,7 +127,7 @@ class UI:
         '''
         self.MAIN.fill((30, 30, 30))
 
-        
+
         # for i in range(10):
         #     pygame.draw.line(self.costruttore.screen, [60, 255, 60], [i*self.w/10, 0], [i*self.w/10, self.h], 1)
         #     pygame.draw.line(self.costruttore.screen, [60, 60, 255], [0, i*self.h/10], [self.w, i*self.h/10], 1)
@@ -154,6 +154,13 @@ class UI:
 
         self.logica.dragging_dx = 0
         self.logica.dragging_dy = 0
+
+        if self.logica.scroll_up > 0: self.logica.scroll_up -= (1 + self.logica.scroll_up / 3)
+        else: self.logica.scroll_up = 0
+
+        if self.logica.scroll_down > 0: self.logica.scroll_down -= (1 + self.logica.scroll_down / 3)
+        else: self.logica.scroll_down = 0
+
         self.logica.mouse_pos = pygame.mouse.get_pos()
 
         eventi = pygame.event.get()

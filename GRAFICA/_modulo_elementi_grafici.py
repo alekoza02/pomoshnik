@@ -35,10 +35,11 @@ class BaseElement:
 
     pappardella = None
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24) -> None:
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24, mantain_aspect_ratio=True) -> None:
         
 
         self.schermo = BaseElement.pappardella["screen"]
+        self.aspect_ratio = mantain_aspect_ratio
 
         self.color_text = (200, 200, 200)
         self.bg = array(BaseElement.pappardella["bg_def"])
@@ -72,9 +73,20 @@ class BaseElement:
         self.testo = text
 
 
-    def update_window_change(self):
-        self.recalc_geometry(*self._init_coords)
-
+    def update_window_change(self, offset_x=None, offset_y=None):
+        """
+        Usare gli offset SOLO nei drop menu per gestire il cambio dimensione finestra
+        """
+        
+        val1, val2, val3, val4, val5, val6 = self._init_coords
+        
+        if type(offset_x) == str:
+            val1 = f"{float(val1) + float(offset_x)}"
+        if type(offset_y) == str:  
+            val2 = f"{float(val2) + float(offset_y)}"
+        
+        self.recalc_geometry(val1, val2, val3, val4, val5, val6)
+        
 
     def recalc_geometry(self, new_x=None, new_y=None, new_w=None, new_h=None, anchor_point=None, font_dim=24, update=False):
 
@@ -95,7 +107,10 @@ class BaseElement:
         if type(new_h) == str:
             self.h: float = float(new_h)
         else: 
-            self.h: float = BaseElement.pappardella["x_screen"] * new_h / 100
+            if self.aspect_ratio:
+                self.h: float = BaseElement.pappardella["x_screen"] * new_h / 100
+            else:
+                self.h: float = BaseElement.pappardella["y_screen"] * new_h / 100
         
         offset_x, offset_y = self.get_anchor_offset(ancoraggio)
 
@@ -211,11 +226,14 @@ class BaseElement:
         self.bounding_box = pygame.Rect(self.x + offset_x, self.y + offset_y, self.w + offset_w, self.h + offset_h)
 
 
+    def get_perc_value(self, value, ax):
+        return 100 * value / BaseElement.pappardella[f"{ax}_screen"]
+
 
 class Label_Text(BaseElement):
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24):
-        super().__init__(x, y, anchor, w, h, text, hide, font_size)
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24, mantain_aspect_ratio=True) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, font_size, mantain_aspect_ratio)
         self.debug = False
 
     def disegnami(self, logica):
@@ -321,8 +339,8 @@ class Label_Text(BaseElement):
 
 class Bottone_Push(BaseElement):
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, function=None, text="", hide=False, disable=False, font_size=24) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, font_size)
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, function=None, text="", hide=False, disable=False, font_size=24, mantain_aspect_ratio=True) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, font_size, mantain_aspect_ratio)
 
         self.contorno = 2
 
@@ -417,15 +435,15 @@ class Bottone_Push(BaseElement):
         super().change_text(text)
 
     
-    def update_window_change(self):
-        super().update_window_change()
+    def update_window_change(self, offset_x=None, offset_y=None):
+        super().update_window_change(offset_x, offset_y)
         self.label_title.update_window_change()
 
 
 
 class Bottone_Toggle(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, state=False, type_checkbox=True, function=None, text="", hide=False, disable=False, font_size=24) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, font_size)
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, state=False, type_checkbox=True, function=None, text="", hide=False, disable=False, font_size=24, mantain_aspect_ratio=True) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, font_size, mantain_aspect_ratio)
         
         self.contorno = 2
 
@@ -520,15 +538,15 @@ class Bottone_Toggle(BaseElement):
         return colore
 
 
-    def update_window_change(self):
-        super().update_window_change()
+    def update_window_change(self, offset_x=None, offset_y=None):
+        super().update_window_change(offset_x, offset_y)
         self.label_title.update_window_change()
 
 
 
 class RadioButton(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=0, h=0, axis="x", cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, scala=1, hide=False, type_checkbox=True, w_button="30", h_button="30", font_size=24):
-        super().__init__(x, y, anchor, w, h, title, hide, font_size)
+    def __init__(self, x=0, y=0, anchor="lu", w=0, h=0, axis="x", cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, scala=1, hide=False, type_checkbox=True, w_button="30", h_button="30", font_size=24, mantain_aspect_ratio=True) -> None:
+        super().__init__(x, y, anchor, w, h, title, hide, font_size, mantain_aspect_ratio)
 
         self.main_ax = axis
         
@@ -616,8 +634,8 @@ class RadioButton(BaseElement):
 
 
 class Entrata(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=0, h=0, text="", hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False, font_size=24):       
-        super().__init__(x, y, anchor, w, h, text, hide, font_size)
+    def __init__(self, x=0, y=0, anchor="lu", w=0, h=0, text="", hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False, font_size=24, mantain_aspect_ratio=True) -> None:       
+        super().__init__(x, y, anchor, w, h, text, hide, font_size, mantain_aspect_ratio)
 
         
         self.contorno = 2
@@ -1077,8 +1095,8 @@ class Entrata(BaseElement):
 
 
 class Scroll(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="Scroll console...", hide=False, font_size=24):
-        super().__init__(x, y, anchor, w, h, text, hide, font_size)
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="Scroll console...", hide=False, font_size=24, mantain_aspect_ratio=True) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, font_size, mantain_aspect_ratio)
         
         self.label_title = Label_Text(anchor=("lu", "lu", self, 10, 10), w=w, h=f"40", text=text, hide=hide)
         self.color_text_selected = (40, 100, 40)
@@ -1272,15 +1290,15 @@ class Scroll(BaseElement):
                                     bottone.state_toggle = status
 
 
-    def update_window_change(self):
-        super().update_window_change()
+    def update_window_change(self, offset_x=None, offset_y=None):
+        super().update_window_change(offset_x, offset_y)
         [ele.update_window_change() for ele in self.ele_toggle]
         self.label_title.update_window_change()
 
 
 class ColorPicker(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, initial_color=[200, 200, 200], text="", hide=False, font_size=24):
-        super().__init__(x, y, anchor, w, h, text, hide, font_size)
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, initial_color=[200, 200, 200], text="", hide=False, font_size=24, mantain_aspect_ratio=True) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, font_size, mantain_aspect_ratio)
         
         self.opener = Bottone_Push(x, y, anchor, w, h, self.apri_picker, hide=hide)
         self.opener.suppress_animation = True
@@ -1321,8 +1339,8 @@ class ColorPicker(BaseElement):
 
 
 class Palette(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=20, h=20, initial_color=[200, 200, 200], font_size=24):
-        super().__init__(x, y, anchor, w, h, "", False, font_size)
+    def __init__(self, x=0, y=0, anchor="lu", w=20, h=20, initial_color=[200, 200, 200], font_size=24, mantain_aspect_ratio=True) -> None:
+        super().__init__(x, y, anchor, w, h, "", False, font_size, mantain_aspect_ratio)
 
         self.colore_scelto = initial_color
         self.intensity = 1
@@ -1485,8 +1503,8 @@ class Palette(BaseElement):
                     entrata.change_text(f"{colore}")
 
     
-    def update_window_change(self):
-        super().update_window_change()
+    def update_window_change(self, offset_x=None, offset_y=None):
+        super().update_window_change(offset_x, offset_y)
         [ele.update_window_change() for ele in self.colori_bottoni]
         [ele.update_window_change() for ele in self.intens_bottoni]
         [ele.update_window_change() for ele in self.RGB_inputs]
@@ -1705,4 +1723,120 @@ class Font:
 
 
 class DropMenu(BaseElement):
-    ...
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24, mantain_aspect_ratio=False) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, font_size, mantain_aspect_ratio)
+
+        self.progression = 0
+        self.max_progression = 0
+        self.offset_progression = self.h
+        self.bg = [25, 25, 25]
+        self.debug = True
+        self.elements: dict[str, Label_Text | Bottone_Push | Bottone_Toggle | Entrata | Scroll | DropMenu | ColorPicker] = {}
+
+    
+    def disegnami(self, logica):
+        pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
+
+        [ele.disegnami(logica) for index, ele in self.elements.items()]
+
+        # for index, ele in self.elements.items():
+        #     if ele.y < self.y or ele.y + ele.h > self.y + self.h:
+        #         ele.hide = True
+        #     else:
+        #         ele.hide = False
+
+
+        if self.debug:
+            pygame.draw.circle(self.schermo, [255, 0, 0], self.lu, 5)
+            pygame.draw.circle(self.schermo, [255, 0, 0], self.lc, 5)
+            pygame.draw.circle(self.schermo, [255, 0, 0], self.ld, 5)
+            pygame.draw.circle(self.schermo, [255, 0, 0], self.cu, 5)
+            pygame.draw.circle(self.schermo, [255, 0, 0], self.cc, 5)
+            pygame.draw.circle(self.schermo, [255, 0, 0], self.cd, 5)
+            pygame.draw.circle(self.schermo, [255, 0, 0], self.ru, 5)
+            pygame.draw.circle(self.schermo, [255, 0, 0], self.rc, 5)
+            pygame.draw.circle(self.schermo, [255, 0, 0], self.rd, 5)
+
+
+    def eventami(self, events, logica: 'Logica'):
+        
+        if logica.scroll_up:
+            if self.progression > 0:
+                self.progression -= 1            
+                self.update_scroll(+1)
+        if logica.scroll_down:
+            if self.progression < self.max_progression - self.offset_progression:
+                self.progression += 1            
+                self.update_scroll(-1)
+
+        [ele.eventami(events, logica) for index, ele in self.elements.items()]
+
+    
+    def add_element(self, id: str, element: Label_Text):
+        """
+        Consigliabile usare:
+        - x: valore percentuale (riferito al dropmenu)
+        - y: valore pixel (assoluto)
+        - w: valore percentuale (riferito al dropmenu)
+        - h: valore pixel (assoluto)
+        """
+        info = list(element._init_coords)
+        
+        try:
+            componente0 = self.get_perc_value(self.x, "x") + info[0] * self._init_coords[2] / 100
+        except TypeError:
+            componente0 = None
+        try:
+            componente1 = f"{float(info[1])}"
+        except TypeError:
+            componente1 = None
+        try:
+            componente2 = info[2] * self._init_coords[2] / 100
+        except TypeError:
+            componente2 = None
+        try:
+            componente3 = info[3]
+        except TypeError:
+            componente3 = None
+        try:
+            componente4 = info[4]
+        except TypeError:
+            componente4 = "lu"
+        try:
+            componente5 = 24
+        except TypeError:
+            componente5 = None
+                
+        element._init_coords = (componente0, componente1, componente2, componente3, componente4, componente5)
+        element.aspect_ratio = True
+        element.update_window_change()
+
+        self.max_progression = max(self.max_progression, float(info[1]) + float(info[3]))
+
+        self.elements[id] = element
+
+        self.update_window_change()
+
+    
+    def update_window_change(self, offset_x=None, offset_y=None):
+        super().update_window_change(offset_x, offset_y)
+        [ele.update_window_change(offset_y=f"{self.get_y_top_side()}") for index, ele in self.elements.items()]
+
+
+    def update_scroll(self, pm: int):
+        
+        for index, ele in self.elements.items():
+            
+            if not type(ele.anchor) == tuple:
+                new_values = list(ele._init_coords)
+                new_values[1] += pm
+                ele._init_coords = tuple(new_values)
+            ele.update_window_change()
+
+    
+    def get_bottom_height(self):
+        return self.h + self.y
+    
+
+    def get_y_top_side(self):
+        return self._init_coords[1] * self.pappardella["y_screen"] / 100

@@ -52,6 +52,8 @@ class Costruttore:
                 ele.update_window_change()
             for index, ele in scena.color_pickers.items():
                 ele.update_window_change()
+            for index, ele in scena.drop_menu.items():
+                ele.update_window_change()
 
 
     def costruisci_main(self):
@@ -65,7 +67,16 @@ class Costruttore:
         s.label["battery"] = Label_Text(anchor=("rc", "lc", s.label["memory"], -20, 0), text="." * 10)
         s.label["fps"] = Label_Text(anchor=("rc", "lc", s.label["battery"], -20, 0), text="." * 13)
         s.label["cpu"] = Label_Text(anchor=("rc", "lc", s.label["fps"], -20, 0), text="." * 13)
+
+        s.drop_menu["debug"] = DropMenu(99, 5, "ru", 30, 90, "DEBUG DROP MENU", mantain_aspect_ratio=False)
         
+        s.drop_menu["debug"].add_element("bottone1", Bottone_Toggle(x=50, y="0", anchor="cu", w=98, h="55", text=r"Tester1", type_checkbox=False))
+        s.drop_menu["debug"].add_element("bottone2", Bottone_Toggle(x=50, y="55", anchor="cu", w=98, h="55", text=r"Tester2", type_checkbox=False))
+        s.drop_menu["debug"].add_element("bottone3", Bottone_Toggle(x=50, y="110", anchor="cu", w=98, h="55", text=r"Tester3", type_checkbox=False))
+        s.drop_menu["debug"].add_element("bottone4", Bottone_Toggle(x=50, y="165", anchor="cu", w=98, h="55", text=r"Tester4", type_checkbox=False))
+        s.drop_menu["debug"].add_element("bottone5", Bottone_Toggle(x=50, y="220", anchor="cu", w=98, h="55", text=r"Tester5", type_checkbox=False))
+        s.drop_menu["debug"].add_element("bottone6", Bottone_Toggle(x=50, y="275", anchor="cu", w=98, h="55", text=r"Tester6", type_checkbox=False))
+        s.drop_menu["debug"].add_element("bottone7", Bottone_Toggle(x=50, y="330", anchor="cu", w=98, h="55", text=r"Tester7", type_checkbox=False))
         
 
 class Scena:
