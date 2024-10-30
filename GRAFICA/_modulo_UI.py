@@ -264,7 +264,7 @@ class UI:
                 case 10: simbolo_corretto = "󰂅" if battery.power_plugged else "󰁹";  # 100%
 
 
-            self.costruttore.scene["main"].label["battery"].testo = r"\high{ " + f"{simbolo_corretto} {battery.percent:>5.1f}%" + " }"
+            self.costruttore.scene["main"].label["battery"].testo = r"\high{ " + f"{simbolo_corretto} {battery.percent:>3}%" + " }"
 
             if battery.percent < 20:
                 self.costruttore.scene["main"].label["battery"].testo = r"\yellow{" + self.costruttore.scene["main"].label["battery"].testo + "}"

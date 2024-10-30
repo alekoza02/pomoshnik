@@ -1,0 +1,130 @@
+# DONE:
+
+- General geometry
+    - Force square plot shape
+    - Set percentage of plot area cover
+    - Background color
+    - Grid
+        - Equidistant
+        - Per value
+---
+- Plots
+    - Setting points
+            - Color
+            - Size
+---
+- Labels
+    - XY label ticks offset
+    - Centered ticks with the ax
+    - Number of big subdivisions 
+    - Number of small subdivisions 
+    - Lenght of big / small subdivisions
+    - Centering of the label
+    - Size
+    - Axis auto detect boundaries
+---
+- Title
+    - Centering of the label
+    - Size
+---
+- Legend
+---
+- Export
+---
+- Import
+---
+- Metadata
+
+UNDONE:
+---
+- General geometry
+    - Multiple plots grid
+    - alpha
+    - Custom dimension
+    - Support 2° ax
+    - Zoom (DO mantain proportions)
+    - Zoom (DO NOT mantain proportions)
+    - Select plots from clicking
+    - Force mantain proportion in XY data
+    - Plot are BB
+    - Type of axis:
+        - Plot style (left and bottom)
+        - Function style (centered on the origin)
+    - Show the zero line
+    - Anti - Lag 
+        - no update if too slow
+    - When zooming, report the full image with the zoom area drawn
+---
+- Plots
+    - Mode
+        - Classic plot
+        - Histogram
+        - Pie chart
+    - Data import
+    - Setting points
+        - Shape
+            - Custom shape generator
+            - Preview   
+    - Smoothing points
+    - Sample values (too many points)
+    - Settings lines
+        - Dashed line
+        - Width
+        - Color
+    - Setting color
+        - Setting gradient
+            - Vertical
+            - Zero line sensible
+        - Setting change on Y axis
+        - Setting progressive change
+        - Setting zone change
+    - Setting Title
+    - Normalize (1 ax 2 plots same height) (0-1)
+    - Normalize (2 axes 2 plots same height) (x-y, x2-y2)
+    - Report errors
+        - Size of the bars
+        - Color
+    - Show the coordinates
+---
+- Labels
+    - Centering of the label
+    - Custom offset
+    - Custom font
+    - Size
+    - Axis auto detect boundaries
+---
+- Title
+    - Centering of the label
+    - Custom offset
+    - Custom font
+    - Size
+---
+- Legend
+    - Position
+    - Name
+    - Color
+    - Order
+    - Reporting the form / shape used in the plot
+---
+- Export
+    - Export in png (custom size)
+    - Export in svg
+---
+- Import
+    - Import different extensions
+    - Import .ale extension
+    - Sort by X - Value
+---
+- Metadata
+    - Adding arrows
+    - Adding boxes
+    - Adding circles
+    - Adding derivative
+    - Adding integral in interval
+---
+- Statistics
+---
+- Tools
+
+# BIG PROJECTS
+- Polar coordinates
