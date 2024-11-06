@@ -1,5 +1,5 @@
 import pygame
-from numpy import array, floor
+from numpy import array
 from MATEMATICA._modulo_mate_utils import MateUtils
 import pyperclip
 import os
@@ -35,8 +35,9 @@ class BaseElement:
 
     pappardella = None
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24, font_mode="auto", mantain_aspect_ratio=True, color_text=[200, 200, 200]) -> None:
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24, font_mode="auto", mantain_aspect_ratio=True, color_text=[200, 200, 200], latex_font=False) -> None:
         
+        self.latex_font = latex_font
 
         self.schermo = BaseElement.pappardella["screen"]
         self.aspect_ratio = mantain_aspect_ratio
@@ -95,7 +96,7 @@ class BaseElement:
             val2 = f"{float(val2) + float(offset_y)}"
         
         self.recalc_geometry(val1, val2, val3, val4, val5)
-        
+
 
     def change_font_size(self, value):
         self.font_size_original = value
@@ -110,7 +111,7 @@ class BaseElement:
         else: 
             self.font_size = self.font_size_original
 
-        self.font: Font = Font(self.font_size)           
+        self.font: Font = Font(self.font_size, self.latex_font)           
         
         if new_h is None or new_w is None:
             new_h = f"{self.font.font_pixel_dim[1]}"
@@ -251,9 +252,15 @@ class BaseElement:
 
 class Label_Text(BaseElement):
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, color_text=[200, 200, 200]) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio, color_text)
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, color_text=[200, 200, 200], latex_font=False) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio, color_text, latex_font=latex_font)
         self.debug = False
+
+        old_hide = self.hide
+        self.need_update = True
+        self.hide = False # forces an update od drawing
+        self.disegnami(None)
+        self.hide = old_hide
 
 
     def disegnami(self, logica, rotation=0):
@@ -285,12 +292,12 @@ class Label_Text(BaseElement):
 
                     if substringa_analizzata.apice:
                         offset_highlight = - 0.5
-
                         offset_usato = offset_orizzontale_apice  
+
                     elif substringa_analizzata.pedice:
                         offset_highlight = - 0.5
-
                         offset_usato = offset_orizzontale_pedice 
+
                     else:
                         offset_highlight = - 1 
 
@@ -397,7 +404,24 @@ class Bottone_Push(BaseElement):
         self.smussatura = 20
         self.debug = False
 
+        self.texture = None
+        self.texture_name = None
+
     
+    def load_texture(self, name: str = None):
+
+        if self.texture_name is None and not name is None:
+            self.texture_name = name
+    
+        if name is None:
+            path = os.path.join(f"TEXTURES", f'{self.texture_name}.png')
+        else:
+            path = os.path.join(f"TEXTURES", f'{name}.png')
+        
+        self.texture = pygame.image.load(path)
+        self.texture = pygame.transform.scale(self.texture, (self.w, self.h))
+
+
     def disegnami(self, logica: 'Logica'):
 
 
@@ -413,7 +437,11 @@ class Bottone_Push(BaseElement):
 
             pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
 
-            self.label_title.disegnami(logica)
+            if self.texture is None:
+                self.label_title.disegnami(logica)
+            else:
+                self.schermo.blit(self.texture, (self.x, self.y))
+
 
         if self.debug:
             pygame.draw.circle(self.schermo, [255, 0, 0], self.lu, 5)
@@ -473,18 +501,25 @@ class Bottone_Push(BaseElement):
     
     def update_window_change(self, offset_x=None, offset_y=None):
         super().update_window_change(offset_x, offset_y)
+        try:
+            self.load_texture()
+        except FileNotFoundError:
+            ...
         self.label_title.update_window_change()
 
 
 
 class Bottone_Toggle(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, state=False, type_checkbox=True, function=None, text="", hide=False, disable=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, state=False, type_checkbox=True, text="", hide=False, disable=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, text_on_right=True) -> None:
         super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
         
         self.contorno = 2
 
         if type_checkbox:
-            self.label_title = Label_Text(anchor=("lc", "rc", self, 10, 0), text=text, font_mode=font_mode, font_size=font_size)
+            if text_on_right:
+                self.label_title = Label_Text(anchor=("lc", "rc", self, 10, 0), text=text, font_mode=font_mode, font_size=font_size)
+            else:
+                self.label_title = Label_Text(anchor=("rc", "lc", self, -10, 0), text=text, font_mode=font_mode, font_size=font_size)
         else:
             self.label_title = Label_Text(anchor=("cc", "cc", self, 0, 0), text=text, font_mode=font_mode, font_size=font_size)
 
@@ -499,6 +534,23 @@ class Bottone_Toggle(BaseElement):
         self.disable: bool = False
 
         self.smussatura = 5
+
+        self.texture = None
+        self.texture_name = None
+
+    
+    def load_texture(self, name: str = None):
+
+        if self.texture_name is None and not name is None:
+            self.texture_name = name
+    
+        if name is None:
+            path = os.path.join(f"TEXTURES", f'{self.texture_name}.png')
+        else:
+            path = os.path.join(f"TEXTURES", f'{name}.png')
+        
+        self.texture = pygame.image.load(path)
+        self.texture = pygame.transform.scale(self.texture, (self.w, self.h))
 
 
     def disegnami(self, logica):
@@ -523,7 +575,11 @@ class Bottone_Toggle(BaseElement):
             else:
 
                 pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
-                self.label_title.disegnami(logica)
+                
+                if self.texture is None:
+                    self.label_title.disegnami(logica)
+                else:
+                    self.schermo.blit(self.texture, (self.x, self.y))
 
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
@@ -565,13 +621,20 @@ class Bottone_Toggle(BaseElement):
 
     def update_window_change(self, offset_x=None, offset_y=None):
         super().update_window_change(offset_x, offset_y)
+        try:
+            self.load_texture()
+        except FileNotFoundError:
+            ...
         self.label_title.update_window_change()
 
 
 
 class RadioButton(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=0, h=0, axis="x", cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, hide=False, type_checkbox=True, w_button="30", h_button="30", font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:
+    def __init__(self, x=0, y=0, anchor="lu", w=0, h=0, axis="x", bg=None, cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, hide=False, type_checkbox=True, w_button="30", h_button="30", font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:
         super().__init__(x, y, anchor, w, h, title, hide, font_size, font_mode, mantain_aspect_ratio)
+
+        if not bg is None:
+            self.bg = bg
 
         self.main_ax = axis
         
@@ -583,6 +646,8 @@ class RadioButton(BaseElement):
         self.type_checkbox = type_checkbox
 
         self.cb_n, self.cb_s, self.cb_t = cb_n, cb_s, cb_t
+
+        self.w_button, self.h_button = w_button, h_button
         
         self.toggles: list[Bottone_Toggle] = []
         for index, state, text  in zip(range(cb_n), cb_s, cb_t):
@@ -596,16 +661,26 @@ class RadioButton(BaseElement):
                         self.toggles.append(Bottone_Toggle(f"{self.x}", f"{self.y + index * (float(h_button) + spacing)}", "lu", w_button, h_button, state, type_checkbox, text=text, hide=hide, font_mode=font_mode, font_size=font_size))
                     
                 case _: raise TypeError(f"Invalid mode {self.main_ax}, accepted types: 'x', 'y'.")
+        
+        for bottone in self.toggles:
+            if bottone.state_toggle:
+                bottone.bg = array([50, 100, 50])
+            else:
+                bottone.bg = self.bg + 10 
 
-            
-        for ele in self.toggles:
-            ele.bg += array([10, 10, 10])
-    
+
 
     def disegnami(self, logica):
         pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
+
+        for bottone in self.toggles:
+            if bottone.state_toggle:
+                bottone.bg = array([50, 100, 50])
+            else:
+                bottone.bg = self.bg + 10
+
         [bottone.disegnami(logica) for bottone in self.toggles]
-        
+
 
     def eventami(self, events, logica):
 
@@ -620,6 +695,8 @@ class RadioButton(BaseElement):
 
             if not ele_nuovo is None and not ele_vecchio is None:
                 self.toggles[ele_vecchio].state_toggle = False
+
+        self.cb_s = [b.state_toggle for b in self.toggles]
 
 
     @property
@@ -640,6 +717,39 @@ class RadioButton(BaseElement):
                 elemento_vecchio = index
 
         return elemento_vecchio, elemento_nuovo
+
+
+    def update_window_change(self, offset_x=None, offset_y=None):
+        super().update_window_change(offset_x, offset_y)
+
+        textures_info = [bottone.texture_name for bottone in self.toggles]
+
+        self.cb_n = len(self.toggles)
+        self.cb_s = [bottone.state_toggle for bottone in self.toggles]
+        self.cb_t = [bottone.testo for bottone in self.toggles]
+
+        self.toggles = []
+
+        for index, state, text  in zip(range(self.cb_n), self.cb_s, self.cb_t):
+            
+            match self.main_ax:
+                case "x": 
+                        spacing = (self.w - float(self.w_button) * self.cb_n) / (self.cb_n - 1)
+                        self.toggles.append(Bottone_Toggle(f"{self.x + index * (float(self.w_button) + spacing)}", f"{self.y}", "lu", self.w_button, self.h_button, state, self.type_checkbox, text=text, hide=self.hide, font_mode=self.font_mode, font_size=self.font_size))
+                case "y":
+                        spacing = (self.h - float(self.h_button) * self.cb_n) / (self.cb_n - 1)
+                        self.toggles.append(Bottone_Toggle(f"{self.x}", f"{self.y + index * (float(self.h_button) + spacing)}", "lu", self.w_button, self.h_button, state, self.type_checkbox, text=text, hide=self.hide, font_mode=self.font_mode, font_size=self.font_size))
+                    
+                case _: raise TypeError(f"Invalid mode {self.main_ax}, accepted types: 'x', 'y'.")
+
+            if not textures_info[index] is None:
+                self.toggles[-1].load_texture(textures_info[index])
+
+        for bottone in self.toggles:
+            if bottone.state_toggle:
+                bottone.bg = array([50, 100, 50])
+            else:
+                bottone.bg = self.bg + 10 
 
 
 
@@ -666,6 +776,7 @@ class Entrata(BaseElement):
         self.num_valore_massimo = num_valore_massimo
         self.is_hex = is_hex
         self.input_error = False
+        self.return_previous_text = False
 
         self.animazione_puntatore = Animazione(1000, "loop")
         self.animazione_puntatore.attiva = True
@@ -703,7 +814,7 @@ class Entrata(BaseElement):
         if not self.hide:
 
             if self.selezionato:
-                self.input_error = True
+                self.return_previous_text = True
                 self.eventami_scrittura(events, logica)
 
                 if self.solo_numeri:
@@ -716,33 +827,8 @@ class Entrata(BaseElement):
 
 
             else:
-                self.input_error = False
+                self.return_previous_text = False
                 self.previous_text = self.testo
-
-                if self.solo_numeri:
-                    numero_equivalente = MateUtils.inp2flo(self.testo, None)
-
-                    if numero_equivalente is None:
-                        self.input_error = True
-                        self.color_text = array([255, 0, 0])
-
-                    else:
-                        self.input_error = False
-                        self.color_text = array((200, 200, 200))
-
-                        if numero_equivalente > self.num_valore_massimo:
-                            self.change_text(f"{self.num_valore_massimo}")
-                        elif numero_equivalente < self.num_valore_minimo:
-                            self.change_text(f"{self.num_valore_minimo}")
-
-
-                if self.is_hex:
-                    if MateUtils.hex2rgb(self.testo, std_return=None) is None:
-                        self.color_text = array([255, 0, 0])
-                    else:
-                        self.color_text = array([200, 200, 200])
-
-
 
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -1124,10 +1210,41 @@ class Entrata(BaseElement):
 
 
     def get_text(self) -> str:
-        if self.input_error:
-            return f"{self.previous_text}"
+        if self.return_previous_text:
+            restituisco = f"{self.previous_text}"
         else:
-            return f"{self.testo}"
+            restituisco = f"{self.testo}"
+        
+        if self.solo_numeri:
+            numero_equivalente = MateUtils.inp2flo(restituisco, None)
+
+            if numero_equivalente is None:
+                self.color_text = array([255, 0, 0])
+                return self.num_valore_minimo
+
+            else:
+                self.color_text = array((200, 200, 200))
+
+                if numero_equivalente > self.num_valore_massimo:
+                    self.change_text(f"{self.num_valore_massimo}")
+                    return self.get_text()
+                elif numero_equivalente < self.num_valore_minimo:
+                    self.change_text(f"{self.num_valore_minimo}")
+                    return self.get_text()
+                else:
+                    return restituisco
+
+
+        elif self.is_hex:
+            if MateUtils.hex2rgb(restituisco, std_return=None) is None:
+                self.color_text = array([255, 0, 0])
+                return "aaaaaa"
+            else:
+                self.color_text = array([200, 200, 200])
+                return restituisco
+
+        else:
+            return restituisco
 
 
     def update_window_change(self, offset_x=None, offset_y=None):
@@ -1180,156 +1297,164 @@ class Scroll(BaseElement):
 
     def disegnami(self, logica: 'Logica'):
 
-        pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
-        
-        self.label_title.disegnami(logica)
+        if not self.hide:
 
-        # creazione elementi (righe)
-        alt_font = self.label_title.font.font_pixel_dim[1]
-
-        for chunck in range(int((self.h - alt_font * 2) // alt_font)):
+            pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
             
-            if self.ele_selected_index == chunck + self.ele_first:
-                colore = self.bg_selected
-            else:
-                colore_bg = self.bg.copy()
-                colore_var1 = colore_bg + 10
-                colore_var2 = colore_bg + 20
-                colore = colore_var1 if chunck % 2 == 0 else colore_var2
+            self.label_title.disegnami(logica)
 
-            pygame.draw.rect(self.schermo, colore, [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * chunck, self.w - self.offset_grafico_testo, alt_font], 0, 5)
-    
+            # creazione elementi (righe)
+            alt_font = self.label_title.font.font_pixel_dim[1]
 
-        # creazione elementi (testo)
-        self.ele_max = int((self.h - alt_font * 2) // alt_font)
-        for ele_iterator in range(self.ele_max):
-            
-            if self.ele_first + ele_iterator >= len(self.elementi):
-                break
-
-            testo = f"{self.elementi[self.ele_first + ele_iterator]}"
-
-            if self.ele_selected_index == ele_iterator + self.ele_first:
-                colore = self.color_text_selected
-            else:
-                colore = self.color_text
+            for chunck in range(int((self.h - alt_font * 2) // alt_font)):
                 
+                if self.ele_selected_index == chunck + self.ele_first:
+                    colore = self.bg_selected
+                else:
+                    colore_bg = self.bg.copy()
+                    colore_var1 = colore_bg + 10
+                    colore_var2 = colore_bg + 20
+                    colore = colore_var1 if chunck % 2 == 0 else colore_var2
 
-            self.schermo.blit(self.label_title.font.font_pyg_r.render(testo, True, colore), (self.x + self.offset_grafico_testo + 5, self.y + (alt_font * (2 + ele_iterator))))
+                pygame.draw.rect(self.schermo, colore, [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * chunck, self.w - self.offset_grafico_testo, alt_font], 0, 5)
         
 
-        # creazione toggles
-        [bottone.disegnami(logica) for bottone in self.ele_toggle]
+            # creazione elementi (testo)
+            self.ele_max = int((self.h - alt_font * 2) // alt_font)
+            for ele_iterator in range(self.ele_max):
+                
+                if self.ele_first + ele_iterator >= len(self.elementi):
+                    break
 
-        # disegno elementi grafici di drag
-        if logica.dragging and not self.no_dragging_animation:
+                testo = f"{self.elementi[self.ele_first + ele_iterator]}"
 
-            if self.bounding_box.collidepoint(logica.mouse_pos):
+                if self.ele_selected_index == ele_iterator + self.ele_first:
+                    colore = self.color_text_selected
+                else:
+                    colore = self.color_text
+                    
 
-                pygame.draw.rect(self.schermo, self.bg_selected, [logica.mouse_pos[0], logica.mouse_pos[1], self.w - self.offset_grafico_testo, self.label_title.font.font_pixel_dim[1]], 0, 5)
-                self.schermo.blit(self.label_title.font.font_pyg_r.render(f"{self.elementi[self.ele_selected_index]}", True, self.color_text_selected), (logica.mouse_pos[0] + 5, logica.mouse_pos[1]))
+                self.schermo.blit(self.label_title.font.font_pyg_r.render(testo, True, colore), (self.x + self.offset_grafico_testo + 5, self.y + (alt_font * (2 + ele_iterator))))
+            
 
-                # mostro dove finisce l'elemento
-                elemento_finale = round((logica.mouse_pos[1] - self.y - self.label_title.font.font_pixel_dim[1] // 2) // self.label_title.font.font_pixel_dim[1]) - 2 + 1 # il +1 è per risolvere un problema grafico in cui il calcolo non tiene conto che l'operazione non è ancora stata eseguita
-                pygame.draw.rect(self.schermo, [255, 200, 0], [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * elemento_finale, self.w - self.offset_grafico_testo, 1], 0, 5)
+            # creazione toggles
+            [bottone.disegnami(logica) for bottone in self.ele_toggle]
+
+            # disegno elementi grafici di drag
+            if logica.dragging and not self.no_dragging_animation:
+
+                if self.bounding_box.collidepoint(logica.mouse_pos):
+
+                    pygame.draw.rect(self.schermo, self.bg_selected, [logica.mouse_pos[0], logica.mouse_pos[1], self.w - self.offset_grafico_testo, self.label_title.font.font_pixel_dim[1]], 0, 5)
+                    self.schermo.blit(self.label_title.font.font_pyg_r.render(f"{self.elementi[self.ele_selected_index]}", True, self.color_text_selected), (logica.mouse_pos[0] + 5, logica.mouse_pos[1]))
+
+                    # mostro dove finisce l'elemento
+                    elemento_finale = round((logica.mouse_pos[1] - self.y - self.label_title.font.font_pixel_dim[1] // 2) // self.label_title.font.font_pixel_dim[1]) - 2 + 1 # il +1 è per risolvere un problema grafico in cui il calcolo non tiene conto che l'operazione non è ancora stata eseguita
+                    pygame.draw.rect(self.schermo, [255, 200, 0], [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * elemento_finale, self.w - self.offset_grafico_testo, 1], 0, 5)
 
 
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
         
-        # aggiorna tutto quello che succede alle toggle box
-        [bottone.eventami(events, logica) for bottone in self.ele_toggle]
-        
-        # nascondo le toggle box che non corrispondono a nessun elemento (fine corsa)
-        for i in range(self.ele_max):
-            if self.ele_first + i < len(self.elementi):
-                self.ele_toggle[i].hide = False
-                self.ele_mask[self.ele_first + i] = self.ele_toggle[i].state_toggle
-            elif self.ele_first + i >= len(self.elementi):
-                self.ele_toggle[i].hide = True
-                
-        if self.bounding_box.collidepoint(logica.mouse_pos):
+        if not self.hide:
 
-            for event in events:
+            # aggiorna tutto quello che succede alle toggle box
+            [bottone.eventami(events, logica) for bottone in self.ele_toggle]
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                
-                    if event.button == 1:
-                        # selezione elemento
-                        self.ele_selected_index = self.ele_first + round((logica.mouse_pos[1] - self.y) // self.label_title.font.font_pixel_dim[1]) - 2
-                        self.no_dragging_animation = False
-
-                        # abilita / disabilita visualizzazione dragging element nel caso di swap posizioni
-                        if self.ele_selected_index > len(self.elementi) - 1:
-                            self.no_dragging_animation = True
-
-                        # impedisce la selezione di elementi oltre al range consentito
-                        if self.ele_selected_index >= len(self.elementi) - 1:
-                            self.ele_selected_index = len(self.elementi) - 1
+            # nascondo le toggle box che non corrispondono a nessun elemento (fine corsa)
+            try:
+                for i in range(self.ele_max):
+                    if self.ele_first + i < len(self.elementi):
+                        self.ele_toggle[i].hide = False
+                        self.ele_mask[self.ele_first + i] = self.ele_toggle[i].state_toggle
+                    elif self.ele_first + i >= len(self.elementi):
+                        self.ele_toggle[i].hide = True
+            except:
+                print("Fail")                    
 
 
-                    if event.button == 4:
-                        # scroll down
-                        if self.ele_first > 0:
-                            self.ele_first -= 1
+            if self.bounding_box.collidepoint(logica.mouse_pos):
 
-                            for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
-                                bottone.state_toggle = status
+                for event in events:
 
-                    if event.button == 5:
-                        # scroll up
-                        if self.ele_first < len(self.elementi) - 1:
-                            self.ele_first += 1
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                    
+                        if event.button == 1:
+                            # selezione elemento
+                            self.ele_selected_index = self.ele_first + round((logica.mouse_pos[1] - self.y) // self.label_title.font.font_pixel_dim[1]) - 2
+                            self.no_dragging_animation = False
 
-                            for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
-                                bottone.state_toggle = status
+                            # abilita / disabilita visualizzazione dragging element nel caso di swap posizioni
+                            if self.ele_selected_index > len(self.elementi) - 1:
+                                self.no_dragging_animation = True
 
-
-                if event.type == pygame.MOUSEBUTTONUP:
-
-                    if event.button == 1:
-
-                        # calcola l'indice dove verrà inserito un valore (offset di mezzo elemento)
-                        rilascio = self.ele_first + round((logica.mouse_pos[1] - self.y - self.label_title.font.font_pixel_dim[1] // 2) // self.label_title.font.font_pixel_dim[1]) - 2
-                        
-                        if rilascio < len(self.elementi) - 1: # se il rilascio avviene entro il range di elementi
-
-                            if self.ele_selected_index != rilascio: # se l'elemento spostato e la destinazione sono diversi
-
-                                offset = True if rilascio < self.ele_selected_index else False # offset nel caso di percorrenza opposta (index slide reverse list)
-                                
-                                # aggiusto i dati di elementi e le relative maschere
-                                self.elementi.insert(rilascio + 1, self.elementi[self.ele_selected_index])
-                                self.ele_mask.insert(rilascio + 1, self.ele_mask[self.ele_selected_index])
-
-                                self.elementi.pop(self.ele_selected_index + offset)
-                                self.ele_mask.pop(self.ele_selected_index + offset)
-
-                                self.ele_selected_index = rilascio + offset
-
-                                if self.ele_selected_index > len(self.elementi):
-                                    self.ele_selected_index = len(self.elementi) - 1
-
-                                # aggiorno i bottoni dopo lo swap di posizioni
-                                for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
-                                    bottone.state_toggle = status
-
-                        elif rilascio == len(self.elementi) - 1: # caso particolare in cui il rilascio avviene all'ultimo valore
-
-                            if self.ele_selected_index != rilascio:
-
-                                offset = True if rilascio < self.ele_selected_index else False
-                                
-                                self.elementi.append(self.elementi[self.ele_selected_index])
-                                self.ele_mask.append(self.ele_mask[self.ele_selected_index])
-
-                                self.elementi.pop(self.ele_selected_index + offset)
-                                self.ele_mask.pop(self.ele_selected_index + offset)
-
+                            # impedisce la selezione di elementi oltre al range consentito
+                            if self.ele_selected_index >= len(self.elementi) - 1:
                                 self.ele_selected_index = len(self.elementi) - 1
 
+
+                        if event.button == 4:
+                            # scroll down
+                            if self.ele_first > 0:
+                                self.ele_first -= 1
+
                                 for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
                                     bottone.state_toggle = status
+
+                        if event.button == 5:
+                            # scroll up
+                            if self.ele_first < len(self.elementi) - 1:
+                                self.ele_first += 1
+
+                                for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
+                                    bottone.state_toggle = status
+
+
+                    if event.type == pygame.MOUSEBUTTONUP:
+
+                        if event.button == 1:
+
+                            # calcola l'indice dove verrà inserito un valore (offset di mezzo elemento)
+                            rilascio = self.ele_first + round((logica.mouse_pos[1] - self.y - self.label_title.font.font_pixel_dim[1] // 2) // self.label_title.font.font_pixel_dim[1]) - 2
+                            
+                            if rilascio < len(self.elementi) - 1: # se il rilascio avviene entro il range di elementi
+
+                                if self.ele_selected_index != rilascio: # se l'elemento spostato e la destinazione sono diversi
+
+                                    offset = True if rilascio < self.ele_selected_index else False # offset nel caso di percorrenza opposta (index slide reverse list)
+                                    
+                                    # aggiusto i dati di elementi e le relative maschere
+                                    self.elementi.insert(rilascio + 1, self.elementi[self.ele_selected_index])
+                                    self.ele_mask.insert(rilascio + 1, self.ele_mask[self.ele_selected_index])
+
+                                    self.elementi.pop(self.ele_selected_index + offset)
+                                    self.ele_mask.pop(self.ele_selected_index + offset)
+
+                                    self.ele_selected_index = rilascio + offset
+
+                                    if self.ele_selected_index > len(self.elementi):
+                                        self.ele_selected_index = len(self.elementi) - 1
+
+                                    # aggiorno i bottoni dopo lo swap di posizioni
+                                    for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
+                                        bottone.state_toggle = status
+
+                            elif rilascio == len(self.elementi) - 1: # caso particolare in cui il rilascio avviene all'ultimo valore
+
+                                if self.ele_selected_index != rilascio:
+
+                                    offset = True if rilascio < self.ele_selected_index else False
+                                    
+                                    self.elementi.append(self.elementi[self.ele_selected_index])
+                                    self.ele_mask.append(self.ele_mask[self.ele_selected_index])
+
+                                    self.elementi.pop(self.ele_selected_index + offset)
+                                    self.ele_mask.pop(self.ele_selected_index + offset)
+
+                                    self.ele_selected_index = len(self.elementi) - 1
+
+                                    for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
+                                        bottone.state_toggle = status
 
 
     def update_window_change(self, offset_x=None, offset_y=None):
@@ -1732,14 +1857,22 @@ class Animazione:
 
 
 class Font:
-    def __init__(self, dim) -> None:
+    def __init__(self, dim, latex_font=False) -> None:
         
         self.original = int(dim)
 
+        self.latex_font = latex_font
+
         self.dim_font = self.original 
-        path_r = os.path.join('TEXTURES', 'font_r.ttf')
-        path_b = os.path.join('TEXTURES', 'font_b.ttf')
-        path_i = os.path.join('TEXTURES', 'font_i.ttf')
+
+        if self.latex_font:        
+            path_r = os.path.join('TEXTURES', 'century_r.otf')
+            path_b = os.path.join('TEXTURES', 'century_b.otf')
+            path_i = os.path.join('TEXTURES', 'century_i.otf')
+        else:
+            path_r = os.path.join('TEXTURES', 'font_r.ttf')
+            path_b = os.path.join('TEXTURES', 'font_b.ttf')
+            path_i = os.path.join('TEXTURES', 'font_i.ttf')
         self.font_pyg_r = pygame.font.Font(path_r, self.dim_font)
         self.font_pyg_i = pygame.font.Font(path_i, self.dim_font)
         self.font_pyg_b = pygame.font.Font(path_b, self.dim_font)
@@ -1754,9 +1887,14 @@ class Font:
         else:
             self.dim_font *= moltiplicatore 
     
-        path_r = os.path.join('TEXTURES', 'font_r.ttf')
-        path_b = os.path.join('TEXTURES', 'font_b.ttf')
-        path_i = os.path.join('TEXTURES', 'font_i.ttf')
+        if self.latex_font:    
+            path_r = os.path.join('TEXTURES', 'century_r.otf')
+            path_b = os.path.join('TEXTURES', 'century_b.otf')
+            path_i = os.path.join('TEXTURES', 'century_i.otf')
+        else:
+            path_r = os.path.join('TEXTURES', 'font_r.ttf')
+            path_b = os.path.join('TEXTURES', 'font_b.ttf')
+            path_i = os.path.join('TEXTURES', 'font_i.ttf')
         self.font_pyg_r = pygame.font.Font(path_r, round(self.dim_font))
         self.font_pyg_i = pygame.font.Font(path_i, round(self.dim_font))
         self.font_pyg_b = pygame.font.Font(path_b, round(self.dim_font))
@@ -1765,7 +1903,7 @@ class Font:
 
 
 class DropMenu(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=False) -> None:
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=False, separator_size=2) -> None:
         super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
 
         self.progression = 0
@@ -1774,30 +1912,30 @@ class DropMenu(BaseElement):
         self.bg = [25, 25, 25]
         self.debug = False
         self.elements: dict[str, Label_Text | Bottone_Push | Bottone_Toggle | Entrata | Scroll | DropMenu | ColorPicker] = {}
+        self.separators = []
+        self.separator_size = separator_size
 
     
     def disegnami(self, logica):
-        pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
 
-        [ele.disegnami(logica) for index, ele in self.elements.items()]
+        if not self.hide:
+            pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
 
-        # for index, ele in self.elements.items():
-        #     if ele.y < self.y or ele.y + ele.h > self.y + self.h:
-        #         ele.hide = True
-        #     else:
-        #         ele.hide = False
+            [ele.disegnami(logica) for index, ele in self.elements.items()]
 
+            for sep in self.separators:
+                pygame.draw.line(self.schermo, [60, 60, 60], [self.x + self.w * 0.01, sep], [self.x + self.w * 0.99, sep], self.separator_size)
 
-        if self.debug:
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.lu, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.lc, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.ld, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.cu, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.cc, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.cd, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.ru, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.rc, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.rd, 5)
+            if self.debug:
+                pygame.draw.circle(self.schermo, [255, 0, 0], self.lu, 5)
+                pygame.draw.circle(self.schermo, [255, 0, 0], self.lc, 5)
+                pygame.draw.circle(self.schermo, [255, 0, 0], self.ld, 5)
+                pygame.draw.circle(self.schermo, [255, 0, 0], self.cu, 5)
+                pygame.draw.circle(self.schermo, [255, 0, 0], self.cc, 5)
+                pygame.draw.circle(self.schermo, [255, 0, 0], self.cd, 5)
+                pygame.draw.circle(self.schermo, [255, 0, 0], self.ru, 5)
+                pygame.draw.circle(self.schermo, [255, 0, 0], self.rc, 5)
+                pygame.draw.circle(self.schermo, [255, 0, 0], self.rd, 5)
 
 
     def eventami(self, events, logica: 'Logica'):
@@ -1812,6 +1950,14 @@ class DropMenu(BaseElement):
                 self.update_scroll(-1)
 
         [ele.eventami(events, logica) for index, ele in self.elements.items()]
+
+        self.hide_elements()
+
+
+    def hide_elements(self):
+        
+        for index, element in self.elements.items():
+            element.hide = self.hide
 
     
     def add_element(self, id: str, element: Label_Text):
@@ -1833,7 +1979,10 @@ class DropMenu(BaseElement):
         except TypeError:
             componente1 = None
         try:
-            componente2 = info[2] * self._init_coords[2] / 100
+            if type(info[2]) == str:
+                componente2 = info[2]
+            else:
+                componente2 = info[2] * self._init_coords[2] / 100
         except TypeError:
             componente2 = None
         try:
@@ -1882,6 +2031,10 @@ class DropMenu(BaseElement):
     def get_y_top_side(self):
         return self._init_coords[1] * self.pappardella["y_screen"] / 100
     
+
+    def add_separator(self, y):
+        self.separators.append(y)
+
 
 
 class Screen(BaseElement):

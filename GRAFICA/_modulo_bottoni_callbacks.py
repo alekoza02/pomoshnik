@@ -6,3 +6,7 @@ if NON_ESEGUIRE:
 class BottoniCallbacks:
     def print_hello(bottone: 'Bottone_Push'):
         bottone.testo = "/green{Cliccato!}"
+
+
+    def exit(bottone: 'Bottone_Push'):
+        exit()

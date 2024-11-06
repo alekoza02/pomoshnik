@@ -17,7 +17,6 @@ def main():
         app.end_cycle()
 
 
-
 if __name__ == "__main__":
 
     main()

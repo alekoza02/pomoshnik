@@ -88,6 +88,7 @@ UNDONE:
 ---
 - Labels
     - Centering of the label
+    - Vertical writing (japanase style)
     - Custom offset
     - Custom font
     - Size

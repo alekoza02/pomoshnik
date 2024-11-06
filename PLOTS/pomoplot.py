@@ -4,7 +4,7 @@ NON_ESEGUIRE = False
 
 if NON_ESEGUIRE:    
     from GRAFICA._modulo_UI import Logica, UI
-    from GRAFICA._modulo_elementi_grafici import Label_Text, Screen, Entrata
+    from GRAFICA._modulo_elementi_grafici import Label_Text, Screen, Entrata, Bottone_Toggle
 
 
 class PomoPlot:
@@ -14,8 +14,9 @@ class PomoPlot:
         # ------------------------------------------------------------------------------
         # ZONA GEOMETRIA
         # ------------------------------------------------------------------------------
-        self.plots: list[_Single1DPlot] = [_Single1DPlot(i) for i in ["fase0", "fase1", "fase2", "fase3"]]
-        
+        # self.plots: list[_Single1DPlot] = [_Single1DPlot(i) for i in ["fase0", "fase1", "fase2", "fase3"]]
+        self.plots: list[_Single1DPlot] = []
+
         # ricerca il quadrato più grande disponibile all'interno dello schermo
         self.force_screen: bool = True
         # crea le coordinate di quest'area
@@ -63,9 +64,7 @@ class PomoPlot:
         self.min_ticks = 3
         self.max_ticks = 8
         self.nice_values = [1, 2, 2.5, 5, 10]
-        self.round_ticks_x: int = 1
-        self.round_ticks_y: int = 1
-
+        
         # contiene Title, label X, label Y, label 2Y, Legenda
         self.labels: list['Label_Text'] = [None, None, None, None, None]
 
@@ -87,13 +86,19 @@ class PomoPlot:
         self.labels[1] = UI.costruttore.scene["main"].label["label_x"]
         self.labels[2] = UI.costruttore.scene["main"].label["label_y"]
 
-        self.font_size_title: 'Entrata' = UI.costruttore.scene["main"].drop_menu["main"].elements["font_size_title"]
-        self.font_size_label_x: 'Entrata' = UI.costruttore.scene["main"].drop_menu["main"].elements["font_size_label_x"]
-        self.font_size_label_y: 'Entrata' = UI.costruttore.scene["main"].drop_menu["main"].elements["font_size_label_y"]
+        self.font_size_title: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["font_size_title"]
+        self.font_size_label_x: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["font_size_label_x"]
+        self.font_size_label_y: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["font_size_label_y"]
         
-        self.text_title: 'Entrata' = UI.costruttore.scene["main"].drop_menu["main"].elements["text_title"]
-        self.text_label_x: 'Entrata' = UI.costruttore.scene["main"].drop_menu["main"].elements["text_label_x"]
-        self.text_label_y: 'Entrata' = UI.costruttore.scene["main"].drop_menu["main"].elements["text_label_y"]
+        self.text_title: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["text_title"]
+        self.text_label_x: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["text_label_x"]
+        self.text_label_y: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["text_label_y"]
+
+        self.round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item4"].elements["round_x"]
+        self.round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item4"].elements["round_y"]
+        
+        self.formatting_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item4"].elements["formatting_x"]
+        self.formatting_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item4"].elements["formatting_y"]
 
 
     def update(self):
@@ -115,7 +120,7 @@ class PomoPlot:
         new_dim_title = self.font_size_title.get_text()
         new_dim_x = self.font_size_label_x.get_text()
         new_dim_y = self.font_size_label_y.get_text()
-
+        
         if float(new_dim_title) != self.labels[0].font_size:
             self.labels[0].change_font_size(float(new_dim_title))
         if float(new_dim_x) != self.labels[1].font_size:
@@ -152,21 +157,24 @@ class PomoPlot:
 
         coords = self._get_plot_area_coord()
 
+        formattatore_x = "e" if self.formatting_x.state_toggle else "f"
+        formattatore_y = "e" if self.formatting_y.state_toggle else "f"
+
         if self.ticks_type:
 
             for index, coord in enumerate(self.coords_of_ticks[0]):
                 self.screen._add_line([[coord, coords[3]], [coord, coords[1]]], [100, 100, 100])
-                self.screen._add_line([[coord, coords[3]], [coord, coords[3] + self.pixel_len_subdivisions]], self.color_y_axis)
+                self.screen._add_line([[coord, coords[3]], [coord, coords[3] + self.pixel_len_subdivisions]], self.color_y_axis, 4)
 
                 # disegno il valore corrispondente
-                self.screen._add_text(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x}{self.formatting_x}}", [coord, coords[3] + self.offset_y_label + self.offset_y_tick_value], anchor="cc")
+                self.screen._add_text(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x.get_text()}{formattatore_x}}", [coord, coords[3] + self.offset_y_label + self.offset_y_tick_value], anchor="cc", size=1.5)
                 
             for index, coord in enumerate(self.coords_of_ticks[1]):
                 self.screen._add_line([[coords[0], coord], [coords[2], coord]], [100, 100, 100])
-                self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions, coord]], self.color_y_axis)
+                self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions, coord]], self.color_y_axis, 4)
 
                 # disegno il valore corrispondente
-                self.screen._add_text(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y}{self.formatting_y}}", [coords[0] - self.offset_x_label - self.offset_y_tick_value, coord], anchor="rc")
+                self.screen._add_text(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y.get_text()}{formattatore_y}}", [coords[0] - self.offset_x_label - self.offset_y_tick_value, coord], anchor="rc", size=1.5)
 
 
         else:
@@ -232,12 +240,12 @@ class PomoPlot:
         coords = self._get_plot_area_coord()
 
         if self.draw_bounding_box:
-            self.screen._add_line([[self.max_plot_square[0], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]]], self.color_x_axis, 1)
-            self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1] + self.max_plot_square[3]]], self.color_x_axis, 1)
+            self.screen._add_line([[self.max_plot_square[0], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]]], self.color_x_axis, 4)
+            self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1] + self.max_plot_square[3]]], self.color_x_axis, 4)
 
         # si posizione sull'area del plot e setta un offset pari a self.offset_x_label o self.offset_y_label
-        self.screen._add_line([[coords[0] - self.offset_x_label, coords[1]], [coords[0] - self.offset_x_label, coords[3]]], self.color_y_axis)
-        self.screen._add_line([[coords[0], coords[3] + self.offset_y_label], [coords[2], coords[3] + self.offset_y_label]], self.color_x_axis)
+        self.screen._add_line([[coords[0] - self.offset_x_label, coords[1]], [coords[0] - self.offset_x_label, coords[3]]], self.color_y_axis, 4)
+        self.screen._add_line([[coords[0], coords[3] + self.offset_y_label], [coords[2], coords[3] + self.offset_y_label]], self.color_x_axis, 4)
     
                     
     def _disegna_dati(self):
@@ -246,8 +254,8 @@ class PomoPlot:
 
         for plot in self.plots:
             # disegno i dati
-            self.screen._add_points(plot.data2plot, plot.scatter_color, plot.scatter_width)
-            self.screen._add_lines(plot.data2plot, plot.function_color, plot.function_width)
+            self.screen._add_lines(plot.data2plot[:, :2], plot.function_color, plot.function_width)
+            self.screen._add_points(plot.data2plot[:, :2], plot.scatter_color, plot.scatter_width)
 
 
     def _disegna_bg(self):
@@ -508,31 +516,108 @@ class PomoPlot:
         self.spazio_coordinate_native[3] -= self.spazio_coordinate_native[1]
 
 
-class _Single1DPlot:
-    def __init__(self, mode: str):
-        self.data: np.ndarray[float] = np.array([[x - 100, np.pi * 10 * (x - 100) / 100] for x in range(201)], dtype=np.float64)
+    def import_plot_data(self, path: str, divisore: str = None) -> None:
+        """Importa un tipo di file e genera un plot con le X, Y e gli errori sulle Y (raccoglie rispettivamente le prime 3 colonne)
+
+        Parameters
+        ----------
+        path : str
+            Path al singolo file
+        divisore : str, optional
+            Divisore delle colonne all'interno del file. Se non specificato, lo cerca di ricavare in autonomia, by default None
+        """
+        self.data_path = path
+        self.divisore = divisore
         
-        match mode:
-            case "fase0":
-                self.data[:, 1] = (self.data[:, 1] / 10) ** 2 * np.sin(self.data[:, 1] + 0 * np.pi / 4)
-                self.scatter_color = [255, 0, 0]
-                self.function_color = [224, 0, 0]
-            case "fase1":
-                self.data[:, 1] = (self.data[:, 1] / 10) ** 2 * np.sin(self.data[:, 1] + 1 * np.pi / 4)
-                self.scatter_color = [255, 64, 64]
-                self.function_color = [224, 32, 32]
-            case "fase2":
-                self.data[:, 1] = (self.data[:, 1] / 10) ** 2 * np.sin(self.data[:, 1] + 2 * np.pi / 4)
-                self.scatter_color = [255, 128, 128]
-                self.function_color = [224, 94, 94]
-            case "fase3":
-                self.data[:, 1] = (self.data[:, 1] / 10) ** 2 * np.sin(self.data[:, 1] + 3 * np.pi / 4)
-                self.scatter_color = [255, 192, 192]
-                self.function_color = [224, 160, 160]
+        # SUPPORTO .CSV
+        if self.data_path.endswith(".csv"): self.divisore = ","
+
+        # estrazione data
+        with open(self.data_path, 'r') as file:
+            data = [line for line in file]
+
+        # SUPPORTO FORMATO HEX utf-16-le
+        if data[0].startswith(r"ÿþ"): 
+            import codecs
+            with codecs.open(self.data_path, 'r', encoding='utf-16-le') as file:
+                data = [line.strip() for line in file]
+
+        data = [i.split(self.divisore) for i in data]
+
+        # controllo dati indesiderati
+        for coordinate in data:
+            if "\n" in coordinate:
+                coordinate.remove("\n")
+    
+        # controllo tipologia float dei dati, se non è un float lo carico nel metadata
+        metadata_str = ""
+        counter_non_metadata = 0
+        counter_domanda = True
+
+        for coordinate in data[::-1]:
+            for elemento in coordinate:
+                try:
+                    float(elemento)
+                    if counter_domanda:
+                        counter_non_metadata += 1
+                        if counter_non_metadata > 3:
+                            counter_non_metadata = 0
+                            counter_domanda = False
+                            metadata_str += f"...\n"
+
+                except ValueError:
+                    data.remove(coordinate)
+                    for _ in coordinate:
+                        metadata_str += f"{_}\t"
+                    metadata_str += f"\n"
+                    counter_domanda = True
+                    break
+    
+        metadata_str += "Metadata / Non converted lines:\n"
+
+        # reverse metadata
+        metadata_lst = [f"{i}\n" if f"{i[-1:]}" != "\n" else f"{i}" for i in metadata_str.split("\n")][::-1]
+        
+        # remove "\n" and "\t\n"
+        for _ in range(metadata_lst.count("\n")):
+            metadata_lst.remove("\n")
+        for _ in range(metadata_lst.count("\t\n")):
+            metadata_lst.remove("\t\n")
+
+        # controllo presenza dati None 
+        data = [i for i in data if i]
+    
+        try:
+            # CONVERSIONE ARRAY DI FLOATS
+            if len(data[0]) != len(data[1]): data.pop(0)
+            data = np.array(data).astype(float)    
             
+            nome = path.split('\\')[-1]
+            
+            # test ordinamento x
+            indici = np.argsort(data[:, 0])
+            data = data[indici]
+
+            self.plots.append(_Single1DPlot(nome, data, metadata_lst))
+            
+        except:
+            print(f"Impossibile caricare il file: {path}")
+
+
+class _Single1DPlot:
+    def __init__(self, nome, data, metadata):
+        
+        self.nome = nome
+        self.metadata = metadata
+
+        self.data = data
+
         self.data2plot: np.ndarray[float] = None
 
         self.scatter = True
-        self.scatter_width = 3
+        self.scatter_width = 10
         self.function = True
-        self.function_width = 1
+        self.function_width = 3
+
+        self.scatter_color = [220, 20, 60]
+        self.function_color = [255, 100, 100]

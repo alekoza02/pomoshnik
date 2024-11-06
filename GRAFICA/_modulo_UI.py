@@ -83,7 +83,7 @@ class UI:
 
         self.logica = Logica()
         self.event_manager = EventManager()
-        self.costruttore = Costruttore(self.MAIN, self.w_screen / 2, self.h_screen / 2)
+        self.costruttore = Costruttore(self.MAIN, self.w_screen * 0.9, self.h_screen * 0.9)
 
         self.cpu_sample: list[int] = [0 for i in range(100)]
 
@@ -94,7 +94,7 @@ class UI:
 
 
     def exit_fullscreen(self):
-        self.MAIN = pygame.display.set_mode((self.w_screen / 2, self.h_screen / 2), pygame.RESIZABLE)
+        self.MAIN = pygame.display.set_mode((self.w_screen * 0.9, self.h_screen * 0.9), pygame.RESIZABLE)
         self.fullscreen = False
 
     
@@ -109,10 +109,10 @@ class UI:
         self.w_screen: int = int(screen_info.current_w * scale_factor)
         self.h_screen: int = int(screen_info.current_h * scale_factor)
 
-        self.w, self.h = self.w_screen / 2, self.h_screen / 2
+        self.w, self.h = self.w_screen * 0.9, self.h_screen * 0.9
 
         # generazione finestra
-        self.MAIN = pygame.display.set_mode((self.w_screen / 2, self.h_screen / 2), pygame.RESIZABLE)
+        self.MAIN = pygame.display.set_mode((self.w_screen * 0.9, self.h_screen * 0.9), pygame.RESIZABLE)
 
 
     def update_screen_data(self):
