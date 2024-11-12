@@ -3,6 +3,7 @@ from numpy import array
 from MATEMATICA._modulo_mate_utils import MateUtils
 import pyperclip
 import os
+from time import perf_counter
 
 NON_ESEGUIRE = False
 
@@ -35,7 +36,7 @@ class BaseElement:
 
     pappardella = None
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24, font_mode="auto", mantain_aspect_ratio=True, color_text=[200, 200, 200], latex_font=False) -> None:
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24, font_mode="auto", mantain_aspect_ratio=True, color_text=[200, 200, 200], latex_font=False, bg=None) -> None:
         
         self.latex_font = latex_font
 
@@ -43,7 +44,11 @@ class BaseElement:
         self.aspect_ratio = mantain_aspect_ratio
 
         self.color_text = color_text
-        self.bg = array(BaseElement.pappardella["bg_def"])
+
+        if bg is None:
+            self.bg = array(BaseElement.pappardella["bg_def"])
+        else:
+            self.bg = bg
 
         self.hide: bool = hide
 
@@ -96,6 +101,7 @@ class BaseElement:
             val2 = f"{float(val2) + float(offset_y)}"
         
         self.recalc_geometry(val1, val2, val3, val4, val5)
+        self.need_update = True
 
 
     def change_font_size(self, value):
@@ -115,7 +121,7 @@ class BaseElement:
         
         if new_h is None or new_w is None:
             new_h = f"{self.font.font_pixel_dim[1]}"
-            new_w = f"{self.len_testo_diplayed * self.font.font_pixel_dim[0]}" 
+            new_w = f"{self.len_testo_diplayed}" 
         
         # new_w         
         if type(new_w) == str:
@@ -151,15 +157,18 @@ class BaseElement:
         if type(new_y) == str: 
             self.original_y = float(new_y)
             self.y: float = offset_y + self.original_y
+            
         elif not new_y is None and not update: 
             self.original_y = BaseElement.pappardella["y_screen"] * new_y / 100
             self.y: float = offset_y + self.original_y
+            
         elif update:
             self.y: float = offset_y + self.original_y
+            
         elif new_y is None:
             self.y: float = offset_y
             self.original_y = offset_y
-
+            
         offset = (0, 0, 0, 0)
         if type(self) == Palette:
             offset = (-100, -100, 200, 200)
@@ -248,6 +257,11 @@ class BaseElement:
 
     def get_perc_value(self, value, ax):
         return 100 * value / BaseElement.pappardella[f"{ax}_screen"]
+    
+
+    def hide_plus_children(self, booleano):
+        self.hide = booleano
+
 
 
 class Label_Text(BaseElement):
@@ -290,16 +304,19 @@ class Label_Text(BaseElement):
                 iteration_lenght = 0
                 for substringa_analizzata in elenco_substringhe:
 
+                    if substringa_analizzata.pedice or substringa_analizzata.apice:
+                        self.font.scala_font(0.5)
+
                     if substringa_analizzata.apice:
-                        offset_highlight = - 0.5
+                        offset_highlight = - 1 / 2
                         offset_usato = offset_orizzontale_apice  
 
                     elif substringa_analizzata.pedice:
-                        offset_highlight = - 0.5
+                        offset_highlight = - 1 / 2                            
                         offset_usato = offset_orizzontale_pedice 
 
                     else:
-                        offset_highlight = - 1 
+                        offset_highlight = - 1
 
                         offset_usato = offset_orizzontale
                         offset_orizzontale_apice = offset_orizzontale
@@ -309,48 +326,43 @@ class Label_Text(BaseElement):
 
                     offset_pedice_apice = original_spacing_y * 0.5 if substringa_analizzata.pedice else - original_spacing_y * 0.1 if substringa_analizzata.apice else 0
 
-                    if substringa_analizzata.pedice or substringa_analizzata.apice:
-                        self.font.scala_font(0.5)
-
-                    if substringa_analizzata.highlight:
+                    if substringa_analizzata.highlight and not self.latex_font:
                         pre_rotation = self.font.font_pyg_r.render("" + "█" * (len(substringa_analizzata.testo)) + "", True, [100, 100, 100])
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        self.schermo.blit(pre_rotation, (self.x + original_spacing_x * ( offset_highlight + offset_usato), self.y + offset_frase + offset_pedice_apice))
+                        self.schermo.blit(pre_rotation, (self.x + original_spacing_x * offset_highlight + offset_usato, self.y + offset_frase + offset_pedice_apice))
 
                     if substringa_analizzata.bold:
                         pre_rotation = self.font.font_pyg_b.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        self.schermo.blit(pre_rotation, (self.x + original_spacing_x * offset_usato, self.y + offset_frase + offset_pedice_apice))
+                        self.schermo.blit(pre_rotation, (self.x + offset_usato, self.y + offset_frase + offset_pedice_apice))
                     elif substringa_analizzata.italic:
                         pre_rotation = self.font.font_pyg_i.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        self.schermo.blit(pre_rotation, (self.x + original_spacing_x * offset_usato, self.y + offset_frase + offset_pedice_apice))
+                        self.schermo.blit(pre_rotation, (self.x + offset_usato, self.y + offset_frase + offset_pedice_apice))
                     else:
                         pre_rotation = self.font.font_pyg_r.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        self.schermo.blit(pre_rotation, (self.x + original_spacing_x * offset_usato, self.y + offset_frase + offset_pedice_apice))
+                        self.schermo.blit(pre_rotation, (self.x + offset_usato, self.y + offset_frase + offset_pedice_apice))
                     
+
+                    font_usato = self.font.font_pyg_i if substringa_analizzata.italic else (self.font.font_pyg_b if substringa_analizzata.bold else self.font.font_pyg_r)
+                    
+                    if substringa_analizzata.apice: offset_orizzontale_apice += substringa_analizzata.end(font_usato)
+                    elif substringa_analizzata.pedice: offset_orizzontale_pedice += substringa_analizzata.end(font_usato)
+                    else:
+                        offset_orizzontale_apice += substringa_analizzata.end(font_usato)
+                        offset_orizzontale_pedice += substringa_analizzata.end(font_usato)
+
                     if substringa_analizzata.pedice or substringa_analizzata.apice:
                         self.font.scala_font(2)
 
-                    
-                    if substringa_analizzata.apice: offset_orizzontale_apice += substringa_analizzata.end
-                    elif substringa_analizzata.pedice: offset_orizzontale_pedice += substringa_analizzata.end
-                    else:
-                        offset_orizzontale_apice += substringa_analizzata.end
-                        offset_orizzontale_pedice += substringa_analizzata.end
-
                     offset_orizzontale = max(offset_orizzontale_apice, offset_orizzontale_pedice)
 
-                    if substringa_analizzata.pedice or substringa_analizzata.apice:
-                        iteration_lenght += len(substringa_analizzata.testo) / 2    
-                    else:
-                        iteration_lenght += len(substringa_analizzata.testo)    
-
+                    iteration_lenght += substringa_analizzata.end(font_usato)
 
                 self.len_testo_diplayed = max(self.len_testo_diplayed, iteration_lenght)
 
@@ -388,10 +400,14 @@ class Bottone_Push(BaseElement):
         self.contorno = 2
 
         self.callback = function
+        self.flag_foo = False
 
         if self.callback is None:
-            def Fuffa(): ...
+            def Fuffa(self): ...
             self.callback = Fuffa
+
+        # SUPPORTO PATHS
+        self.paths: list[str] = []
 
         self.animazione = Animazione(100, "once")
         self.hover = False
@@ -457,12 +473,12 @@ class Bottone_Push(BaseElement):
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
 
-        if not self.hide or not self.disable:
+        if self.hide == False or self.disable == False:
 
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if self.bounding_box.collidepoint(event.pos):
-                        self.callback()
+                        self.callback(self)
                         self.animazione.riavvia()
 
             self.hover = True if self.bounding_box.collidepoint(logica.mouse_pos) else False
@@ -508,7 +524,12 @@ class Bottone_Push(BaseElement):
         self.label_title.update_window_change()
 
 
+    def hide_plus_children(self, booleano):
+        super().hide_plus_children(booleano)
+        self.disable = booleano
 
+
+        
 class Bottone_Toggle(BaseElement):
     def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, state=False, type_checkbox=True, text="", hide=False, disable=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, text_on_right=True) -> None:
         super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
@@ -1126,6 +1147,10 @@ class Entrata(BaseElement):
 
                                 self.puntatore_pos += 1
 
+                        else:
+                            reset_animation = True
+                            self.highlight_region = [0, 0]
+
 
             if logica.backspace:
                 logica.acc_backspace += logica.dt
@@ -1256,7 +1281,7 @@ class Entrata(BaseElement):
 class Scroll(BaseElement):
     def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="Scroll console...", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:
         super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
-        
+
         self.label_title = Label_Text(anchor=("lu", "lu", self, 10, 10), w=w, h=f"40", text=text, hide=hide, font_mode=font_mode, font_size=font_size)
         self.color_text_selected = (40, 100, 40)
 
@@ -1266,7 +1291,7 @@ class Scroll(BaseElement):
 
         self.no_dragging_animation = False
 
-        self.elementi = [i for i in range(100)]
+        self.elementi = []
         self.ele_mask = [False for _ in range(len(self.elementi))]
         self.ele_selected_index = 0
         self.ele_first = 0
@@ -1287,12 +1312,30 @@ class Scroll(BaseElement):
         self.animazione_puntatore = Animazione(1000, "loop")
         self.animazione_puntatore.attiva = True
 
-        self.bounding_box = pygame.Rect(self.x + self.offset_grafico_testo, self.y, self.w - self.offset_grafico_testo, self.h)
+        # self.bounding_box = pygame.Rect(self.x + self.offset_grafico_testo, self.y, self.w - self.offset_grafico_testo, self.h)
+        self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
         
+
+    def add_element_scroll(self, element: str, stato: bool):
+        self.elementi.append(element)
+        self.ele_mask.append(stato)
+
+
+    def remove_selected_item(self):
+        if len(self.elementi) > 0:
+            self.elementi.pop(self.ele_selected_index)
+            self.ele_mask.pop(self.ele_selected_index)
+            if self.ele_selected_index == len(self.elementi) and self.ele_selected_index > 0:
+                self.ele_selected_index -= 1
+
+                if self.elemento_attivo < 0:
+                    self.ele_first -= 1
+
 
     @property
     def elemento_attivo(self):
-        return self.selected + self.first_element
+        elemento = self.ele_selected_index - self.ele_first
+        return elemento
 
 
     def disegnami(self, logica: 'Logica'):
@@ -1316,7 +1359,9 @@ class Scroll(BaseElement):
                     colore_var2 = colore_bg + 20
                     colore = colore_var1 if chunck % 2 == 0 else colore_var2
 
-                pygame.draw.rect(self.schermo, colore, [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * chunck, self.w - self.offset_grafico_testo, alt_font], 0, 5)
+                if self.ele_first + chunck < len(self.elementi):
+                    pygame.draw.rect(self.schermo, colore, [self.x + self.offset_grafico_testo, (self.y + alt_font * 2) + alt_font * chunck, self.w - self.offset_grafico_testo, alt_font], 0, 5)
+                
         
 
             # creazione elementi (testo)
@@ -1362,16 +1407,13 @@ class Scroll(BaseElement):
             [bottone.eventami(events, logica) for bottone in self.ele_toggle]
 
             # nascondo le toggle box che non corrispondono a nessun elemento (fine corsa)
-            try:
-                for i in range(self.ele_max):
-                    if self.ele_first + i < len(self.elementi):
-                        self.ele_toggle[i].hide = False
-                        self.ele_mask[self.ele_first + i] = self.ele_toggle[i].state_toggle
-                    elif self.ele_first + i >= len(self.elementi):
-                        self.ele_toggle[i].hide = True
-            except:
-                print("Fail")                    
-
+            for i in range(self.ele_max):
+                if self.ele_first + i < len(self.elementi):
+                    self.ele_toggle[i].hide = False
+                    self.ele_mask[self.ele_first + i] = self.ele_toggle[i].state_toggle
+                elif self.ele_first + i >= len(self.elementi):
+                    self.ele_toggle[i].hide = True
+            
 
             if self.bounding_box.collidepoint(logica.mouse_pos):
 
@@ -1459,65 +1501,110 @@ class Scroll(BaseElement):
 
     def update_window_change(self, offset_x=None, offset_y=None):
         super().update_window_change(offset_x, offset_y)
-        [ele.update_window_change() for ele in self.ele_toggle]
         self.label_title.update_window_change()
+
+        self.ele_max = int((self.h - self.label_title.font.font_pixel_dim[1] * 2) // self.label_title.font.font_pixel_dim[1])
+
+        status_toggle = self.ele_mask + [False for _ in range(self.ele_max - len(self.ele_mask))]
+
+        self.ele_toggle = [Bottone_Toggle(anchor=("lu", "lu", self, self.w * 0.01, self.label_title.font.font_pixel_dim[1] * (i + 2)), w=f"{self.label_title.font.font_pixel_dim[1]}", h=f"{self.label_title.font.font_pixel_dim[1]}", state=stato, text="", font_mode=self.font_mode, font_size=self.font_size) for i, stato in zip(range(self.ele_max), status_toggle)]
+
+        for ele in self.ele_toggle:
+            ele.bg += array([10, 10, 10])
 
 
 class ColorPicker(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, initial_color=[200, 200, 200], text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
+    def __init__(self, palette, id, x=0, y=0, anchor="lu", w=None, h=None, initial_color=[200, 200, 200], text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, bg=None) -> None:
         
-        self.opener = Bottone_Push(x, y, anchor, w, h, self.apri_picker, hide=hide, font_mode=font_mode, font_size=font_size)
+        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
+
+        self.label_title = Label_Text(anchor=("lc", "rc", self, + 10 + self.w / 2, 0), text=text, hide=hide, font_mode=font_mode, font_size=font_size)
+
+        self.opener = Bottone_Push(anchor=("cc", "cc", self, 0, 0), w=w, h=h, function=self.apri_picker, hide=hide, font_mode=font_mode, font_size=font_size)
         self.opener.suppress_animation = True
         self.opener.contorno = 0
+        self.opener.bg = initial_color
+
+        self.update_mouse_position = False
+
+        self.id = id
 
         self.title = text
         
-        self.palette = Palette(x, y, "cd", initial_color=initial_color, font_mode=font_mode, font_size=font_size)
+        self.palette: Palette = palette
         self.picked_color = initial_color
 
     
+    def set_color(self, color):
+        self.picked_color = color
+        self.opener.bg = color
+
+
     def disegnami(self, logica):
+        self.label_title.disegnami(logica)
         self.opener.disegnami(logica)
-        self.palette.disegnami(logica)
-    
 
-    def eventami(self, events, logica):
-        self.opener.eventami(events, logica)
-        self.palette.eventami(logica, events)
 
-        if not self.palette.toggle:
-            self.opener.bg = array(self.palette.colore_scelto) * self.palette.intensity
-            self.picked_color = array(self.palette.colore_scelto) * self.palette.intensity
+    def eventami(self, events, logica: 'Logica'):
 
-    
-    def apri_picker(self):
+        if not self.hide:
+
+            self.opener.eventami(events, logica)
+
+            if self.palette.aggiorna_colore and self.id == self.palette.chosen_id:
+                self.opener.bg = array(self.palette.colore_scelto) * self.palette.intensity
+                self.set_color(array(self.palette.colore_scelto) * self.palette.intensity)
+
+            if self.update_mouse_position:
+                logica.mouse_pos = (self.palette.x + self.palette.w / 2, self.palette.y + self.palette.h / 2)
+                self.update_mouse_position = False
+
+            return self.palette.toggle
+
+
+    def apri_picker(self, __useless):
+        pygame.mouse.set_pos(self.palette.x + self.palette.w / 2, self.palette.y + self.palette.h / 2)
+        self.update_mouse_position = True
+        self.palette.colore_scelto = self.picked_color
+        self.palette.intensity = 1
         self.palette.toggle = False if self.palette.toggle else True
+        self.palette.chosen_id = self.id
+
+
+    def hide_plus_children(self, booleano):
+        super().hide_plus_children(booleano)
+        self.label_title.hide_plus_children(booleano)
+        self.opener.hide_plus_children(booleano)
+        self.palette.hide_plus_children(booleano)
 
     
     def get_color(self):
         return self.picked_color
-    
 
-    def update_window_change(self):
+
+    def update_window_change(self, offset_x=None, offset_y=None):
+        super().update_window_change(offset_x, offset_y)
+        self.label_title.update_window_change()
         self.opener.update_window_change()
         self.palette.update_window_change()
 
 
-
 class Palette(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=20, h=20, initial_color=[200, 200, 200], font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:
-        super().__init__(x, y, anchor, w, h, "", False, font_size, font_mode, mantain_aspect_ratio)
+    def __init__(self, x=50, y=50, anchor="cc", w=40, h=40, initial_color=[200, 200, 200], font_mode="auto", font_size=24, mantain_aspect_ratio=False, bg=None) -> None:
+
+        super().__init__(x, y, anchor, w, h, "", False, font_size, font_mode, mantain_aspect_ratio, bg=bg)
 
         self.colore_scelto = initial_color
+        self.aggiorna_colore = False
         self.intensity = 1
         self.update_color_value = False
 
+        self.chosen_id = ""
         self.toggle = False
 
         ###### generazione colori ###### 
         def generate_color_function(color):
-            def return_selected_color():
+            def return_selected_color(__useless):
                 self.colore_scelto = array(color)
                 self.update_color_value = True
             return return_selected_color
@@ -1543,6 +1630,7 @@ class Palette(BaseElement):
 
 
         self.colori_bottoni: list[Bottone_Push] = []
+
         for y in range(9):
             for x in range(11):    
                 
@@ -1554,10 +1642,9 @@ class Palette(BaseElement):
                 else:
                     anchor = ("lu", "ru", self.colori_bottoni[-1], -1, 0)
 
-                ele_iter = Bottone_Push(anchor=anchor, w=1.2, h=1.7, function=color_functions[y * 11 + x], font_mode=font_mode, font_size=font_size)
+                ele_iter = Bottone_Push(anchor=anchor, w=2.4, h=2, function=color_functions[y * 11 + x], font_mode=font_mode, font_size=font_size)
                 self.colori_bottoni.append(ele_iter)
             
-
         for bottone, colore in zip(self.colori_bottoni, colori):
             bottone.original_color = array(colore)
             bottone.suppress_animation = True
@@ -1566,7 +1653,7 @@ class Palette(BaseElement):
 
         ###### generazione intensità ###### 
         def generate_intens_function(intensity):
-            def return_selected_intensity():
+            def return_selected_intensity(__useless):
                 self.intensity = intensity
                 self.update_color_value = True
             return return_selected_intensity
@@ -1581,7 +1668,7 @@ class Palette(BaseElement):
     
             anchor = ("lu", "ru", self.colori_bottoni[y * 11 + 10], self.w / 12, 0)
 
-            ele_iter = Bottone_Push(anchor=anchor, w=1.2, h=1.7, function=intensities_functions[y], font_mode=font_mode, font_size=font_size)
+            ele_iter = Bottone_Push(anchor=anchor, w=2.4, h=2, function=intensities_functions[y], font_mode=font_mode, font_size=font_size)
             self.intens_bottoni.append(ele_iter)
     
 
@@ -1592,7 +1679,7 @@ class Palette(BaseElement):
             bottone.smussatura = 0
 
         ###### generazione preview ###### 
-        self.preview_button = Bottone_Push(anchor=("ru", "ru", self, 0, 0), w=3, h=9 * 1.6, disable=True, font_mode=font_mode, font_size=font_size)
+        self.preview_button = Bottone_Push(anchor=("ru", "ru", self, 0, 0), w=5, h=9 * 1.9, disable=True, font_mode=font_mode, font_size=font_size)
         self.preview_button.contorno = 0
 
         ###### generazione entrate ###### 
@@ -1604,7 +1691,7 @@ class Palette(BaseElement):
             else:
                 anchor = ("lu", "ru", self.RGB_inputs[-1], 5, 0)
 
-            ele_iter = Entrata(anchor=anchor, w=20/6, h="30", text=f"{self.colore_scelto[y]}", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255, font_mode=font_mode, font_size=font_size)
+            ele_iter = Entrata(anchor=anchor, w=20/6, h="30", text=f"{self.colore_scelto[y]}", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255, font_mode=font_mode, font_size=font_size, title="")
             self.RGB_inputs.append(ele_iter)
         
         for index, entrata in enumerate(self.RGB_inputs):
@@ -1612,14 +1699,15 @@ class Palette(BaseElement):
             entrata.bg[index] = 180
 
         self.HEX_input: Entrata = Entrata(anchor=("rd", "rd", self, -10, -self.h / 12), w=20/3, h="30",
-                                 text=f"{MateUtils.rgb2hex(self.colore_scelto)}", 
+                                 text=f"{MateUtils.rgb2hex(self.colore_scelto)}", title="", 
                                  lunghezza_max=6, is_hex=True, font_mode=font_mode, font_size=font_size)
         self.HEX_input.bg = array([60, 60, 60])
 
-
+        
     def disegnami(self, logica):
 
         if self.toggle:
+            pygame.draw.rect(self.schermo, [200, 200, 200], [self.x - 2, self.y - 2, self.w + 4, self.h + 4], 0, 5)
             pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
 
             for bottone in self.colori_bottoni:
@@ -1636,10 +1724,15 @@ class Palette(BaseElement):
 
 
     def eventami(self, logica: 'Logica', events):
+    
+        stato_prima = self.toggle
 
-        if not self.bounding_box.collidepoint(logica.mouse_pos): self.toggle = False
+        if not self.bounding_box.collidepoint(logica.mouse_pos): 
+            self.toggle = False
+            
         for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: self.toggle = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: 
+                self.toggle = False
                         
         if self.toggle:
             if self.update_color_value:
@@ -1669,6 +1762,11 @@ class Palette(BaseElement):
                 for colore, entrata in zip(self.colore_scelto, self.RGB_inputs):
                     entrata.change_text(f"{colore}")
 
+        if self.toggle != stato_prima:
+            self.aggiorna_colore = True
+        else:
+            self.aggiorna_colore = False
+
     
     def update_window_change(self, offset_x=None, offset_y=None):
         super().update_window_change(offset_x, offset_y)
@@ -1693,12 +1791,9 @@ class SubStringa:
         self.testo: str = testo
 
 
-    @property
-    def end(self):
-        lung = len(self.testo)
-        if self.apice or self.pedice:
-            lung *= 0.5
-        return lung 
+    def end(self, font:pygame.font.Font):
+        lung = font.size(self.testo)
+        return lung[0] 
 
 
     @staticmethod
@@ -1866,16 +1961,18 @@ class Font:
         self.dim_font = self.original 
 
         if self.latex_font:        
-            path_r = os.path.join('TEXTURES', 'century_r.otf')
-            path_b = os.path.join('TEXTURES', 'century_b.otf')
-            path_i = os.path.join('TEXTURES', 'century_i.otf')
+            path_r = os.path.join('TEXTURES', 'century_r.TTF')
+            path_b = os.path.join('TEXTURES', 'century_b.TTF')
+            path_i = os.path.join('TEXTURES', 'century_i.TTF')
         else:
             path_r = os.path.join('TEXTURES', 'font_r.ttf')
             path_b = os.path.join('TEXTURES', 'font_b.ttf')
             path_i = os.path.join('TEXTURES', 'font_i.ttf')
+        
         self.font_pyg_r = pygame.font.Font(path_r, self.dim_font)
         self.font_pyg_i = pygame.font.Font(path_i, self.dim_font)
         self.font_pyg_b = pygame.font.Font(path_b, self.dim_font)
+
         self.font_pixel_dim = self.font_pyg_r.size("a")
 
 
@@ -1888,16 +1985,18 @@ class Font:
             self.dim_font *= moltiplicatore 
     
         if self.latex_font:    
-            path_r = os.path.join('TEXTURES', 'century_r.otf')
-            path_b = os.path.join('TEXTURES', 'century_b.otf')
-            path_i = os.path.join('TEXTURES', 'century_i.otf')
+            path_r = os.path.join('TEXTURES', 'century_r.TTF')
+            path_b = os.path.join('TEXTURES', 'century_b.TTF')
+            path_i = os.path.join('TEXTURES', 'century_i.TTF')
         else:
             path_r = os.path.join('TEXTURES', 'font_r.ttf')
             path_b = os.path.join('TEXTURES', 'font_b.ttf')
             path_i = os.path.join('TEXTURES', 'font_i.ttf')
+        
         self.font_pyg_r = pygame.font.Font(path_r, round(self.dim_font))
         self.font_pyg_i = pygame.font.Font(path_i, round(self.dim_font))
         self.font_pyg_b = pygame.font.Font(path_b, round(self.dim_font))
+
         self.font_pixel_dim = self.font_pyg_r.size("a")
 
 
@@ -1905,6 +2004,8 @@ class Font:
 class DropMenu(BaseElement):
     def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=False, separator_size=2) -> None:
         super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
+
+        self.inizializzato = False
 
         self.progression = 0
         self.max_progression = 0
@@ -1921,7 +2022,8 @@ class DropMenu(BaseElement):
         if not self.hide:
             pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
 
-            [ele.disegnami(logica) for index, ele in self.elements.items()]
+            [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
+            [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) == ColorPicker]
 
             for sep in self.separators:
                 pygame.draw.line(self.schermo, [60, 60, 60], [self.x + self.w * 0.01, sep], [self.x + self.w * 0.99, sep], self.separator_size)
@@ -1949,15 +2051,24 @@ class DropMenu(BaseElement):
                 self.progression += 1            
                 self.update_scroll(-1)
 
-        [ele.eventami(events, logica) for index, ele in self.elements.items()]
-
+        [ele.eventami(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
+        
         self.hide_elements()
+
+        for indice, ele in self.elements.items():
+            if type(ele) == ColorPicker:
+                pop_up_domanda_color = ele.eventami(events, logica)
+            
+                if pop_up_domanda_color:
+                    return ele
+        
+        return 0
 
 
     def hide_elements(self):
         
         for index, element in self.elements.items():
-            element.hide = self.hide
+            element.hide_plus_children(self.hide)
 
     
     def add_element(self, id: str, element: Label_Text):
@@ -1968,6 +2079,7 @@ class DropMenu(BaseElement):
         - w: valore percentuale (riferito al dropmenu)
         - h: valore pixel (assoluto)
         """
+
         info = list(element._init_coords)
         
         try:
@@ -1996,7 +2108,6 @@ class DropMenu(BaseElement):
                 
         element._init_coords = (componente0, componente1, componente2, componente3, componente4)
         element.aspect_ratio = True
-        element.update_window_change()
 
         try:
             self.max_progression = max(self.max_progression, float(info[1]) + float(info[3]))
@@ -2004,14 +2115,11 @@ class DropMenu(BaseElement):
             self.max_progression = max(self.max_progression, float(info[1]) + 50)
 
         self.elements[id] = element
-
-        self.update_window_change()
-
-    
+        
     def update_window_change(self, offset_x=None, offset_y=None):
         super().update_window_change(offset_x, offset_y)
         [ele.update_window_change(offset_y=f"{self.get_y_top_side()}") for index, ele in self.elements.items()]
-
+        
 
     def update_scroll(self, pm: int):
         
@@ -2039,8 +2147,8 @@ class DropMenu(BaseElement):
 
 class Screen(BaseElement):
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True):
-        super().__init__(x, y, anchor, w, h, "", hide, font_size, font_mode, mantain_aspect_ratio)
+    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, latex_font=False):
+        super().__init__(x, y, anchor, w, h, "", hide, font_size, font_mode, mantain_aspect_ratio, latex_font=latex_font)
 
         self.tavolozza = pygame.Surface((self.w, self.h))
 

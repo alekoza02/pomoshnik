@@ -180,7 +180,7 @@ class UI:
             self.costruttore.recalc(self.w, self.h)
 
         self.event_manager.event_manage_ui(eventi, self.costruttore.scene["main"], self.logica)
-        self.costruttore.scene["main"].disegna_scena(self.logica)
+        self.costruttore.scene["main"].disegna_scena_inizio_ciclo(self.logica)
         
 
 
@@ -191,6 +191,8 @@ class UI:
         '''
 
         # self.mouse_icon()
+
+        self.costruttore.scene["main"].disegna_scena_fine_ciclo(self.logica)
 
         # aggiornamento
         self.current_fps = self.clock.get_fps()
@@ -271,6 +273,11 @@ class UI:
 
             if battery.percent < 10:
                 self.costruttore.scene["main"].label["battery"].testo = r"\red{" + self.costruttore.scene["main"].label["battery"].testo + "}"
+
+
+    @staticmethod
+    def graceful_quit():
+        pygame.quit()
 
 
     @staticmethod

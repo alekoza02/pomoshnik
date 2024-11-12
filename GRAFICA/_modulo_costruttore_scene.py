@@ -1,8 +1,9 @@
 import pygame
 import os
 from numpy import array
+from time import perf_counter
 
-from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, DropMenu, BaseElement, Screen
+from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, DropMenu, BaseElement, Screen, Palette
 from GRAFICA._modulo_bottoni_callbacks import BottoniCallbacks
 
 NON_ESEGUIRE = False
@@ -64,6 +65,8 @@ class Costruttore:
         self.scene["main"] = Scena()
 
         s = self.scene["main"]
+        
+        s.palette_popup = Palette()
 
         s.label["clock"] = Label_Text(x=100, y=100, anchor="rd", text="." * 22)
         s.label["memory"] = Label_Text(anchor=("rc", "lc", s.label["clock"], -20, 0), text="." * 22)
@@ -75,14 +78,14 @@ class Costruttore:
         
         # ----------------------------------------------------------------------------------------------------
 
-        s.screens["viewport"] = Screen(37.5, 50, "cc", 70, 90, mantain_aspect_ratio=False)
+        s.screens["viewport"] = Screen(37.5, 50, "cc", 70, 90, mantain_aspect_ratio=False, latex_font=True)
 
         s.drop_menu["item1"] = DropMenu(76.5, 5, "lu", 22, 90, "item1", hide=True)
         s.drop_menu["item2"] = DropMenu(76.5, 40, "lu", 22, 55, "item2", hide=True)
         s.drop_menu["item3"] = DropMenu(76.5, 5, "lu", 22, 90, "item3", hide=True)
         s.drop_menu["item4"] = DropMenu(76.5, 5, "lu", 22, 90, "item4", hide=True)
         s.drop_menu["item5"] = DropMenu(76.5, 5, "lu", 22, 90, "item5", hide=True)
-        s.drop_menu["item6"] = DropMenu(76.5, 5, "lu", 22, 90, "item6", hide=True)
+        s.drop_menu["item6"] = DropMenu(76.5, 40, "lu", 22, 55, "item6", hide=True)
         s.drop_menu["item7"] = DropMenu(76.5, 5, "lu", 22, 90, "item7", hide=True)
         s.drop_menu["item8"] = DropMenu(76.5, 5, "lu", 22, 90, "item8", hide=True)
         s.drop_menu["item9"] = DropMenu(76.5, 5, "lu", 22, 90, "item9", hide=True)
@@ -91,29 +94,45 @@ class Costruttore:
 
         # ITEM 1 GEOMETRY ------------------------------------------------
         s.drop_menu["item1"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Geometria}", font_size=28))
+        s.drop_menu["item1"].add_element("w_plot_area", Entrata(75, "120", "lu", 20, "30", text="0.8", title="larghezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        s.drop_menu["item1"].add_element("h_plot_area", Entrata(75, "155", "lu", 20, "30", text="0.8", title="altezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        s.drop_menu["item1"].add_element("x_plot_area", Entrata(75, "205", "lu", 20, "30", text="0.15", title="X plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        s.drop_menu["item1"].add_element("y_plot_area", Entrata(75, "240", "lu", 20, "30", text="0.1", title="Y plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        s.drop_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", 30, "400", "cc", 10, "40", [50, 50, 50], bg=[50, 50, 50], text="Color plot area"))
+        s.drop_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", 30, "450", "cc", 10, "40", [40, 40, 40], bg=[50, 50, 50], text="Color background"))
         # ITEM 1 GEOMETRY ------------------------------------------------
         
         
         # ITEM 2 PLOTS ---------------------------------------------------
-        s.scrolls["item2"] = Scroll(76.5, 5, "lu", 22, 35, "Grafici caricati", mantain_aspect_ratio=False)
         s.drop_menu["item2"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Grafici}", font_size=28))
+        s.drop_menu["item2"].add_element("scatter_size", Entrata(75, "120", "lu", 20, "30", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
+        s.drop_menu["item2"].add_element("function_size", Entrata(75, "155", "lu", 20, "30", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
+
+        s.drop_menu["item2"].add_element("scatter_toggle", Bottone_Toggle(50, "120", "ru", "30", "30", text="Toggle scatter", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
+        s.drop_menu["item2"].add_element("function_toggle", Bottone_Toggle(50, "155", "ru", "30", "30", text="Toggle function", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
+        
+        s.scrolls["elenco_plots"] = Scroll(76.5, 5, "lu", 22, 35, "Grafici caricati", mantain_aspect_ratio=False)
+        
+        s.drop_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", 30, "255", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
+        s.drop_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", 30, "310", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
         # ITEM 2 PLOTS ---------------------------------------------------
 
 
         # ITEM 3 AX LABELS -----------------------------------------------
         s.drop_menu["item3"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Label}", font_size=28))
+        s.drop_menu["item3"].add_element("_title_drop_menu_avanz", Label_Text(50, "680", "cu", text=r"\yellow{Impostazioni avanzate Label}", font_size=28))
         
         s.drop_menu["item3"].add_element("text_title", Entrata(50, "120", "lu", 45, "30", text="Title", title="Title text"))
         s.drop_menu["item3"].add_element("text_label_x", Entrata(50, "170", "lu", 45, "30", text="X axis", title="Label text X"))
         s.drop_menu["item3"].add_element("text_label_y", Entrata(50, "205", "lu", 45, "30", text="Y axis", title="Y"))
         
-        s.drop_menu["item3"].add_element("font_size_title", Entrata(75, "305", "lu", 20, "30", text="24", title="Title font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
-        s.drop_menu["item3"].add_element("font_size_label_x", Entrata(75, "355", "lu", 20, "30", text="24", title="Label font size X", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
-        s.drop_menu["item3"].add_element("font_size_label_y", Entrata(75, "390", "lu", 20, "30", text="24", title="Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
+        s.drop_menu["item3"].add_element("font_size_title", Entrata(75, "305", "lu", 20, "30", text="48", title="Title font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
+        s.drop_menu["item3"].add_element("font_size_label_x", Entrata(75, "355", "lu", 20, "30", text="48", title="Label font size X", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
+        s.drop_menu["item3"].add_element("font_size_label_y", Entrata(75, "390", "lu", 20, "30", text="48", title="Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
+        s.drop_menu["item3"].add_element("label_title_color", ColorPicker(s.palette_popup, "4", 30, "495", "cc", 10, "40", [255, 255, 255], bg=[50, 50, 50], text="Colore titolo"))
+        s.drop_menu["item3"].add_element("label_x_color", ColorPicker(s.palette_popup, "5", 30, "555", "cc", 10, "40", [255, 255, 255], bg=[50, 50, 50], text="Colore label X"))
+        s.drop_menu["item3"].add_element("label_y_color", ColorPicker(s.palette_popup, "6", 30, "605", "cc", 10, "40", [255, 255, 255], bg=[50, 50, 50], text="Colore label Y"))
         
-        s.drop_menu["item3"].add_element("_title_drop_menu_avanz", Label_Text(50, "480", "cu", text=r"\yellow{Impostazioni avanzate Label}", font_size=28))
-        
-        s.drop_menu["item3"].add_element("_title_drop_menu_debug", Label_Text(50, "900", "cu", text=r"\red{Debugging Label}", font_size=28))
         # ITEM 3 AX LABELS -----------------------------------------------
 
         # ITEM 4 AXES ----------------------------------------------------
@@ -122,48 +141,63 @@ class Costruttore:
         s.drop_menu["item4"].add_element("round_x", Entrata(75, "120", "lu", 20, "30", text="2", title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
         s.drop_menu["item4"].add_element("round_y", Entrata(75, "155", "lu", 20, "30", text="2", title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
         
-        s.drop_menu["item4"].add_element("formatting_x", Bottone_Toggle(95, "255", "ru", "30", "30", text="Usa notazione scientifica asse X", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
-        s.drop_menu["item4"].add_element("formatting_y", Bottone_Toggle(95, "290", "ru", "30", "30", text="Usa notazione scientifica asse Y", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+        s.drop_menu["item4"].add_element("show_grid_x", Bottone_Toggle(95, "255", "ru", "30", "30", text="Mostra griglia X", state=True, type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+        s.drop_menu["item4"].add_element("show_grid_y", Bottone_Toggle(95, "290", "ru", "30", "30", text="Mostra griglia Y", state=True, type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+        
+        s.drop_menu["item4"].add_element("formatting_x", Bottone_Toggle(95, "350", "ru", "30", "30", text="Usa notazione scientifica asse X", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+        s.drop_menu["item4"].add_element("formatting_y", Bottone_Toggle(95, "390", "ru", "30", "30", text="Usa notazione scientifica asse Y", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+        
+        s.drop_menu["item4"].add_element("ax_color_x", ColorPicker(s.palette_popup, "7", 30, "505", "cc", 10, "40", [70, 70, 70], bg=[50, 50, 50], text="Colore asse X"))
+        s.drop_menu["item4"].add_element("ax_color_y", ColorPicker(s.palette_popup, "8", 30, "555", "cc", 10, "40", [70, 70, 70], bg=[50, 50, 50], text="Colore asse Y"))
+        s.drop_menu["item4"].add_element("tick_color_x", ColorPicker(s.palette_popup, "9", 30, "620", "cc", 10, "40", [255, 255, 255], bg=[50, 50, 50], text="Colore values X"))
+        s.drop_menu["item4"].add_element("tick_color_y", ColorPicker(s.palette_popup, "10", 30, "670", "cc", 10, "40", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y"))
         # ITEM 4 AXES ----------------------------------------------------
 
 
-        # ITEM 5 PLOTS ---------------------------------------------------
+        # ITEM 5 LEGEND --------------------------------------------------
         s.drop_menu["item5"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Legenda}", font_size=28))
-        # ITEM 5 PLOTS ---------------------------------------------------
+        # ITEM 5 LEGEND --------------------------------------------------
 
 
-        # ITEM 6 PLOTS ---------------------------------------------------
+        # ITEM 6 IMPORT --------------------------------------------------
         s.drop_menu["item6"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Import}", font_size=28))
-        # ITEM 6 PLOTS ---------------------------------------------------
+        
+        s.drop_menu["item6"].add_element("import_single_plot", Bottone_Push(50, "80", "cu", 70, "40", function=self.bott_calls.load_file, text="Carica singolo file"))
+        s.drop_menu["item6"].add_element("import_multip_plot", Bottone_Push(50, "130", "cu", 70, "40", function=self.bott_calls.load_files, text="Carica file multipli"))
+    
+        s.drop_menu["item6"].add_element("remove_element_selected", Bottone_Push(50, "200", "cu", 70, "40", function=self.bott_calls.change_state, text="\\red{Elimina elemento selezionato}"))
+        
+        # ITEM 6 IMPORT --------------------------------------------------
 
 
-        # ITEM 7 PLOTS ---------------------------------------------------
+        # ITEM 7 EXPORT --------------------------------------------------
         s.drop_menu["item7"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Export}", font_size=28))
-        # ITEM 7 PLOTS ---------------------------------------------------
+        # ITEM 7 EXPORT --------------------------------------------------
 
 
-        # ITEM 8 PLOTS ---------------------------------------------------
+        # ITEM 8 STATSISTIC ----------------------------------------------
         s.drop_menu["item8"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Statistica}", font_size=28))
-        # ITEM 8 PLOTS ---------------------------------------------------
+        # ITEM 8 STATSISTIC ----------------------------------------------
 
 
-        # ITEM 9 PLOTS ---------------------------------------------------
+        # ITEM 9 INTERPOLATION -------------------------------------------
         s.drop_menu["item9"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Interpolazioni}", font_size=28))
-        # ITEM 9 PLOTS ---------------------------------------------------
+        # ITEM 9 INTERPOLATION -------------------------------------------
 
 
-        # ITEM 10 PLOTS ---------------------------------------------------
+        # ITEM 10 MULTI-PLOTS --------------------------------------------
         s.drop_menu["item10"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Multi-Plots}", font_size=28))
-        # ITEM 10 PLOTS ---------------------------------------------------
+        # ITEM 10 MULTI-PLOTS --------------------------------------------
 
 
-        # ITEM 11 PLOTS ---------------------------------------------------
+        # ITEM 11 METADATA -----------------------------------------------
         s.drop_menu["item11"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Metadata}", font_size=28))
-        # ITEM 11 PLOTS ---------------------------------------------------
+        # ITEM 11 METADATA -----------------------------------------------
 
-
-
-        s.bottoni_r["modes"] = RadioButton(anchor=("rc", "lc", s.drop_menu["item3"], 0, 0), w="70", h="900", bg=array([35, 35, 35]), axis="y", cb_n=11, cb_s=[False for _ in range(11)], cb_t=["" for _ in range(11)], type_checkbox=False, w_button="70", h_button="70")
+        starting = 5
+        stato_iniziale_tab = [False for _ in range(11)]
+        stato_iniziale_tab[starting] = True        
+        s.bottoni_r["modes"] = RadioButton(anchor=("rc", "lc", s.drop_menu["item3"], 0, 0), w="70", h="900", bg=array([35, 35, 35]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="70", h_button="70")
         [bottone.load_texture(f"item{index + 1}") for index, bottone in enumerate(s.bottoni_r["modes"].toggles)]
         
         s.label["label_x"] = Label_Text(latex_font=True)
@@ -172,14 +206,45 @@ class Costruttore:
 
         def set_active_tab():
             for index, state in enumerate(self.scene["main"].bottoni_r["modes"].cb_s):
-                self.scene["main"].drop_menu[f"item{index + 1}"].hide = not state
+                self.scene["main"].drop_menu[f"item{index + 1}"].hide_plus_children(not state)
+                
+                if not self.scene["main"].drop_menu[f"item{index + 1}"].hide and not self.scene["main"].drop_menu[f"item{index + 1}"].inizializzato:
+                    self.scene["main"].drop_menu[f"item{index + 1}"].inizializzato = True
+                    self.scene["main"].drop_menu[f"item{index + 1}"].update_window_change()
 
-                if index == 1:
-                    self.scene["main"].scrolls[f"item{index + 1}"].hide = not state
+                if index == 1 or index == 5:
+                    self.scene["main"].scrolls["elenco_plots"].hide_plus_children(True)
+                else:
+                    self.scene["main"].scrolls["elenco_plots"].hide_plus_children(False)
+
+
+        def hide_UI_element_with_toggle_plot_section():
+
+            if not self.scene["main"].drop_menu["item2"].elements["scatter_toggle"].state_toggle:
+                self.scene["main"].drop_menu["item2"].elements["scatter_size"].hide_plus_children(True)
+                self.scene["main"].drop_menu["item2"].elements["colore_scatter"].hide_plus_children(True)
+            else:
+                self.scene["main"].drop_menu["item2"].elements["scatter_size"].hide_plus_children(False)
+                self.scene["main"].drop_menu["item2"].elements["colore_scatter"].hide_plus_children(False)
+
+            if not self.scene["main"].drop_menu["item2"].elements["function_toggle"].state_toggle:
+                self.scene["main"].drop_menu["item2"].elements["function_size"].hide_plus_children(True)
+                self.scene["main"].drop_menu["item2"].elements["colore_function"].hide_plus_children(True)
+            else:
+                self.scene["main"].drop_menu["item2"].elements["function_size"].hide_plus_children(False)
+                self.scene["main"].drop_menu["item2"].elements["colore_function"].hide_plus_children(False)
+
+
+        def remove_selected_element():
+
+            if self.scene["main"].drop_menu["item6"].elements["remove_element_selected"].flag_foo:
+                self.scene["main"].drop_menu["item6"].elements["remove_element_selected"].flag_foo = False
+                self.scene["main"].scrolls["elenco_plots"].remove_selected_item()
 
 
         s.functions.append(set_active_tab)
-
+        s.functions.append(hide_UI_element_with_toggle_plot_section)
+        s.functions.append(remove_selected_element)
 
 
 class Scena:
@@ -193,31 +258,73 @@ class Scena:
         self.color_pickers: dict[str, ColorPicker] = {}
         self.drop_menu: dict[str, DropMenu] = {}
         self.screens: dict[str, Screen] = {}
+        self.palette_popup: Palette = None
+
+        self.pop_up_aperto: bool = False
+        self.pop_up: list[ColorPicker] = []
 
         self.functions: list[function] = []
 
 
-    def disegna_scena(self, logica: 'Logica'):
+    def disegna_scena_inizio_ciclo(self, logica: 'Logica'):
         [label.disegnami(logica) for indice, label in self.label.items()]
         [bottone.disegnami(logica) for indice, bottone in self.bottoni_p.items()]
         [bottone.disegnami(logica) for indice, bottone in self.bottoni_t.items()]
         [bottone.disegnami(logica) for indice, bottone in self.bottoni_r.items()]
         [entrate.disegnami(logica) for indice, entrate in self.entrate.items()]
         [scroll.disegnami(logica) for indice, scroll in self.scrolls.items()]
-        [color_picker.disegnami(logica) for indice, color_picker in self.color_pickers.items()]
-        [dropmenu.disegnami(logica) for indice, dropmenu in self.drop_menu.items()]
         [screen.disegnami(logica) for indice, screen in self.screens.items()]
+        [dropmenu.disegnami(logica) for indice, dropmenu in self.drop_menu.items()]
+        [color_picker.disegnami(logica) for indice, color_picker in self.color_pickers.items()]
+    
+    
+    def disegna_scena_fine_ciclo(self, logica: 'Logica'):
+        self.palette_popup.disegnami(logica)
 
     
     def gestisci_eventi(self, eventi: list[pygame.event.Event], logica: 'Logica'):
-        [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_p.items()]
-        [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_t.items()]
-        [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_r.items()]
-        [entrata.eventami(eventi, logica) for indice, entrata in self.entrate.items()]
-        [scroll.eventami(eventi, logica) for indice, scroll in self.scrolls.items()]
-        [color_picker.eventami(eventi, logica) for indice, color_picker in self.color_pickers.items()]
-        [dropmenu.eventami(eventi, logica) for indice, dropmenu in self.drop_menu.items()]
-        [screen.eventami(eventi, logica) for indice, screen in self.screens.items()]
+        
+        if not self.pop_up_aperto:
 
-        for foo in self.functions:
-            foo()
+            [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_p.items()]
+            [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_t.items()]
+            [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_r.items()]
+            [entrata.eventami(eventi, logica) for indice, entrata in self.entrate.items()]
+            [scroll.eventami(eventi, logica) for indice, scroll in self.scrolls.items()]
+            [screen.eventami(eventi, logica) for indice, screen in self.screens.items()]
+
+            # POSSIBILI GENERATORI DI POP-UP
+
+            for indice, color_picker in self.color_pickers.items():
+                pop_up_domanda_color = color_picker.eventami(eventi, logica)
+                
+                if pop_up_domanda_color:
+                    self.pop_up.append(color_picker)
+                    self.pop_up_aperto = True
+
+
+            for indice, dropmenu in self.drop_menu.items():
+                pop_up_domanda_drop_menu = dropmenu.eventami(eventi, logica)
+
+                if pop_up_domanda_drop_menu:
+                    self.pop_up.append(pop_up_domanda_drop_menu)
+                    self.pop_up_aperto = True
+
+            
+            for foo in self.functions:
+                foo()
+
+        else:
+            
+            for elemento in self.pop_up:
+                if type(elemento) == ColorPicker:
+                    pop_running = elemento.eventami(eventi, logica)
+                    
+                    if not pop_running:
+                        self.pop_up.pop()
+
+            if len(self.pop_up) == 0:
+                self.pop_up_aperto = False
+
+        
+        self.palette_popup.eventami(logica, eventi)
