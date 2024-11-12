@@ -6,6 +6,7 @@ def main():
     app = UI()
     plot = PomoPlot()
     plot.link_ui(app)
+    # plot.import_plot_data(r"C:\Users\aless\Desktop\default\spettro_3v.txt")
 
     while app.running:
 
