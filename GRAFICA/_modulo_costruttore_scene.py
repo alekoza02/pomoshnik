@@ -107,14 +107,17 @@ class Costruttore:
         s.drop_menu["item2"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Grafici}", font_size=28))
         s.drop_menu["item2"].add_element("scatter_size", Entrata(75, "120", "lu", 20, "30", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
         s.drop_menu["item2"].add_element("function_size", Entrata(75, "155", "lu", 20, "30", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
+        s.drop_menu["item2"].add_element("dashed_density", Entrata(75, "450", "lu", 20, "30", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101))
 
         s.drop_menu["item2"].add_element("scatter_toggle", Bottone_Toggle(50, "120", "ru", "30", "30", text="Toggle scatter", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
         s.drop_menu["item2"].add_element("function_toggle", Bottone_Toggle(50, "155", "ru", "30", "30", text="Toggle function", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
+        s.drop_menu["item2"].add_element("errorbar", Bottone_Toggle(50, "190", "ru", "30", "30", text="Toggle errors", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
+        s.drop_menu["item2"].add_element("dashed", Bottone_Toggle(50, "450", "ru", "30", "30", text="Dashed line", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
         
         s.scrolls["elenco_plots"] = Scroll(76.5, 5, "lu", 22, 35, "Grafici caricati", mantain_aspect_ratio=False)
         
-        s.drop_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", 30, "255", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
-        s.drop_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", 30, "310", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
+        s.drop_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", 30, "305", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
+        s.drop_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", 30, "360", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
         # ITEM 2 PLOTS ---------------------------------------------------
 
 
@@ -194,7 +197,7 @@ class Costruttore:
         s.drop_menu["item11"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Metadata}", font_size=28))
         # ITEM 11 METADATA -----------------------------------------------
 
-        starting = 5
+        starting = 1
         stato_iniziale_tab = [False for _ in range(11)]
         stato_iniziale_tab[starting] = True        
         s.bottoni_r["modes"] = RadioButton(anchor=("rc", "lc", s.drop_menu["item3"], 0, 0), w="70", h="900", bg=array([35, 35, 35]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="70", h_button="70")
@@ -230,9 +233,11 @@ class Costruttore:
             if not self.scene["main"].drop_menu["item2"].elements["function_toggle"].state_toggle:
                 self.scene["main"].drop_menu["item2"].elements["function_size"].hide_plus_children(True)
                 self.scene["main"].drop_menu["item2"].elements["colore_function"].hide_plus_children(True)
+                self.scene["main"].drop_menu["item2"].elements["dashed"].hide_plus_children(True)
             else:
                 self.scene["main"].drop_menu["item2"].elements["function_size"].hide_plus_children(False)
                 self.scene["main"].drop_menu["item2"].elements["colore_function"].hide_plus_children(False)
+                self.scene["main"].drop_menu["item2"].elements["dashed"].hide_plus_children(False)
 
 
         def remove_selected_element():

@@ -8,6 +8,8 @@ def main():
         app = UI()
         plot = PomoPlot()
         plot.link_ui(app)
+        plot.import_plot_data("C:\\users\\aless\\desktop\\default\\led_corrente_V_interpolazione.txt")
+        plot.import_plot_data("C:\\users\\aless\\desktop\\default\\polarizzazione_diretta.txt")
         
         while app.running:
 

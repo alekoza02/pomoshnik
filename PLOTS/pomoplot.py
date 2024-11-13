@@ -89,9 +89,12 @@ class PomoPlot:
 
         self.scatter_size: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["scatter_size"]
         self.function_size: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["function_size"]
-
+        self.dashed_density: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["dashed_density"]
+        
         self.scatter_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item2"].elements["scatter_toggle"]
         self.function_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item2"].elements["function_toggle"]
+        self.dashed_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item2"].elements["dashed"]
+        self.error_bar: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item2"].elements["errorbar"]
 
         self.colore_function: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item2"].elements["colore_function"]
         self.colore_scatter: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item2"].elements["colore_scatter"]
@@ -133,15 +136,25 @@ class PomoPlot:
 
         if len(self.scroll_plots.elementi) > 0:
 
-            self.active_plot: _Single1DPlot = self.scroll_plots.elementi[self.scroll_plots.elemento_attivo]
+            self.active_plot: _Single1DPlot = self.scroll_plots.elementi[self.scroll_plots.ele_selected_index]
 
             if self.active_plot != old_active:
                 self.scatter_size.change_text(f"{self.active_plot.scatter_width}")
                 self.function_size.change_text(f"{self.active_plot.function_width}")
                 self.scatter_toggle.state_toggle = self.active_plot.scatter
                 self.function_toggle.state_toggle = self.active_plot.function
+                self.dashed_toggle.state_toggle = self.active_plot.dashed
+                self.error_bar.state_toggle = self.active_plot.errorbar
+                self.dashed_density.change_text(f"{self.active_plot.dashed_traits}")
                 self.colore_scatter.set_color(self.active_plot.scatter_color)
                 self.colore_function.set_color(self.active_plot.function_color)
+
+                if self.active_plot.data.shape[1] <= 2:
+                    self.error_bar.bg = np.array([70, 40, 40])
+                else:
+                    self.error_bar.bg = np.array([40, 70, 40])
+
+
 
         [self.import_plot_data(path) for path in self.import_single_plot.paths]
         [self.import_plot_data(path) for path in self.import_multip_plot.paths]
@@ -165,7 +178,10 @@ class PomoPlot:
         if not self.active_plot is None:
             self.active_plot.scatter_width = int(self.scatter_size.get_text())
             self.active_plot.function_width = int(self.function_size.get_text())
+            self.active_plot.dashed_traits = int(self.dashed_density.get_text())
             self.active_plot.scatter = self.scatter_toggle.state_toggle
+            self.active_plot.dashed = self.dashed_toggle.state_toggle
+            self.active_plot.errorbar = self.error_bar.state_toggle
             self.active_plot.function = self.function_toggle.state_toggle
             self.active_plot.function_color = self.colore_function.get_color()
             self.active_plot.scatter_color = self.colore_scatter.get_color()
@@ -310,13 +326,86 @@ class PomoPlot:
         # preparazione dati
         self._normalize_data2screen()
 
+        larg_error = self.max_plot_square[2] / 100
+
         for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
             # disegno i dati se plot acceso
             if status:
                 if plot.function:
-                    self.screen._add_lines(plot.data2plot[:, :2], plot.function_color, plot.function_width)
+    
+                    if plot.dashed:
+                        self._disegna_spezzata_tratteggiata(plot)
+                    else:
+                        self.screen._add_lines(plot.data2plot[:, :2], plot.function_color, plot.function_width)
+    
+                if plot.errorbar and plot.data.shape[1] > 2:
+
+                    for x, y, e in zip(plot.data2plot[:, 0], plot.data2plot[:, 1], plot.data2plot[:, 2]):
+                        self.screen._add_line([[x, y], [x, y + e]], plot.function_color, plot.function_width)
+                        self.screen._add_line([[x, y], [x, y - e]], plot.function_color, plot.function_width)
+                        self.screen._add_line([[x - larg_error, y + e], [x + larg_error, y + e]], plot.function_color, plot.function_width)
+                        self.screen._add_line([[x - larg_error, y - e], [x + larg_error, y - e]], plot.function_color, plot.function_width)
+                        
                 if plot.scatter:
                     self.screen._add_points(plot.data2plot[:, :2], plot.scatter_color, plot.scatter_width)
+
+
+    def _disegna_spezzata_tratteggiata(self, plot:'_Single1DPlot'):
+
+        lunghezze_parziali = plot.data2plot[:-1, :2] - plot.data2plot[1:, :2]
+        lunghezze_parziali = np.linalg.norm(lunghezze_parziali, axis=1)
+        lunghezza_totale = np.sum(lunghezze_parziali)
+        
+        subdivisions = plot.dashed_traits
+        subdivisions_len = lunghezza_totale / subdivisions
+
+        percorso = 0
+
+        for p1, p2 in zip(plot.data2plot[:-1, :2], plot.data2plot[1:, :2]):
+    
+            new_point = p1
+            iters = 0
+
+            versore = np.array(p2) - np.array(p1)
+            versore /= np.linalg.norm(versore)
+
+            starting_color = not (percorso // subdivisions_len) % 2 == 0
+
+            while 1:
+
+                if not (new_point[0] != p2[0] and iters < subdivisions):
+                    # print(f"WHILE DEBUG: {new_module}")
+                    break
+
+                iters += 1
+
+                new_module = subdivisions_len - percorso % subdivisions_len 
+
+                if new_module < 0.01:
+                    new_module = subdivisions_len 
+
+
+                new_point = p1 + versore * new_module
+                
+                if new_point[0] >= p2[0]:
+                    
+                    delta_x = np.array(p2) - np.array(p1)
+                    delta_x = np.linalg.norm(delta_x)
+                    percorso +=  delta_x
+                    new_point = p2
+
+                else:
+                    percorso += new_module
+
+                if (iters + starting_color) % 2 == 0:
+                    colore = self.plot_area_color.get_color()
+
+                else:
+                    colore = plot.function_color
+                    
+                self.screen._add_line([p1, new_point], colore, plot.function_width)
+
+                p1 = new_point                
 
 
     def _disegna_bg(self):
@@ -351,7 +440,6 @@ class PomoPlot:
                 # traslo in base all'offset dell'area del plot nello schermo
                 plot.data2plot[:, 0] += self.max_canvas_square[0]
                 
-
                 # stessa cosa ma per l'asse y
                 plot.data2plot[:, 1] -= self.spazio_coordinate_native[1]
                 plot.data2plot[:, 1] /= self.spazio_coordinate_native[3]
@@ -363,6 +451,11 @@ class PomoPlot:
                 
                 plot.data2plot[:, 1] += (self.max_canvas_square[3] * float(self.y_plot_area.get_text()))
                 plot.data2plot[:, 1] += self.max_canvas_square[1]
+                
+                # stessa cosa ma per errori y
+                if plot.data.shape[1] > 2:
+                    plot.data2plot[:, 2] /= self.spazio_coordinate_native[3]
+                    plot.data2plot[:, 2] *= (self.max_plot_square[3])
 
 
         # ticks x
@@ -555,11 +648,21 @@ class PomoPlot:
         for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
             if status:
                 at_least_one = True
-                # trova le coordinate minime tra tutti i grafici
-                self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.data[:, 0]))
-                self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(plot.data[:, 1]))
-                self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, 0]))
-                self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.data[:, 1]))
+
+                if plot.errorbar and plot.data.shape[1] > 2:
+
+                    # trova le coordinate minime tra tutti i grafici + errori
+                    self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.data[:, 0]))
+                    self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(plot.data[:, 1] - plot.data[:, 2]))
+                    self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, 0]))
+                    self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.data[:, 1] + plot.data[:, 2]))
+
+                else:
+                    # trova le coordinate minime tra tutti i grafici
+                    self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.data[:, 0]))
+                    self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(plot.data[:, 1]))
+                    self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, 0]))
+                    self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.data[:, 1]))
 
 
 
@@ -688,6 +791,9 @@ class _Single1DPlot:
         self.scatter_width = 3
         self.function = True
         self.function_width = 1
+        self.dashed = False
+        self.dashed_traits = 21
+        self.errorbar = True if data.shape[1] > 2 else False
 
         self.scatter_color = [100, 100, 255]
         self.function_color = [80, 80, 200]
