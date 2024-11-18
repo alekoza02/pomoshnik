@@ -1,4 +1,7 @@
 import numpy as np
+from scipy.ndimage import gaussian_filter 
+from MATEMATICA._modulo_mate_utils import MateUtils
+from PIL import Image
 
 NON_ESEGUIRE = False
 
@@ -60,7 +63,6 @@ class PomoPlot:
         
         # contiene Title, label X, label Y, label 2Y, Legenda
         self.labels: list['Label_Text'] = [None, None, None, None, None]
-
         # ------------------------------------------------------------------------------
         # ZONA COLORI
         # ------------------------------------------------------------------------------
@@ -71,9 +73,14 @@ class PomoPlot:
     def link_ui(self, UI: 'UI'):
         """Richiesta UI pomoshnik, si puù modificare manualmente per adattarla alla propria UI. Serve per intereagire con il grafico"""
         self.screen = UI.costruttore.scene["main"].screens["viewport"]
+        self.screen_render = UI.costruttore.scene["main"].screens["renderer"]
+
+        self.scale_factor_viewport = 1
+
         self.labels[0] = UI.costruttore.scene["main"].label["title"]
         self.labels[1] = UI.costruttore.scene["main"].label["label_x"]
         self.labels[2] = UI.costruttore.scene["main"].label["label_y"]
+        self.labels[4] = UI.costruttore.scene["main"].label["legend"]
 
         self.x_plot_area: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item1"].elements["x_plot_area"]
         self.y_plot_area: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item1"].elements["y_plot_area"]
@@ -82,10 +89,10 @@ class PomoPlot:
         self.plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item1"].elements["plot_area_bg"]
         self.canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item1"].elements["canvas_area_bg"]
         
-        self.import_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item6"].elements["import_single_plot"]
-        self.import_multip_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item6"].elements["import_multip_plot"]
         
         self.scroll_plots: 'Scroll' = UI.costruttore.scene["main"].scrolls["elenco_plots"]
+
+        self.plot_name: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["plot_name"]
 
         self.scatter_size: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["scatter_size"]
         self.function_size: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["function_size"]
@@ -123,13 +130,28 @@ class PomoPlot:
         
         self.show_grid_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item4"].elements["show_grid_x"]
         self.show_grid_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item4"].elements["show_grid_y"]
+        
+        self.show_legend: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["show_legend"]
+        self.x_legend: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item5"].elements["x_legend"]
+        self.y_legend: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item5"].elements["y_legend"]
+        self.font_size_legend: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item5"].elements["font_size_legend"]
+        self.show_legend_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["show_legend_background"]
+        self.legend_bg_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item5"].elements["legend_color_background"]
+        self.transparent_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["transparent_background"]
+        self.blur_strenght: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item5"].elements["blur_strenght"]
+        self.show_icons: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["show_icons"]
+        self.match_color_text: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["match_color_text"]
+        self.color_text: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item5"].elements["color_text"]
+
+        self.import_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item6"].elements["import_single_plot"]
+        self.import_multip_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item6"].elements["import_multip_plot"]
 
 
     def update_plot_list(self, added_plot):
         self.scroll_plots.add_element_scroll(added_plot, False)
         
 
-    def update(self):
+    def update(self, logica: 'Logica'):
         self.plots = self.scroll_plots.elementi
 
         old_active = self.active_plot
@@ -141,6 +163,7 @@ class PomoPlot:
             if self.active_plot != old_active:
                 self.scatter_size.change_text(f"{self.active_plot.scatter_width}")
                 self.function_size.change_text(f"{self.active_plot.function_width}")
+                self.plot_name.change_text(f"{self.active_plot.nome}")
                 self.scatter_toggle.state_toggle = self.active_plot.scatter
                 self.function_toggle.state_toggle = self.active_plot.function
                 self.dashed_toggle.state_toggle = self.active_plot.dashed
@@ -161,16 +184,207 @@ class PomoPlot:
             
         self.import_single_plot.paths = []            
         self.import_multip_plot.paths = []
+
+        if logica.ctrl:
+
+            self.scale_factor_renderer = self.screen_render.w / self.screen.w
+
+            self.screen_backup = self.screen
+            self.screen = self.screen_render
+
+            self.screen_backup.hide = True
+            self.screen.hide = False
+
+            self.scale_factor_backup = self.scale_factor_viewport
+            self.scale_factor_viewport = self.scale_factor_renderer
+
+            self.plot(logica)
+            self.plot(logica)
+            self.screen._save_screenshot(r"C:\Users\aless\Desktop\output.png")
+            
+            self.scale_factor_viewport = self.scale_factor_backup
+            
+            self.screen_render = self.screen
+            self.screen = self.screen_backup
         
+            self.screen_render.hide = True
+            self.screen.hide = False
+
 
     def plot(self, logica: 'Logica'):
         """Richiesta UI pomoshnik, si può utilizzare con altri metodi di disegno. coordinate, colori e dimensioni sono forniti per poter essere usati in qualunque formato."""
-        
+
         self._disegna_bg()
         self._disegna_assi()
         self._disegna_labels(logica)
         self._disegna_ticks()
         self._disegna_dati()
+        self._disegna_legend(logica)
+            
+
+    def _disegna_legend(self, logica: 'Logica'):
+
+        if len([1 for status in self.scroll_plots.ele_mask if status]) > 0 and self.show_legend.state_toggle:
+
+            self.legend_position = [float(self.x_legend.get_text()), float(self.y_legend.get_text())]               # done
+            self.legend_draw_icogram = self.show_icons.state_toggle                                                 # NO                           
+            self.legend_match_color_title = self.match_color_text.state_toggle                                      # NO               
+            self.legend_color_title = self.color_text.get_color()                                                   # NO   
+            self.legend_show_background = self.show_legend_background.state_toggle                                  # done                   
+            self.legend_color_background = self.legend_bg_color.get_color()                                         # done           
+
+            self.legend_transparent = self.transparent_background.state_toggle
+            self.legend_blur_strenght = float(self.blur_strenght.get_text()) * self.scale_factor_viewport
+
+            if self.legend_draw_icogram:
+                self.icon_size_pixel = 150 * self.scale_factor_viewport
+            else:
+                self.icon_size_pixel = 0
+
+            legend_position = [self.max_plot_square[0] + self.max_plot_square[2] * self.legend_position[0], self.max_plot_square[1] + self.max_plot_square[3] * self.legend_position[1]]
+
+            # legenda testo
+            if self.legend_match_color_title:
+                self.labels[4].change_text("".join([f'\\#{MateUtils.rgb2hex(plot.function_color if plot.function else plot.scatter_color)}{{{plot.nome}}}\n' for plot, status in zip(self.plots, self.scroll_plots.ele_mask) if status])[:-1])
+            else:
+                self.labels[4].color_text = self.legend_color_title
+                self.labels[4].change_text("".join([f'{plot.nome}\n' for plot, status in zip(self.plots, self.scroll_plots.ele_mask) if status])[:-1])
+
+            self.labels[4].anchor = "cc"
+
+            new_dim_legend = self.font_size_legend.get_text()
+            
+            self.labels[4].change_font_size(float(new_dim_legend) * self.scale_factor_viewport)
+
+            self.labels[4].recalc_geometry(f"{legend_position[0]}", f"{legend_position[1]}", anchor_point="cc")
+
+            offset_icona = self.labels[4].h / len([1 for status in self.scroll_plots.ele_mask if status])
+            plot_attivo_analizzato = 0
+
+            inizio_legenda = self.labels[4].h * 0.15
+
+
+            leg_lar, leg_lar_2 = self.labels[4].w + 24 * self.scale_factor_viewport, (self.labels[4].w + 24 * self.scale_factor_viewport) / 2
+            leg_alt, leg_alt_2 = self.labels[4].h * 1.3, self.labels[4].h * 1.3 / 2
+
+            if self.legend_transparent:
+                pixel_array = self.screen._extract_pixel_values(legend_position[0] - leg_lar_2 - self.icon_size_pixel, legend_position[1] - leg_alt_2, leg_lar + self.icon_size_pixel, leg_alt)
+
+                if not self.legend_show_background:
+                    superficie_alpha = self.screen._generate_surface(pixel_array)
+                    
+            
+                else:
+
+                    pixel_array = gaussian_filter(pixel_array, sigma=(self.legend_blur_strenght, self.legend_blur_strenght, 0))
+                    pixel_array = pixel_array.astype(np.float64)
+                    pixel_array[:, :, 0] = pixel_array[:, :, 0] * self.legend_color_background[0] / 255
+                    pixel_array[:, :, 1] = pixel_array[:, :, 1] * self.legend_color_background[1] / 255
+                    pixel_array[:, :, 2] = pixel_array[:, :, 2] * self.legend_color_background[2] / 255
+                
+                    superficie_alpha = self.screen._generate_surface(pixel_array)
+
+            elif not self.legend_transparent and not self.legend_show_background:
+                self.screen._add_rectangle([legend_position[0] - leg_lar_2 - self.icon_size_pixel, legend_position[1] - leg_alt_2, leg_lar + self.icon_size_pixel, leg_alt], self.legend_color_background)
+
+
+            if self.legend_transparent:
+                if self.legend_draw_icogram:
+            
+                    # CASO TRASPARENTE
+                    for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
+                        if status:
+                            if plot.function:
+                                if plot.dashed:
+                                    for i in range(5):
+                                        colore_tratteggiato = plot.function_color if i % 2 == 0 else self.plot_area_color.get_color()
+                                        self.screen._add_line_static(superficie_alpha, [
+                                            [self.icon_size_pixel * 3 / 4 - self.icon_size_pixel * 0.125 * (i + 1), inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato], 
+                                            [self.icon_size_pixel * 3 / 4 - self.icon_size_pixel * 0.125 * i , inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato]
+                                        ], colore_tratteggiato, plot.function_width * self.scale_factor_viewport)
+                                else:
+                                    self.screen._add_line_static(superficie_alpha, [
+                                        [self.icon_size_pixel * 3 / 4, inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato], 
+                                        [self.icon_size_pixel / 8 , inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato]
+                                    ], plot.function_color, plot.function_width * self.scale_factor_viewport)
+
+                            if plot.errorbar:
+                                    self.screen._add_line_static(superficie_alpha, [
+                                        [self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625, inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato + offset_icona / 3], 
+                                        [self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625, inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato - offset_icona / 3]
+                                    ], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                                    
+                                    self.screen._add_line_static(superficie_alpha, [
+                                        [self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625 - 7 * self.scale_factor_viewport, inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato + offset_icona / 3], 
+                                        [self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625 + 7 * self.scale_factor_viewport, inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato + offset_icona / 3]
+                                    ], plot.function_color, plot.function_width * self.scale_factor_viewport)
+
+                                    self.screen._add_line_static(superficie_alpha, [
+                                        [self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625 - 7 * self.scale_factor_viewport, inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato - offset_icona / 3], 
+                                        [self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625 + 7 * self.scale_factor_viewport, inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato - offset_icona / 3]
+                                    ], plot.function_color, plot.function_width * self.scale_factor_viewport)
+
+
+                            if plot.scatter:
+                                self.screen._add_points_static(superficie_alpha, [
+                                    [self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625, inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato]
+                                ], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport)
+
+
+                            plot_attivo_analizzato += 1
+
+                self.labels[4].disegnami(logica, 0, superficie_alpha, -self.labels[4].x + self.icon_size_pixel, -self.labels[4].y + self.labels[4].h * 0.15)
+
+                self.screen._blit_surface(superficie_alpha, [legend_position[0] - leg_lar_2 - self.icon_size_pixel, legend_position[1] - leg_alt_2])
+                    
+            else:
+                
+                if self.legend_draw_icogram:
+
+                    # CASO NON TRASPARENTE
+                    
+                    for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
+                        if status:
+                            if plot.function:
+                                if plot.dashed:
+                                    for i in range(5):
+                                        colore_tratteggiato = plot.function_color if i % 2 == 0 else self.legend_color_background
+                                        self.screen._add_line([
+                                            [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel * 3 / 4 - self.icon_size_pixel * 0.125 * (i + 1), legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato], 
+                                            [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel * 3 / 4 - self.icon_size_pixel * 0.125 * i , legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato]
+                                        ], colore_tratteggiato, plot.function_width * self.scale_factor_viewport)
+                                else:
+                                    self.screen._add_line([
+                                        [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel * 3 / 4, legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato], 
+                                        [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel / 8 , legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato]
+                                    ], plot.function_color, plot.function_width * self.scale_factor_viewport)
+
+                            if plot.errorbar:
+                                    self.screen._add_line([
+                                        [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625, legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato + offset_icona / 3], 
+                                        [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625, legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato - offset_icona / 3]
+                                    ], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                                    
+                                    self.screen._add_line([
+                                        [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625 - 7 * self.scale_factor_viewport, legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato + offset_icona / 3], 
+                                        [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625 + 7 * self.scale_factor_viewport, legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato + offset_icona / 3]
+                                    ], plot.function_color, plot.function_width * self.scale_factor_viewport)
+
+                                    self.screen._add_line([
+                                        [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625 - 7 * self.scale_factor_viewport, legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato - offset_icona / 3], 
+                                        [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625 + 7 * self.scale_factor_viewport, legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato - offset_icona / 3]
+                                    ], plot.function_color, plot.function_width * self.scale_factor_viewport)
+
+
+                            if plot.scatter:
+                                self.screen._add_points([
+                                    [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625, legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato],
+                                ], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport)
+
+
+                            plot_attivo_analizzato += 1
+
+                self.labels[4].disegnami(logica, 0, self.screen.tavolozza, 0, 0)
             
 
     def _disegna_labels(self, logica: 'Logica'):
@@ -185,35 +399,33 @@ class PomoPlot:
             self.active_plot.function = self.function_toggle.state_toggle
             self.active_plot.function_color = self.colore_function.get_color()
             self.active_plot.scatter_color = self.colore_scatter.get_color()
+            self.active_plot.nome = self.plot_name.get_text()
 
         new_dim_title = self.font_size_title.get_text()
         new_dim_x = self.font_size_label_x.get_text()
         new_dim_y = self.font_size_label_y.get_text()
         
-        if float(new_dim_title) != self.labels[0].font_size:
-            self.labels[0].change_font_size(float(new_dim_title))
-        if float(new_dim_x) != self.labels[1].font_size:
-            self.labels[1].change_font_size(float(new_dim_x))
-        if float(new_dim_y) != self.labels[2].font_size:
-            self.labels[2].change_font_size(float(new_dim_y))
+        self.labels[0].change_font_size(float(new_dim_title) * self.scale_factor_viewport)
+        self.labels[1].change_font_size(float(new_dim_x) * self.scale_factor_viewport)
+        self.labels[2].change_font_size(float(new_dim_y) * self.scale_factor_viewport)
 
         # titolo
         self.labels[0].change_text(f"{self.text_title.get_text()}")
         self.labels[0].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}", f"{self.screen.y + self.max_plot_square[1] / 2}", anchor_point="cc")
         self.labels[0].color_text = self.label_title_color.get_color()
-        self.labels[0].disegnami(logica)
+        self.labels[0].disegnami(logica, 0, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
         # X label
         self.labels[1].change_text(f"{self.text_label_x.get_text()}")
         self.labels[1].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}", f"{self.screen.y + self.max_plot_square[3] + 2 * self.max_plot_square[1]}", anchor_point="cd")
         self.labels[1].color_text = self.label_x_color.get_color()
-        self.labels[1].disegnami(logica)
+        self.labels[1].disegnami(logica, 0, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
         # Y label
         self.labels[2].change_text(f"{self.text_label_y.get_text()}")
         self.labels[2].recalc_geometry(f"{self.screen.x + self.max_canvas_square[0]}", f"{self.screen.y + self.max_plot_square[1] + self.max_plot_square[3] / 2 - self.labels[2].len_testo_diplayed / 2}", anchor_point="lu")
         self.labels[2].color_text = self.label_y_color.get_color()
-        self.labels[2].disegnami(logica, 90)
+        self.labels[2].disegnami(logica, 90, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
 
 
     def _get_nice_ticks(self):
@@ -232,81 +444,24 @@ class PomoPlot:
         formattatore_x = "e" if self.formatting_x.state_toggle else "f"
         formattatore_y = "e" if self.formatting_y.state_toggle else "f"
 
-        if self.ticks_type:
+        self.offset_x_tick_value: int = (self.pixel_len_subdivisions + 7) * self.scale_factor_viewport
+        self.offset_y_tick_value: int = (self.pixel_len_subdivisions + 25) * self.scale_factor_viewport
 
-            for index, coord in enumerate(self.coords_of_ticks[0]):
-                if self.show_grid_x.state_toggle:
-                    self.screen._add_line([[coord, coords[3]], [coord, coords[1]]], self.ax_color_x.get_color())
-                self.screen._add_line([[coord, coords[3]], [coord, coords[3] + self.pixel_len_subdivisions]], self.ax_color_x.get_color(), 4)
+        for index, coord in enumerate(self.coords_of_ticks[0]):
+            if self.show_grid_x.state_toggle:
+                self.screen._add_line([[coord, coords[3]], [coord, coords[1]]], self.ax_color_x.get_color(), self.scale_factor_viewport)
+            self.screen._add_line([[coord, coords[3]], [coord, coords[3] + self.pixel_len_subdivisions * self.scale_factor_viewport]], self.ax_color_x.get_color(), 4 * self.scale_factor_viewport)
 
-                # disegno il valore corrispondente
-                self.screen._add_text(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x.get_text()}{formattatore_x}}", [coord, coords[3] + self.offset_y_label + self.offset_y_tick_value], anchor="cc", size=1.5, color=self.tick_color_x.get_color())
-                
-            for index, coord in enumerate(self.coords_of_ticks[1]):
-                if self.show_grid_y.state_toggle:
-                    self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_y.get_color())
-                self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions, coord]], self.ax_color_y.get_color(), 4)
-
-                # disegno il valore corrispondente
-                self.screen._add_text(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y.get_text()}{formattatore_y}}", [coords[0] - self.offset_x_label - self.offset_y_tick_value, coord], anchor="rc", size=1.5, color=self.tick_color_y.get_color())
-
-
-        else:
-
-            ###########
-            # TICKS Y #
-            ###########
+            # disegno il valore corrispondente
+            self.screen._add_text(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x.get_text()}{formattatore_x}}", [coord, coords[3] + self.offset_y_label + self.offset_y_tick_value], anchor="cc", size=1.5 * self.scale_factor_viewport, color=self.tick_color_x.get_color())
             
-            # calcolo spaziatura tra segni grandi e segni piccoli
-            delta_y = abs((coords[1] - coords[3]) / self.n_subdivisions_x)
-            delta_y_small = abs(delta_y / self.n_subdivisions_x_small)
-            
-            # controlla se la lineetta dev'essere centrata o meno
-            offset_lineetta = self.pixel_len_subdivisions / 2 if self.subdivision_x_centerd else 0
-            offset_lineetta_small = self.pixel_len_subdivisions_small / 2 if self.subdivision_x_centerd else 0
-            
-            for n in range(self.n_subdivisions_x + 1):
+        for index, coord in enumerate(self.coords_of_ticks[1]):
+            if self.show_grid_y.state_toggle:
+                self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_y.get_color(), self.scale_factor_viewport)
+            self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_y.get_color(), 4 * self.scale_factor_viewport)
 
-                # disegno le linee grande separate da delta_y
-                self.screen._add_line([[coords[0] - self.offset_x_label + offset_lineetta, coords[1] + delta_y * n], [coords[0] - self.offset_x_label - self.pixel_len_subdivisions + offset_lineetta, coords[1] + delta_y * n]], self.color_y_axis)
-                
-                # disegno il valore corrispondente
-                self.screen._add_text(f"{self.n_subdivisions_x - n}", [coords[0] - self.offset_x_label - self.offset_y_tick_value, coords[1] + delta_y * n], anchor="rc")
-                
-                # se fosse anche per n == self.n_subdivisions_x, allora avrebbe disegnato un settore in più del dovuto, dato che n indica l'inizio del settore
-                if n < self.n_subdivisions_x:
-
-                    for n1 in range(self.n_subdivisions_x_small + 1):
-                        # disegno le linee piccole separate da delta_y_small   
-                        self.screen._add_line([[coords[0] - self.offset_x_label + offset_lineetta_small, coords[1] + delta_y * n + delta_y_small * n1], [coords[0] - self.offset_x_label - self.pixel_len_subdivisions_small + offset_lineetta_small, coords[1] + delta_y * n + delta_y_small * n1]], self.color_y_axis)
-        
-            ###########
-            # TICKS X #
-            ###########
-
-            # calcolo spaziatura tra segni grandi e segni piccoli
-            delta_x = abs((coords[0] - coords[2]) / self.n_subdivisions_y)
-            delta_x_small = abs(delta_x / self.n_subdivisions_y_small)
-            
-            # controlla se la lineetta dev'essere centrata o meno
-            offset_lineetta = self.pixel_len_subdivisions / 2 if self.subdivision_y_centerd else 0
-            offset_lineetta_small = self.pixel_len_subdivisions_small / 2 if self.subdivision_y_centerd else 0
-            
-            for n in range(self.n_subdivisions_y + 1):
-
-                # disegno le linee grande separate da delta_x
-                self.screen._add_line([[coords[0] + delta_x * n, coords[3] + self.offset_y_label - offset_lineetta], [coords[0] + delta_x * n, coords[3] + self.offset_y_label + self.pixel_len_subdivisions - offset_lineetta]], self.color_x_axis)
-
-                # disegno il valore corrispondente
-                self.screen._add_text(f"{n}", [coords[0] + delta_x * n, coords[3] + self.offset_y_label + self.offset_y_tick_value], anchor="cu")
-
-                # se fosse anche per n == self.n_subdivisions_y, allora avrebbe disegnato un settore in più del dovuto, dato che n indica l'inizio del settore
-                if n < self.n_subdivisions_y:
-
-                    for n1 in range(self.n_subdivisions_y_small + 1):
-                        # disegno le linee piccole separate da delta_x_small 
-                        self.screen._add_line([[coords[0] + delta_x * n + delta_x_small * n1, coords[3] + self.offset_y_label - offset_lineetta_small], [coords[0] + delta_x * n + delta_x_small * n1, coords[3] + self.offset_y_label + self.pixel_len_subdivisions_small - offset_lineetta_small]], self.color_x_axis)
-        
+            # disegno il valore corrispondente
+            self.screen._add_text(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y.get_text()}{formattatore_y}}", [coords[0] - self.offset_x_label - self.offset_x_tick_value, coord], anchor="rc", size=1.5 * self.scale_factor_viewport, color=self.tick_color_y.get_color())
 
 
     def _disegna_assi(self):
@@ -314,12 +469,12 @@ class PomoPlot:
         coords = self._get_plot_area_coord()
 
         if self.draw_bounding_box:
-            self.screen._add_line([[self.max_plot_square[0], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]]], self.ax_color_x.get_color(), 4)
-            self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1] + self.max_plot_square[3]]], self.ax_color_x.get_color(), 4)
+            self.screen._add_line([[self.max_plot_square[0], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]]], self.ax_color_x.get_color(), 4 * self.scale_factor_viewport)
+            self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1] + self.max_plot_square[3]]], self.ax_color_x.get_color(), 4 * self.scale_factor_viewport)
 
         # si posizione sull'area del plot e setta un offset pari a self.offset_x_label o self.offset_y_label
-        self.screen._add_line([[coords[0] - self.offset_x_label, coords[1]], [coords[0] - self.offset_x_label, coords[3]]], self.ax_color_y.get_color(), 4)
-        self.screen._add_line([[coords[0], coords[3] + self.offset_y_label], [coords[2], coords[3] + self.offset_y_label]], self.ax_color_x.get_color(), 4)
+        self.screen._add_line([[coords[0] - self.offset_x_label, coords[1]], [coords[0] - self.offset_x_label, coords[3]]], self.ax_color_y.get_color(), 4 * self.scale_factor_viewport)
+        self.screen._add_line([[coords[0], coords[3] + self.offset_y_label], [coords[2], coords[3] + self.offset_y_label]], self.ax_color_x.get_color(), 4 * self.scale_factor_viewport)
     
                     
     def _disegna_dati(self):
@@ -336,18 +491,18 @@ class PomoPlot:
                     if plot.dashed:
                         self._disegna_spezzata_tratteggiata(plot)
                     else:
-                        self.screen._add_lines(plot.data2plot[:, :2], plot.function_color, plot.function_width)
+                        self.screen._add_lines(plot.data2plot[:, :2], plot.function_color, plot.function_width * self.scale_factor_viewport)
     
                 if plot.errorbar and plot.data.shape[1] > 2:
 
                     for x, y, e in zip(plot.data2plot[:, 0], plot.data2plot[:, 1], plot.data2plot[:, 2]):
-                        self.screen._add_line([[x, y], [x, y + e]], plot.function_color, plot.function_width)
-                        self.screen._add_line([[x, y], [x, y - e]], plot.function_color, plot.function_width)
-                        self.screen._add_line([[x - larg_error, y + e], [x + larg_error, y + e]], plot.function_color, plot.function_width)
-                        self.screen._add_line([[x - larg_error, y - e], [x + larg_error, y - e]], plot.function_color, plot.function_width)
+                        self.screen._add_line([[x, y], [x, y + e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                        self.screen._add_line([[x, y], [x, y - e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                        self.screen._add_line([[x - larg_error, y + e], [x + larg_error, y + e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                        self.screen._add_line([[x - larg_error, y - e], [x + larg_error, y - e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
                         
                 if plot.scatter:
-                    self.screen._add_points(plot.data2plot[:, :2], plot.scatter_color, plot.scatter_width)
+                    self.screen._add_points(plot.data2plot[:, :2], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport)
 
 
     def _disegna_spezzata_tratteggiata(self, plot:'_Single1DPlot'):
@@ -403,7 +558,7 @@ class PomoPlot:
                 else:
                     colore = plot.function_color
                     
-                self.screen._add_line([p1, new_point], colore, plot.function_width)
+                self.screen._add_line([p1, new_point], colore, plot.function_width* self.scale_factor_viewport)
 
                 p1 = new_point                
 

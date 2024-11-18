@@ -3,7 +3,8 @@ from numpy import array
 from MATEMATICA._modulo_mate_utils import MateUtils
 import pyperclip
 import os
-from time import perf_counter
+from PIL import Image
+from math import ceil
 
 NON_ESEGUIRE = False
 
@@ -120,7 +121,7 @@ class BaseElement:
         self.font: Font = Font(self.font_size, self.latex_font)           
         
         if new_h is None or new_w is None:
-            new_h = f"{self.font.font_pixel_dim[1]}"
+            new_h = f"{self.font.font_pixel_dim[1] * len(self.testo.split("\n"))}" 
             new_w = f"{self.len_testo_diplayed}" 
         
         # new_w         
@@ -277,7 +278,9 @@ class Label_Text(BaseElement):
         self.hide = old_hide
 
 
-    def disegnami(self, logica, rotation=0):
+    def disegnami(self, logica, rotation=0, DANG_surface=None, DANG_offset_x=0, DANG_offset_y=0):
+
+        surface_to_use = self.schermo if DANG_surface is None else DANG_surface
 
         if not self.hide:
 
@@ -286,6 +289,9 @@ class Label_Text(BaseElement):
 
             self.len_testo_diplayed = 0
 
+            pixel_ancoraggio = self.h / 2 if self.anchor == "cc" else 0
+            pixel_ancoraggio = 0
+            
             for index, frase in enumerate(testo_analisi.split("\n")):
 
                 # offset multi-riga
@@ -330,23 +336,23 @@ class Label_Text(BaseElement):
                         pre_rotation = self.font.font_pyg_r.render("" + "█" * (len(substringa_analizzata.testo)) + "", True, [100, 100, 100])
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        self.schermo.blit(pre_rotation, (self.x + original_spacing_x * offset_highlight + offset_usato, self.y + offset_frase + offset_pedice_apice))
+                        surface_to_use.blit(pre_rotation, (self.x + original_spacing_x * offset_highlight + offset_usato + DANG_offset_x, self.y + pixel_ancoraggio + offset_frase + offset_pedice_apice + DANG_offset_y))
 
                     if substringa_analizzata.bold:
                         pre_rotation = self.font.font_pyg_b.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        self.schermo.blit(pre_rotation, (self.x + offset_usato, self.y + offset_frase + offset_pedice_apice))
+                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + pixel_ancoraggio + offset_frase + offset_pedice_apice + DANG_offset_y))
                     elif substringa_analizzata.italic:
                         pre_rotation = self.font.font_pyg_i.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        self.schermo.blit(pre_rotation, (self.x + offset_usato, self.y + offset_frase + offset_pedice_apice))
+                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + pixel_ancoraggio + offset_frase + offset_pedice_apice + DANG_offset_y))
                     else:
                         pre_rotation = self.font.font_pyg_r.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        self.schermo.blit(pre_rotation, (self.x + offset_usato, self.y + offset_frase + offset_pedice_apice))
+                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + pixel_ancoraggio + offset_frase + offset_pedice_apice + DANG_offset_y))
                     
 
                     font_usato = self.font.font_pyg_i if substringa_analizzata.italic else (self.font.font_pyg_b if substringa_analizzata.bold else self.font.font_pyg_r)
@@ -1835,7 +1841,22 @@ class SubStringa:
         
         substringhe_create = []
 
-        formattatori=(r"\red{", r"\orange{", r"\yellow{", r"\green{", r"\lblue{", r"\blue{", r"\violet{", r"\high{", r"\^{", r"\_{", r"\bold{", r"\italic{")
+        formattatori=(r"\h{", r"\^{", r"\_{", r"\b{", r"\i{", r"\#")
+        lookup_lenghts = {
+            r"\h{": 3,
+            r"\^{": 3,
+            r"\_{": 3,
+            r"\b{": 3,
+            r"\i{": 3,
+            r"\#": 9,
+        }
+
+        # h = highlight
+        # ^ = apice
+        # _ = pedice
+        # b = bold
+        # i = italic
+        # # = hex color
 
         formattatori_trovati = []
 
@@ -1868,7 +1889,6 @@ class SubStringa:
             # controllo se il primo formattatore è stato chiuso
             if len(formattatori_trovati) > 0 and len(formattatori_trovati[0]) == 3:
 
-
                 # controllo pre formattatore, presenza di testo default
                 if formattatori_trovati[0][1] > valvola:
                     substringhe_create.append(SubStringa(self.colore, self.bold, self.italic, self.apice, self.pedice, self.highlight, self.testo[valvola:formattatori_trovati[0][1]]))
@@ -1876,21 +1896,16 @@ class SubStringa:
 
                 # gestione del tag                    
                 ris = SubStringa(self.colore, self.bold, self.italic, self.apice, self.pedice, self.highlight, None)
-                ris.testo = self.testo[formattatori_trovati[0][1] + len(formattatori_trovati[0][0]): formattatori_trovati[0][2]]
+                ris.testo = self.testo[formattatori_trovati[0][1] + lookup_lenghts[formattatori_trovati[0][0]]: formattatori_trovati[0][2]]
                 
                 match formattatori_trovati[0][0]:
-                    case r"\red{": ris.colore = (255, 100, 100)
-                    case r"\orange{": ris.colore = (255, 150, 100)
-                    case r"\yellow{": ris.colore = (200, 200, 100)
-                    case r"\green{": ris.colore = (100, 255, 100)
-                    case r"\lblue{": ris.colore = (100, 255, 255)
-                    case r"\blue{": ris.colore = (100, 100, 255)
-                    case r"\violet{": ris.colore = (255, 100, 255)
-                    case r"\high{": ris.highlight = True
+                    case r"\h{": ris.highlight = True
                     case r"\^{": ris.apice = True
                     case r"\_{": ris.pedice = True
-                    case r"\bold{": ris.bold = True
-                    case r"\italic{": ris.italic = True
+                    case r"\b{": ris.bold = True
+                    case r"\i{": ris.italic = True
+                    case r"\#": ris.colore = MateUtils.hex2rgb(self.testo[formattatori_trovati[0][1] + 2 : formattatori_trovati[0][1] + 8])
+
 
                 # controllo figli
                 depth_controllo = ris.analisi()
@@ -2172,21 +2187,43 @@ class Screen(BaseElement):
 
     def _add_points(self, points, color, size=1):
         for point in points:
-            pygame.draw.circle(self.tavolozza, color, point[:2], size)
+            pygame.draw.circle(self.tavolozza, color, point[:2], ceil(size))
     
     
     def _add_rectangle(self, coords4, color, width=0):
-        pygame.draw.rect(self.tavolozza, color, coords4, width)
+        pygame.draw.rect(self.tavolozza, color, coords4, ceil(width))
     
     
     def _add_line(self, coords2, color, width=1):
-        pygame.draw.line(self.tavolozza, color, coords2[0], coords2[1], width)
+        pygame.draw.line(self.tavolozza, color, coords2[0], coords2[1], ceil(width))
 
 
     def _add_lines(self, points, color, size=1):
         for start, end in zip(points[:-1], points[1:]):
-            pygame.draw.line(self.tavolozza, color, start, end, size)
+            pygame.draw.line(self.tavolozza, color, start, end, ceil(size))
 
+
+    @staticmethod
+    def _add_points_static(schermo, points, color, size=1):
+        for point in points:
+            pygame.draw.circle(schermo, color, point[:2], ceil(size))
+    
+    
+    @staticmethod
+    def _add_rectangle_static(schermo, coords4, color, width=0):
+        pygame.draw.rect(schermo, color, coords4, ceil(width))
+    
+    
+    @staticmethod
+    def _add_line_static(schermo, coords2, color, width=1):
+        pygame.draw.line(schermo, color, coords2[0], coords2[1], ceil(width))
+
+
+    @staticmethod
+    def _add_lines_static(schermo, points, color, size=1):
+        for start, end in zip(points[:-1], points[1:]):
+            pygame.draw.line(schermo, color, start, end, ceil(size))
+    
 
     def _add_text(self, text, pos, size=1, anchor="lu", color=[100, 100, 100], rotation=0):
         
@@ -2228,3 +2265,36 @@ class Screen(BaseElement):
         if need_reset:
             need_reset = False
             self.font.scala_font(1/size)
+
+    
+    def _paste_array(self, array, position):
+        surface = pygame.surfarray.make_surface(array)
+        self.tavolozza.blit(surface, (position[0],position[1]))
+    
+    
+    def _generate_surface(self, array):
+        return pygame.surfarray.make_surface(array)
+
+    
+    def _blit_surface(self, surface, position):
+        self.tavolozza.blit(surface, (position[0],position[1]))
+
+
+    def _extract_pixel_values(self, x, y, w, h):
+        
+        x, y, w, h = int(x), int(y), int(w), int(h)
+
+        pixel_array = pygame.surfarray.array3d(self.tavolozza)
+
+        return pixel_array[x : x+w, y : y+h]
+    
+
+    def _save_screenshot(self, path):
+        try:
+            pygame.image.save(self.tavolozza, path)
+            img = Image.open(path)
+            img.save(path, dpi=(300, 300))
+
+        except FileNotFoundError:
+            pass
+    

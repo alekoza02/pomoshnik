@@ -79,6 +79,10 @@ class Costruttore:
         # ----------------------------------------------------------------------------------------------------
 
         s.screens["viewport"] = Screen(37.5, 50, "cc", 70, 90, mantain_aspect_ratio=False, latex_font=True)
+        
+        moltiplier = s.screens["viewport"].h / s.screens["viewport"].w
+
+        s.screens["renderer"] = Screen(f"{s.screens["viewport"].x}", f"{s.screens["viewport"].y}", "lu", "4000", f"{4000 * moltiplier}", mantain_aspect_ratio=False, latex_font=True, hide=True)
 
         s.drop_menu["item1"] = DropMenu(76.5, 5, "lu", 22, 90, "item1", hide=True)
         s.drop_menu["item2"] = DropMenu(76.5, 40, "lu", 22, 55, "item2", hide=True)
@@ -93,7 +97,7 @@ class Costruttore:
         s.drop_menu["item11"] = DropMenu(76.5, 5, "lu", 22, 90, "item11", hide=True)
 
         # ITEM 1 GEOMETRY ------------------------------------------------
-        s.drop_menu["item1"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Geometria}", font_size=28))
+        s.drop_menu["item1"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Geometria}", font_size=28))
         s.drop_menu["item1"].add_element("w_plot_area", Entrata(75, "120", "lu", 20, "30", text="0.8", title="larghezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
         s.drop_menu["item1"].add_element("h_plot_area", Entrata(75, "155", "lu", 20, "30", text="0.8", title="altezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
         s.drop_menu["item1"].add_element("x_plot_area", Entrata(75, "205", "lu", 20, "30", text="0.15", title="X plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
@@ -104,26 +108,29 @@ class Costruttore:
         
         
         # ITEM 2 PLOTS ---------------------------------------------------
-        s.drop_menu["item2"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Grafici}", font_size=28))
-        s.drop_menu["item2"].add_element("scatter_size", Entrata(75, "120", "lu", 20, "30", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
-        s.drop_menu["item2"].add_element("function_size", Entrata(75, "155", "lu", 20, "30", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
-        s.drop_menu["item2"].add_element("dashed_density", Entrata(75, "450", "lu", 20, "30", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101))
+        s.drop_menu["item2"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Grafici}", font_size=28))
+        
+        s.drop_menu["item2"].add_element("plot_name", Entrata(50, "90", "lu", 45, "30", text="", title="Plot name"))
+        
+        s.drop_menu["item2"].add_element("scatter_size", Entrata(75, "155", "lu", 20, "30", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
+        s.drop_menu["item2"].add_element("function_size", Entrata(75, "190", "lu", 20, "30", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
+        s.drop_menu["item2"].add_element("dashed_density", Entrata(75, "485", "lu", 20, "30", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101))
 
-        s.drop_menu["item2"].add_element("scatter_toggle", Bottone_Toggle(50, "120", "ru", "30", "30", text="Toggle scatter", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
-        s.drop_menu["item2"].add_element("function_toggle", Bottone_Toggle(50, "155", "ru", "30", "30", text="Toggle function", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
-        s.drop_menu["item2"].add_element("errorbar", Bottone_Toggle(50, "190", "ru", "30", "30", text="Toggle errors", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
-        s.drop_menu["item2"].add_element("dashed", Bottone_Toggle(50, "450", "ru", "30", "30", text="Dashed line", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
+        s.drop_menu["item2"].add_element("scatter_toggle", Bottone_Toggle(50, "155", "ru", "30", "30", text="Toggle scatter", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
+        s.drop_menu["item2"].add_element("function_toggle", Bottone_Toggle(50, "190", "ru", "30", "30", text="Toggle function", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
+        s.drop_menu["item2"].add_element("errorbar", Bottone_Toggle(50, "225", "ru", "30", "30", text="Toggle errors", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
+        s.drop_menu["item2"].add_element("dashed", Bottone_Toggle(50, "485", "ru", "30", "30", text="Dashed line", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
         
         s.scrolls["elenco_plots"] = Scroll(76.5, 5, "lu", 22, 35, "Grafici caricati", mantain_aspect_ratio=False)
         
-        s.drop_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", 30, "305", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
-        s.drop_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", 30, "360", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
+        s.drop_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", 30, "340", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
+        s.drop_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", 30, "395", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
         # ITEM 2 PLOTS ---------------------------------------------------
 
 
         # ITEM 3 AX LABELS -----------------------------------------------
-        s.drop_menu["item3"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Label}", font_size=28))
-        s.drop_menu["item3"].add_element("_title_drop_menu_avanz", Label_Text(50, "680", "cu", text=r"\yellow{Impostazioni avanzate Label}", font_size=28))
+        s.drop_menu["item3"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Label}", font_size=28))
+        s.drop_menu["item3"].add_element("_title_drop_menu_avanz", Label_Text(50, "680", "cu", text=r"\#ddaa88{Impostazioni avanzate Label}", font_size=28))
         
         s.drop_menu["item3"].add_element("text_title", Entrata(50, "120", "lu", 45, "30", text="Title", title="Title text"))
         s.drop_menu["item3"].add_element("text_label_x", Entrata(50, "170", "lu", 45, "30", text="X axis", title="Label text X"))
@@ -139,7 +146,7 @@ class Costruttore:
         # ITEM 3 AX LABELS -----------------------------------------------
 
         # ITEM 4 AXES ----------------------------------------------------
-        s.drop_menu["item4"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Assi}", font_size=28))
+        s.drop_menu["item4"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Assi}", font_size=28))
         
         s.drop_menu["item4"].add_element("round_x", Entrata(75, "120", "lu", 20, "30", text="2", title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
         s.drop_menu["item4"].add_element("round_y", Entrata(75, "155", "lu", 20, "30", text="2", title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
@@ -158,43 +165,59 @@ class Costruttore:
 
 
         # ITEM 5 LEGEND --------------------------------------------------
-        s.drop_menu["item5"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Legenda}", font_size=28))
+        s.drop_menu["item5"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Legenda}", font_size=28))
+    
+        s.drop_menu["item5"].add_element("show_legend", Bottone_Toggle(95, "80", "ru", "30", "30", text="\\#dfffdf{\\b{Mostra legenda}}", state=False, type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+
+        s.drop_menu["item5"].add_element("x_legend", Entrata(75, "155", "lu", 20, "30", text="0.5", title="X legend", lunghezza_max=5, solo_numeri=True, num_valore_minimo=-0.5, num_valore_massimo=1.5))
+        s.drop_menu["item5"].add_element("y_legend", Entrata(75, "190", "lu", 20, "30", text="0.5", title="Y legend", lunghezza_max=5, solo_numeri=True, num_valore_minimo=-0.5, num_valore_massimo=1.5))
+        
+        s.drop_menu["item5"].add_element("font_size_legend", Entrata(75, "255", "lu", 20, "30", text="48", title="Legend font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
+        
+        s.drop_menu["item5"].add_element("show_legend_background", Bottone_Toggle(95, "350", "ru", "30", "30", text="\\#dfffdf{\\b{Disegna bg}}", state=False, type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+        s.drop_menu["item5"].add_element("legend_color_background", ColorPicker(s.palette_popup, "11", 30, "430", "cc", 10, "40", [250, 250, 250], bg=[50, 50, 50], text="Color legend bg"))
+        s.drop_menu["item5"].add_element("transparent_background", Bottone_Toggle(95, "490", "ru", "30", "30", text="Trasparenza bg", state=True, type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+        s.drop_menu["item5"].add_element("blur_strenght", Entrata(75, "530", "lu", 20, "30", text="6", title="Forza di blur", lunghezza_max=2, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=12))
+        
+        s.drop_menu["item5"].add_element("show_icons", Bottone_Toggle(95, "620", "ru", "30", "30", text="Mostra icone", state=True, type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+        s.drop_menu["item5"].add_element("match_color_text", Bottone_Toggle(95, "660", "ru", "30", "30", text="Match text color", state=True, type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False))
+        s.drop_menu["item5"].add_element("color_text", ColorPicker(s.palette_popup, "12", 30, "720", "cc", 10, "40", [255, 255, 255], bg=[50, 50, 50], text="Color legend text"))
         # ITEM 5 LEGEND --------------------------------------------------
 
 
         # ITEM 6 IMPORT --------------------------------------------------
-        s.drop_menu["item6"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Import}", font_size=28))
+        s.drop_menu["item6"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Import}", font_size=28))
         
         s.drop_menu["item6"].add_element("import_single_plot", Bottone_Push(50, "80", "cu", 70, "40", function=self.bott_calls.load_file, text="Carica singolo file"))
         s.drop_menu["item6"].add_element("import_multip_plot", Bottone_Push(50, "130", "cu", 70, "40", function=self.bott_calls.load_files, text="Carica file multipli"))
     
-        s.drop_menu["item6"].add_element("remove_element_selected", Bottone_Push(50, "200", "cu", 70, "40", function=self.bott_calls.change_state, text="\\red{Elimina elemento selezionato}"))
+        s.drop_menu["item6"].add_element("remove_element_selected", Bottone_Push(50, "200", "cu", 70, "40", function=self.bott_calls.change_state, text=r"\#dc143c{Elimina elemento selezionato}"))
         
         # ITEM 6 IMPORT --------------------------------------------------
 
 
         # ITEM 7 EXPORT --------------------------------------------------
-        s.drop_menu["item7"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Export}", font_size=28))
+        s.drop_menu["item7"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Export}", font_size=28))
         # ITEM 7 EXPORT --------------------------------------------------
 
 
         # ITEM 8 STATSISTIC ----------------------------------------------
-        s.drop_menu["item8"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Statistica}", font_size=28))
+        s.drop_menu["item8"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Statistica}", font_size=28))
         # ITEM 8 STATSISTIC ----------------------------------------------
 
 
         # ITEM 9 INTERPOLATION -------------------------------------------
-        s.drop_menu["item9"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Interpolazioni}", font_size=28))
+        s.drop_menu["item9"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Interpolazioni}", font_size=28))
         # ITEM 9 INTERPOLATION -------------------------------------------
 
 
         # ITEM 10 MULTI-PLOTS --------------------------------------------
-        s.drop_menu["item10"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Multi-Plots}", font_size=28))
+        s.drop_menu["item10"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Multi-Plots}", font_size=28))
         # ITEM 10 MULTI-PLOTS --------------------------------------------
 
 
         # ITEM 11 METADATA -----------------------------------------------
-        s.drop_menu["item11"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\green{Impostazioni base Metadata}", font_size=28))
+        s.drop_menu["item11"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Metadata}", font_size=28))
         # ITEM 11 METADATA -----------------------------------------------
 
         starting = 1
@@ -206,6 +229,7 @@ class Costruttore:
         s.label["label_x"] = Label_Text(latex_font=True)
         s.label["label_y"] = Label_Text(latex_font=True)
         s.label["title"] = Label_Text(latex_font=True)
+        s.label["legend"] = Label_Text(latex_font=True)
 
         def set_active_tab():
             for index, state in enumerate(self.scene["main"].bottoni_r["modes"].cb_s):
@@ -219,6 +243,27 @@ class Costruttore:
                     self.scene["main"].scrolls["elenco_plots"].hide_plus_children(True)
                 else:
                     self.scene["main"].scrolls["elenco_plots"].hide_plus_children(False)
+
+
+        def hide_UI_element_with_toggle_legend_section():
+            
+            
+            stato = not self.scene["main"].drop_menu["item5"].elements["show_legend"].state_toggle
+            stato2 = not self.scene["main"].drop_menu["item5"].elements["show_legend_background"].state_toggle
+
+
+            self.scene["main"].drop_menu["item5"].elements["legend_color_background"].hide_plus_children(stato or stato2)
+            self.scene["main"].drop_menu["item5"].elements["transparent_background"].hide_plus_children(stato or stato2)
+            self.scene["main"].drop_menu["item5"].elements["blur_strenght"].hide_plus_children(stato or stato2)
+            
+            self.scene["main"].drop_menu["item5"].elements["x_legend"].hide_plus_children(stato)
+            self.scene["main"].drop_menu["item5"].elements["y_legend"].hide_plus_children(stato)
+            self.scene["main"].drop_menu["item5"].elements["font_size_legend"].hide_plus_children(stato)
+            self.scene["main"].drop_menu["item5"].elements["show_legend_background"].hide_plus_children(stato)
+            self.scene["main"].drop_menu["item5"].elements["show_icons"].hide_plus_children(stato)
+            self.scene["main"].drop_menu["item5"].elements["match_color_text"].hide_plus_children(stato)
+            self.scene["main"].drop_menu["item5"].elements["color_text"].hide_plus_children(stato)
+
 
 
         def hide_UI_element_with_toggle_plot_section():
@@ -249,6 +294,7 @@ class Costruttore:
 
         s.functions.append(set_active_tab)
         s.functions.append(hide_UI_element_with_toggle_plot_section)
+        s.functions.append(hide_UI_element_with_toggle_legend_section)
         s.functions.append(remove_selected_element)
 
 

@@ -12,10 +12,9 @@ def main():
         plot.import_plot_data("C:\\users\\aless\\desktop\\default\\polarizzazione_diretta.txt")
         
         while app.running:
-
             app.start_cycle()
 
-            plot.update()
+            plot.update(app.logica)
             plot.plot(app.logica)
 
             app.end_cycle()
@@ -42,8 +41,7 @@ def main():
         traceback_info = traceback_info.replace('\n', "\n\n", 1)
 
         traceback_info = traceback_info[:traceback_info.find("line")] + GREEN + traceback_info[traceback_info.find("line") : traceback_info.find(", in ")] + RESET + traceback_info[traceback_info.find(", in "):]
-        traceback_info = traceback_info[:traceback_info[:traceback_info.find("Error")][::-1].rfind("\n")] + RED + traceback_info[traceback_info[:traceback_info.find("Error")][::-1].rfind("\n"):] + RESET
-
+        
         print(f"\n\n\nATTENZIONE PROGRAMMA ARRESTATO!\n\n{traceback_info}\n\n")
         input("Premi un tasto qualsiasi per uscire...")
 

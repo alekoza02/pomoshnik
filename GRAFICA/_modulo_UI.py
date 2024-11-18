@@ -212,36 +212,36 @@ class UI:
 
     def pc_attributes(self):
         
-        self.costruttore.scene["main"].label["memory"].change_text(r"\high{ " + f' Memory: {psutil.Process().memory_info().rss / 1024**2:>7.2f} MB' + " }")
+        self.costruttore.scene["main"].label["memory"].change_text(r"\h{ " + f' Memory: {psutil.Process().memory_info().rss / 1024**2:>7.2f} MB' + " }")
         
         if psutil.Process().memory_info().rss / 1024**2 > 4000:
-            self.costruttore.scene["main"].label["memory"].change_text(r"\red{" + self.costruttore.scene["main"].label["memory"].testo + "}")
+            self.costruttore.scene["main"].label["memory"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].label["memory"].testo + "}")
 
         # -----------------------------------------------------------------------------
 
         self.cpu_sample.pop(0)
         self.cpu_sample.append(psutil.cpu_percent(interval=0))
-        self.costruttore.scene["main"].label["cpu"].change_text(r"\high{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }")
+        self.costruttore.scene["main"].label["cpu"].change_text(r"\h{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }")
 
         if sum(self.cpu_sample) / len(self.cpu_sample) > 30:
-            self.costruttore.scene["main"].label["cpu"].change_text(r"\yellow{" + self.costruttore.scene["main"].label["cpu"].testo + "}")
+            self.costruttore.scene["main"].label["cpu"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].label["cpu"].testo + "}")
 
         if sum(self.cpu_sample) / len(self.cpu_sample) > 70:
-            self.costruttore.scene["main"].label["cpu"].change_text(r"\red{" + self.costruttore.scene["main"].label["cpu"].testo + "}")
+            self.costruttore.scene["main"].label["cpu"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].label["cpu"].testo + "}")
 
         # -----------------------------------------------------------------------------
         
-        self.costruttore.scene["main"].label["fps"].change_text(r"\high{ " + f"FPS: {self.current_fps:>6.2f}" + " }")
+        self.costruttore.scene["main"].label["fps"].change_text(r"\h{ " + f"FPS: {self.current_fps:>6.2f}" + " }")
         
         if self.current_fps < 60:
-            self.costruttore.scene["main"].label["fps"].change_text(r"\yellow{" + self.costruttore.scene["main"].label["fps"].testo + "}")
+            self.costruttore.scene["main"].label["fps"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].label["fps"].testo + "}")
 
         if self.current_fps < 24:
-            self.costruttore.scene["main"].label["fps"].change_text(r"\red{" + self.costruttore.scene["main"].label["fps"].testo + "}")
+            self.costruttore.scene["main"].label["fps"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].label["fps"].testo + "}")
         
         # -----------------------------------------------------------------------------
         
-        self.costruttore.scene["main"].label["clock"].change_text(r"\high{ " + f" {strftime("%X, %x")}" " }")
+        self.costruttore.scene["main"].label["clock"].change_text(r"\h{ " + f" {strftime("%X, %x")}" " }")
 
         # -----------------------------------------------------------------------------
 
@@ -266,23 +266,15 @@ class UI:
                 case 10: simbolo_corretto = "󰂅" if battery.power_plugged else "󰁹";  # 100%
 
 
-            self.costruttore.scene["main"].label["battery"].testo = r"\high{ " + f"{simbolo_corretto} {battery.percent:>3}%" + " }"
+            self.costruttore.scene["main"].label["battery"].testo = r"\h{ " + f"{simbolo_corretto} {battery.percent:>3}%" + " }"
 
             if battery.percent < 20:
-                self.costruttore.scene["main"].label["battery"].testo = r"\yellow{" + self.costruttore.scene["main"].label["battery"].testo + "}"
+                self.costruttore.scene["main"].label["battery"].testo = r"\#ddaa88{" + self.costruttore.scene["main"].label["battery"].testo + "}"
 
             if battery.percent < 10:
-                self.costruttore.scene["main"].label["battery"].testo = r"\red{" + self.costruttore.scene["main"].label["battery"].testo + "}"
+                self.costruttore.scene["main"].label["battery"].testo = r"\#dc143c{" + self.costruttore.scene["main"].label["battery"].testo + "}"
 
 
     @staticmethod
     def graceful_quit():
         pygame.quit()
-
-
-    @staticmethod
-    def salva_screenshot(path, schermo):
-        try:
-            pygame.image.save(schermo, path)
-        except FileNotFoundError:
-            pass
