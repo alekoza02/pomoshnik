@@ -30,7 +30,12 @@ class BottoniCallbacks:
         if nomi != "":
             bottone.paths = list(nomi)
     
-    
+
+    @staticmethod
+    def save_file(bottone: 'Bottone_Push', extension=".png"):
+        bottone.paths.append(filedialog.asksaveasfilename(title="Salva file", defaultextension=extension))
+        
+
     @staticmethod
     def change_state(bottone: 'Bottone_Push'):
         bottone.flag_foo = not bottone.flag_foo

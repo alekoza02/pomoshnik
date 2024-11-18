@@ -198,6 +198,7 @@ class Costruttore:
 
         # ITEM 7 EXPORT --------------------------------------------------
         s.drop_menu["item7"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Export}", font_size=28))
+        s.drop_menu["item7"].add_element("save_single_plot", Bottone_Push(50, "80", "cu", 70, "40", function=self.bott_calls.save_file, text="Salva grafico"))
         # ITEM 7 EXPORT --------------------------------------------------
 
 

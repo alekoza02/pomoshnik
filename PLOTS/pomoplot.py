@@ -146,6 +146,8 @@ class PomoPlot:
         self.import_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item6"].elements["import_single_plot"]
         self.import_multip_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item6"].elements["import_multip_plot"]
 
+        self.save_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item7"].elements["save_single_plot"]
+
 
     def update_plot_list(self, added_plot):
         self.scroll_plots.add_element_scroll(added_plot, False)
@@ -185,7 +187,7 @@ class PomoPlot:
         self.import_single_plot.paths = []            
         self.import_multip_plot.paths = []
 
-        if logica.ctrl:
+        if len(self.save_single_plot.paths) > 0:
 
             self.scale_factor_renderer = self.screen_render.w / self.screen.w
 
@@ -200,7 +202,8 @@ class PomoPlot:
 
             self.plot(logica)
             self.plot(logica)
-            self.screen._save_screenshot(r"C:\Users\aless\Desktop\output.png")
+            self.screen._save_screenshot(self.save_single_plot.paths[-1])
+            self.save_single_plot.paths.pop()
             
             self.scale_factor_viewport = self.scale_factor_backup
             
@@ -209,6 +212,7 @@ class PomoPlot:
         
             self.screen_render.hide = True
             self.screen.hide = False
+
 
 
     def plot(self, logica: 'Logica'):
