@@ -288,7 +288,7 @@ class PomoPlot:
                 
                     superficie_alpha = self.screen._generate_surface(pixel_array)
 
-            elif not self.legend_transparent and not self.legend_show_background:
+            elif not self.legend_transparent and self.legend_show_background:
                 self.screen._add_rectangle([legend_position[0] - leg_lar_2 - self.icon_size_pixel, legend_position[1] - leg_alt_2, leg_lar + self.icon_size_pixel, leg_alt], self.legend_color_background)
 
 
@@ -571,7 +571,7 @@ class PomoPlot:
         # setu-up canvas
         self.screen._clear_canvas(self.unused_area_color)
         # disegno area di plot BG
-        self.screen._add_rectangle(self.max_canvas_square, self.canvas_area_color.get_color())
+        self.screen.tavolozza.fill(self.canvas_area_color.get_color())
         self.screen._add_rectangle(self.max_plot_square, self.plot_area_color.get_color())
         
 

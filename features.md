@@ -2,6 +2,7 @@
 
 - General geometry
     - Force square plot shape
+    - Custom dimension
     - Set percentage of plot area cover
     - Background color
     - Grid
@@ -9,9 +10,17 @@
         - Per value
 ---
 - Plots
+    - Data import
     - Setting points
-            - Color
-            - Size
+        - Color
+        - Size
+    - Settings lines
+        - Dashed line
+        - Width
+        - Color
+    - Setting Title
+    - Report errors
+        - Size of the bars
 ---
 - Labels
     - XY label ticks offset
@@ -22,25 +31,33 @@
     - Centering of the label
     - Size
     - Axis auto detect boundaries
+    - Custom font
 ---
 - Title
     - Centering of the label
     - Size
+    - Custom font
 ---
 - Legend
+    - Position
+    - Name
+    - Color
+    - Order
+    - Reporting the form / shape used in the plot
 ---
 - Export
+    - Export in png (X = 4000)
 ---
 - Import
+    - Import different extensions
+    - Sort by X - Value
 ---
 - Metadata
 
-UNDONE:
----
+# UNDONE:
 - General geometry
     - Multiple plots grid
     - alpha
-    - Custom dimension
     - Support 2° ax
     - Zoom (DO mantain proportions)
     - Zoom (DO NOT mantain proportions)
@@ -60,17 +77,12 @@ UNDONE:
         - Classic plot
         - Histogram
         - Pie chart
-    - Data import
     - Setting points
         - Shape
             - Custom shape generator
             - Preview   
     - Smoothing points
     - Sample values (too many points)
-    - Settings lines
-        - Dashed line
-        - Width
-        - Color
     - Setting color
         - Setting gradient
             - Vertical
@@ -78,45 +90,28 @@ UNDONE:
         - Setting change on Y axis
         - Setting progressive change
         - Setting zone change
-    - Setting Title
     - Normalize (1 ax 2 plots same height) (0-1)
     - Normalize (2 axes 2 plots same height) (x-y, x2-y2)
-    - Report errors
-        - Size of the bars
-        - Color
     - Show the coordinates
 ---
 - Labels
-    - Centering of the label
-    - Vertical writing (japanase style)
     - Custom offset
-    - Custom font
-    - Size
-    - Axis auto detect boundaries
+    - Vertical writing (japanase style)
 ---
 - Title
-    - Centering of the label
     - Custom offset
-    - Custom font
-    - Size
 ---
-- Legend
-    - Position
-    - Name
-    - Color
-    - Order
-    - Reporting the form / shape used in the plot
+- Legend $\checkmark$
 ---
 - Export
     - Export in png (custom size)
     - Export in svg
 ---
 - Import
-    - Import different extensions
     - Import .ale extension
-    - Sort by X - Value
 ---
 - Metadata
+    - Adding molecules
     - Adding arrows
     - Adding boxes
     - Adding circles

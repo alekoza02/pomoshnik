@@ -262,8 +262,12 @@ class Costruttore:
             self.scene["main"].drop_menu["item5"].elements["font_size_legend"].hide_plus_children(stato)
             self.scene["main"].drop_menu["item5"].elements["show_legend_background"].hide_plus_children(stato)
             self.scene["main"].drop_menu["item5"].elements["show_icons"].hide_plus_children(stato)
+
             self.scene["main"].drop_menu["item5"].elements["match_color_text"].hide_plus_children(stato)
-            self.scene["main"].drop_menu["item5"].elements["color_text"].hide_plus_children(stato)
+            
+            stato2 = self.scene["main"].drop_menu["item5"].elements["match_color_text"].state_toggle
+
+            self.scene["main"].drop_menu["item5"].elements["color_text"].hide_plus_children(stato or stato2)
 
 
 
