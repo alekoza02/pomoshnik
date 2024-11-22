@@ -25,6 +25,7 @@ class Logica:
         self.dragging_end_pos = (0,0)
         self.dragging_dx = 0
         self.dragging_dy = 0
+        self.dragging_finished_FLAG = False
         self.mouse_pos = (0,0)
 
         self.skip_salto = False
@@ -77,7 +78,7 @@ class UI:
         self.fullscreen = False
         
         self.clock = pygame.time.Clock()
-        self.max_fps: int = 24
+        self.max_fps: int = 0
         self.current_fps: int = 0
         self.running: int = 1
 

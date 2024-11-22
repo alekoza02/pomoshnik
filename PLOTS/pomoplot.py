@@ -66,7 +66,8 @@ class PomoPlot:
         # ------------------------------------------------------------------------------
         # ZONA COLORI
         # ------------------------------------------------------------------------------
-        self.unused_area_color: list[int] = np.array([40, 40, 40])
+        self.unused_area_color: list[int] = np.array([40, 40, 40]) # FIX unify
+        self.zoom_boundaries = np.array([0., 0., 1., 1.])
 
 
 
@@ -154,15 +155,18 @@ class PomoPlot:
         
 
     def update(self, logica: 'Logica'):
+
+        # cambio grafico attivo
         self.plots = self.scroll_plots.elementi
-
         old_active = self.active_plot
-
         if len(self.scroll_plots.elementi) > 0:
 
             self.active_plot: _Single1DPlot = self.scroll_plots.elementi[self.scroll_plots.ele_selected_index]
 
             if self.active_plot != old_active:
+
+                self.zoom_boundaries = np.array([0., 0., 1., 1.])
+
                 self.scatter_size.change_text(f"{self.active_plot.scatter_width}")
                 self.function_size.change_text(f"{self.active_plot.function_width}")
                 self.plot_name.change_text(f"{self.active_plot.nome}")
@@ -180,13 +184,15 @@ class PomoPlot:
                     self.error_bar.bg = np.array([40, 70, 40])
 
 
-
+        # import plots
         [self.import_plot_data(path) for path in self.import_single_plot.paths]
         [self.import_plot_data(path) for path in self.import_multip_plot.paths]
             
         self.import_single_plot.paths = []            
         self.import_multip_plot.paths = []
 
+
+        # salvataggio screenshot
         if len(self.save_single_plot.paths) > 0:
 
             self.scale_factor_renderer = self.screen_render.w / self.screen.w
@@ -200,8 +206,8 @@ class PomoPlot:
             self.scale_factor_backup = self.scale_factor_viewport
             self.scale_factor_viewport = self.scale_factor_renderer
 
-            self.plot(logica)
-            self.plot(logica)
+            self.plot(logica, screenshot=1)
+            self.plot(logica, screenshot=1)
             self.screen._save_screenshot(self.save_single_plot.paths[-1])
             self.save_single_plot.paths.pop()
             
@@ -213,10 +219,58 @@ class PomoPlot:
             self.screen_render.hide = True
             self.screen.hide = False
 
+        self.screen._add_points([
+            [self.max_plot_square[0], self.max_plot_square[1]],
+            [self.max_plot_square[2], self.max_plot_square[3]],
+        ], [255, 255, 255], 10)
+        
+        # logica zoom
+        if logica.dragging_finished_FLAG and self.screen.bounding_box.collidepoint(logica.mouse_pos) and logica.original_start_pos[0] != logica.dragging_end_pos[0] and logica.original_start_pos[1] != logica.dragging_end_pos[1]:
+            logica.dragging_finished_FLAG = False
+            
+            dragging_1 = self._extract_mouse_coordinate(logica.original_start_pos)          # x1 and y1
+            dragging_2 = self._extract_mouse_coordinate(logica.dragging_end_pos)            # x2 and y2
+            
+            dragging_1[0], dragging_2[0] = min(dragging_1[0], dragging_2[0]), max(dragging_1[0], dragging_2[0])
+            dragging_1[1], dragging_2[1] = min(dragging_1[1], dragging_2[1]), max(dragging_1[1], dragging_2[1])
+
+            dragging_1 = dragging_1.astype(np.float64)
+            dragging_2 = dragging_2.astype(np.float64)
+
+            dragging_1[0] -= self.max_plot_square[2] * self.minimal_offset_data_x
+            dragging_2[0] -= self.max_plot_square[2] * self.minimal_offset_data_x
+            dragging_1[1] -= self.max_plot_square[3] * self.minimal_offset_data_y
+            dragging_2[1] -= self.max_plot_square[3] * self.minimal_offset_data_y
+
+            dragging_1[0] /= self.max_plot_square[2] * (1 - self.minimal_offset_data_x * 2)
+            dragging_2[0] /= self.max_plot_square[2] * (1 - self.minimal_offset_data_x * 2)
+            dragging_1[1] /= self.max_plot_square[3] * (1 - self.minimal_offset_data_y * 2)
+            dragging_2[1] /= self.max_plot_square[3] * (1 - self.minimal_offset_data_y * 2)
+
+            dragging_1[1] = 1 - dragging_1[1]
+            dragging_2[1] = 1 - dragging_2[1]
+
+            dragging_1[1], dragging_2[1] = dragging_2[1], dragging_1[1]
+
+            x1 = self.zoom_boundaries[0] + dragging_1[0] * (self.zoom_boundaries[2] - self.zoom_boundaries[0])
+            x2 = self.zoom_boundaries[0] + dragging_2[0] * (self.zoom_boundaries[2] - self.zoom_boundaries[0])
+
+            y1 = self.zoom_boundaries[1] + dragging_1[1] * (self.zoom_boundaries[3] - self.zoom_boundaries[1])
+            y2 = self.zoom_boundaries[1] + dragging_2[1] * (self.zoom_boundaries[3] - self.zoom_boundaries[1])
+
+            self.zoom_boundaries = np.array([x1, y1, x2, y2])
+
+        if logica.ctrl:
+            self.zoom_boundaries = np.array([0., 0., 1., 1.])
 
 
-    def plot(self, logica: 'Logica'):
+
+
+    def plot(self, logica: 'Logica', screenshot=0):
         """Richiesta UI pomoshnik, si può utilizzare con altri metodi di disegno. coordinate, colori e dimensioni sono forniti per poter essere usati in qualunque formato."""
+
+        if not screenshot:
+            self.update(logica)
 
         self._disegna_bg()
         self._disegna_assi()
@@ -224,7 +278,77 @@ class PomoPlot:
         self._disegna_ticks()
         self._disegna_dati()
         self._disegna_legend(logica)
+
+        if not screenshot:
+            self._disegna_mouse_coordinate(logica)
+            self._disegna_mouse_zoom(logica)
             
+
+    def _disegna_mouse_zoom(self, logica: 'Logica'):
+        
+        if logica.dragging:
+
+            rectangle = [logica.original_start_pos[0], logica.original_start_pos[1], logica.dragging_end_pos[0], logica.dragging_end_pos[1]]
+
+            rectangle[0], rectangle[2] = min(rectangle[0], rectangle[2]), max(rectangle[0], rectangle[2])
+            rectangle[1], rectangle[3] = min(rectangle[1], rectangle[3]), max(rectangle[1], rectangle[3])
+
+            rectangle[2] -= rectangle[0]
+            rectangle[3] -= rectangle[1]
+
+            rectangle[0] -= self.screen.x
+            rectangle[1] -= self.screen.y
+
+            self.screen._add_rectangle(rectangle, [0, 255, 0], 2)
+
+
+    def _disegna_mouse_coordinate(self, logica: 'Logica'):
+        
+        try:
+
+            value = self._extract_mouse_coordinate(logica.mouse_pos)
+            value = self._transform_native_space(value)
+
+            posizione = np.array(logica.mouse_pos)
+
+            posizione[0] -= self.screen.x
+            posizione[1] -= self.screen.y
+
+            self.screen._add_text(f"({float(value[0]):.{int(self.round_ticks_x.get_text())}f}, {float(value[1]):.{int(self.round_ticks_y.get_text())}f})", size=1.2, pos=posizione, anchor="cd", color=[150, 160, 150])
+
+        except Exception as e:
+            print(e)
+
+
+    def _transform_native_space(self, value):
+
+        value = value.astype(float)
+
+        value[0] /= self.max_plot_square[2]
+        value[1] /= self.max_plot_square[3]
+
+        value[1] = 1 - value[1]
+
+        value[0] *= self.spazio_coordinate_native[2]
+        value[1] *= self.spazio_coordinate_native[3]
+        
+        value[0] += self.spazio_coordinate_native[0]
+        value[1] += self.spazio_coordinate_native[1]
+
+        return value
+
+
+    def _extract_mouse_coordinate(self, pos: tuple[int]) -> tuple[float]:
+        pos = np.array(pos)
+
+        pos[0] -= self.screen.x
+        pos[1] -= self.screen.y
+
+        pos[0] -= self.max_plot_square[0]
+        pos[1] -= self.max_plot_square[1]
+        
+        return pos
+
 
     def _disegna_legend(self, logica: 'Logica'):
 
@@ -451,21 +575,37 @@ class PomoPlot:
         self.offset_x_tick_value: int = (self.pixel_len_subdivisions + 7) * self.scale_factor_viewport
         self.offset_y_tick_value: int = (self.pixel_len_subdivisions + 25) * self.scale_factor_viewport
 
+        labels_info_text = []
+        labels_info_pos = []
+        labels_info_anchor = []
+        labels_info_color = []
+        labels_info_rotation = []
+
         for index, coord in enumerate(self.coords_of_ticks[0]):
             if self.show_grid_x.state_toggle:
                 self.screen._add_line([[coord, coords[3]], [coord, coords[1]]], self.ax_color_x.get_color(), self.scale_factor_viewport)
             self.screen._add_line([[coord, coords[3]], [coord, coords[3] + self.pixel_len_subdivisions * self.scale_factor_viewport]], self.ax_color_x.get_color(), 4 * self.scale_factor_viewport)
 
-            # disegno il valore corrispondente
-            self.screen._add_text(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x.get_text()}{formattatore_x}}", [coord, coords[3] + self.offset_y_label + self.offset_y_tick_value], anchor="cc", size=1.5 * self.scale_factor_viewport, color=self.tick_color_x.get_color())
-            
+            labels_info_text.append(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x.get_text()}{formattatore_x}}")
+            labels_info_pos.append([coord, coords[3] + self.offset_y_label + self.offset_y_tick_value])
+            labels_info_anchor.append("cc")
+            labels_info_color.append(self.tick_color_x.get_color())
+            labels_info_rotation.append(0)
+
+
         for index, coord in enumerate(self.coords_of_ticks[1]):
             if self.show_grid_y.state_toggle:
                 self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_y.get_color(), self.scale_factor_viewport)
             self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_y.get_color(), 4 * self.scale_factor_viewport)
 
-            # disegno il valore corrispondente
-            self.screen._add_text(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y.get_text()}{formattatore_y}}", [coords[0] - self.offset_x_label - self.offset_x_tick_value, coord], anchor="rc", size=1.5 * self.scale_factor_viewport, color=self.tick_color_y.get_color())
+            labels_info_text.append(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y.get_text()}{formattatore_y}}")
+            labels_info_pos.append([coords[0] - self.offset_x_label - self.offset_x_tick_value, coord])
+            labels_info_anchor.append("rc")
+            labels_info_color.append(self.tick_color_y.get_color())
+            labels_info_rotation.append(0)
+
+        # disegno il valore corrispondente
+        self.screen._add_text(labels_info_text, labels_info_pos, anchor=labels_info_anchor, size=1.5 * self.scale_factor_viewport, color=labels_info_color, rotation=labels_info_rotation)
 
 
     def _disegna_assi(self):
@@ -490,28 +630,49 @@ class PomoPlot:
         for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
             # disegno i dati se plot acceso
             if status:
+
+                cond1 = plot.data2plot[:, :2][:, 0] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
+                cond2 = plot.data2plot[:, :2][:, 1] >= self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
+                cond3 = plot.data2plot[:, :2][:, 0] <=  self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
+                cond4 = plot.data2plot[:, :2][:, 1] <=  self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
+
+                # Combine all conditions with logical AND
+                combined_condition = cond1 & cond2 & cond3 & cond4
+
+                extracted = plot.data2plot[combined_condition]
+
                 if plot.function:
     
                     if plot.dashed:
                         self._disegna_spezzata_tratteggiata(plot)
                     else:
-                        self.screen._add_lines(plot.data2plot[:, :2], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                        self.screen._add_lines(extracted[:, :2], plot.function_color, plot.function_width * self.scale_factor_viewport)
     
                 if plot.errorbar and plot.data.shape[1] > 2:
 
-                    for x, y, e in zip(plot.data2plot[:, 0], plot.data2plot[:, 1], plot.data2plot[:, 2]):
+                    for x, y, e in zip(extracted[:, 0], extracted[:, 1], extracted[:, 2]):
                         self.screen._add_line([[x, y], [x, y + e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
                         self.screen._add_line([[x, y], [x, y - e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
                         self.screen._add_line([[x - larg_error, y + e], [x + larg_error, y + e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
                         self.screen._add_line([[x - larg_error, y - e], [x + larg_error, y - e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
                         
                 if plot.scatter:
-                    self.screen._add_points(plot.data2plot[:, :2], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport)
+                    self.screen._add_points(extracted[:, :2], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport)
 
 
     def _disegna_spezzata_tratteggiata(self, plot:'_Single1DPlot'):
 
-        lunghezze_parziali = plot.data2plot[:-1, :2] - plot.data2plot[1:, :2]
+        cond1 = plot.data2plot[:, :2][:, 0] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
+        cond2 = plot.data2plot[:, :2][:, 1] >= self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
+        cond3 = plot.data2plot[:, :2][:, 0] <=  self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
+        cond4 = plot.data2plot[:, :2][:, 1] <=  self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
+
+        # Combine all conditions with logical AND
+        combined_condition = cond1 & cond2 & cond3 & cond4
+
+        extracted = plot.data2plot[combined_condition]
+
+        lunghezze_parziali = extracted[:-1, :2] - extracted[1:, :2]
         lunghezze_parziali = np.linalg.norm(lunghezze_parziali, axis=1)
         lunghezza_totale = np.sum(lunghezze_parziali)
         
@@ -520,7 +681,7 @@ class PomoPlot:
 
         percorso = 0
 
-        for p1, p2 in zip(plot.data2plot[:-1, :2], plot.data2plot[1:, :2]):
+        for p1, p2 in zip(extracted[:-1, :2], extracted[1:, :2]):
     
             new_point = p1
             iters = 0
@@ -738,13 +899,12 @@ class PomoPlot:
 
         new_start = round(start_values[0] / (self.nice_values[indice_valore] * power_per_tick[indice_tick])) * (self.nice_values[indice_valore] * power_per_tick[indice_tick])
         
-        ris = [round(new_start + self.nice_values[indice_valore] * power_per_tick[indice_tick] * i, 3) for i in range(0, indice_tick + self.min_ticks + 2)]
+        ris = [round(new_start + self.nice_values[indice_valore] * power_per_tick[indice_tick] * i, 12) for i in range(0, indice_tick + self.min_ticks + 2)]
             
         # decido se tenere l'ultimo elemento
-        while abs(start_values[-1] - ris[-1]) > abs(start_values[-1] - ris[-2]):
+        while len(ris) > 3 and abs(start_values[-1] - ris[-1]) > abs(start_values[-1] - ris[-2]):
             _ = ris.pop()
-            # print(f"DEBUG: eliminato il punto {_} perchè troppo lontano")
-
+            # print(f"DEBUG: eliminato il punto {_} perchè troppo lontano, {start_values}")
 
         return ris
 
@@ -823,8 +983,6 @@ class PomoPlot:
                     self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, 0]))
                     self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.data[:, 1]))
 
-
-
         # ottengo i ticks belli
         if at_least_one:
             self._get_nice_ticks()
@@ -834,6 +992,49 @@ class PomoPlot:
             self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(self.coords_of_ticks[1]))
             self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(self.coords_of_ticks[0]))
             self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(self.coords_of_ticks[1]))
+
+
+        swap_0 = self.spazio_coordinate_native[0] + (self.spazio_coordinate_native[2] - self.spazio_coordinate_native[0]) * self.zoom_boundaries[0]
+        swap_1 = self.spazio_coordinate_native[1] + (self.spazio_coordinate_native[3] - self.spazio_coordinate_native[1]) * self.zoom_boundaries[1]
+        swap_2 = self.spazio_coordinate_native[0] + (self.spazio_coordinate_native[2] - self.spazio_coordinate_native[0]) * self.zoom_boundaries[2]
+        swap_3 = self.spazio_coordinate_native[1] + (self.spazio_coordinate_native[3] - self.spazio_coordinate_native[1]) * self.zoom_boundaries[3]
+
+        self.spazio_coordinate_native[0] = swap_0
+        self.spazio_coordinate_native[1] = swap_1
+        self.spazio_coordinate_native[2] = swap_2
+        self.spazio_coordinate_native[3] = swap_3
+
+        if at_least_one and self.zoom_boundaries[0] != 0 and self.zoom_boundaries[1] != 0 and self.zoom_boundaries[2] != 1 and self.zoom_boundaries[3] != 1:
+            self._get_nice_ticks()
+
+            fix = 1
+            while fix:
+                if self.coords_of_ticks[0][0] < self.spazio_coordinate_native[0]:
+                    _ = self.coords_of_ticks[0].pop(0)
+                else:
+                    fix = 0
+        
+            fix = 1
+            while fix:
+                if self.coords_of_ticks[0][-1] > self.spazio_coordinate_native[2]:
+                    _ = self.coords_of_ticks[0].pop()
+                else:
+                    fix = 0
+
+            fix = 1
+            while fix:
+                if self.coords_of_ticks[1][0] < self.spazio_coordinate_native[1]:
+                    _ = self.coords_of_ticks[1].pop(0)
+                else:
+                    fix = 0
+        
+            fix = 1
+            while fix:
+                if self.coords_of_ticks[1][-1] > self.spazio_coordinate_native[3]:
+                    _ = self.coords_of_ticks[1].pop()
+                else:
+                    fix = 0
+
 
         # applico lo spostamento dei dati in base all'offset minimo richiesto dagli assi cartesiani
         self.spazio_coordinate_native[0] -= (self.spazio_coordinate_native[2] - self.spazio_coordinate_native[0]) * self.minimal_offset_data_x

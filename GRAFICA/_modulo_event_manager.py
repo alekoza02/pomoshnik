@@ -59,6 +59,7 @@ class EventManager:
                         logica.doppio_click_sinistro = False
                         
                     logica.init_dragging = True
+                    logica.dragging_finished_FLAG = False
                     logica.original_start_pos = logica.mouse_pos
                     logica.dragging_end_pos = logica.mouse_pos
 
@@ -76,6 +77,7 @@ class EventManager:
                     logica.dragging = False
                     logica.init_dragging = False
                     logica.dragging_end_pos = logica.mouse_pos
+                    logica.dragging_finished_FLAG = True
 
             if event.type == pygame.MOUSEMOTION:
                 

@@ -2227,44 +2227,86 @@ class Screen(BaseElement):
 
     def _add_text(self, text, pos, size=1, anchor="lu", color=[100, 100, 100], rotation=0):
         
-        # make it bulk
+        if type(text) == list:
 
-        need_reset = False
-        if size != 1:
-            need_reset = True
-            self.font.scala_font(size)
-
-        pre_rotation = self.font.font_pyg_r.render(text, True, color)
-        
-        if rotation != 0:
-            pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-
-        nl = 0
-        hl = self.font.font_pixel_dim[0] * len(text) / 2
-        fl = self.font.font_pixel_dim[0] * len(text)
-
-        nh = 0
-        hh = self.font.font_pixel_dim[1] / 2 
-        fh = self.font.font_pixel_dim[1] 
-
-
-        match anchor:
-            case "lu": offset_x, offset_y = nl, nh 
-            case "cu": offset_x, offset_y = hl, nh
-            case "ru": offset_x, offset_y = fl, nh
-            case "lc": offset_x, offset_y = nl, hh
-            case "cc": offset_x, offset_y = hl, hh
-            case "rc": offset_x, offset_y = fl, hh
-            case "ld": offset_x, offset_y = nl, fh
-            case "cd": offset_x, offset_y = hl, fh
-            case "rd": offset_x, offset_y = fl, fh
-
-
-        self.tavolozza.blit(pre_rotation, (pos[0] - offset_x, pos[1] - offset_y))
-        
-        if need_reset:
             need_reset = False
-            self.font.scala_font(1/size)
+            if size != 1:
+                need_reset = True
+                self.font.scala_font(size)
+
+            for text_i, pos_i, anchor_i, color_i, rotation_i in zip(text, pos, anchor, color, rotation):
+
+                pre_rotation = self.font.font_pyg_r.render(text_i, True, color_i)
+                
+                if rotation_i != 0:
+                    pre_rotation = pygame.transform.rotate(pre_rotation, rotation_i)
+
+                nl = 0
+                hl = self.font.font_pixel_dim[0] * len(text_i) / 2
+                fl = self.font.font_pixel_dim[0] * len(text_i)
+
+                nh = 0
+                hh = self.font.font_pixel_dim[1] / 2 
+                fh = self.font.font_pixel_dim[1] 
+
+
+                match anchor_i:
+                    case "lu": offset_x, offset_y = nl, nh 
+                    case "cu": offset_x, offset_y = hl, nh
+                    case "ru": offset_x, offset_y = fl, nh
+                    case "lc": offset_x, offset_y = nl, hh
+                    case "cc": offset_x, offset_y = hl, hh
+                    case "rc": offset_x, offset_y = fl, hh
+                    case "ld": offset_x, offset_y = nl, fh
+                    case "cd": offset_x, offset_y = hl, fh
+                    case "rd": offset_x, offset_y = fl, fh
+
+
+                self.tavolozza.blit(pre_rotation, (pos_i[0] - offset_x, pos_i[1] - offset_y))
+            
+            if need_reset:
+                need_reset = False
+                self.font.scala_font(1/size)
+
+        # make it bulk
+        else:
+
+            need_reset = False
+            if size != 1:
+                need_reset = True
+                self.font.scala_font(size)
+
+            pre_rotation = self.font.font_pyg_r.render(text, True, color)
+            
+            if rotation != 0:
+                pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
+
+            nl = 0
+            hl = self.font.font_pixel_dim[0] * len(text) / 2
+            fl = self.font.font_pixel_dim[0] * len(text)
+
+            nh = 0
+            hh = self.font.font_pixel_dim[1] / 2 
+            fh = self.font.font_pixel_dim[1] 
+
+
+            match anchor:
+                case "lu": offset_x, offset_y = nl, nh 
+                case "cu": offset_x, offset_y = hl, nh
+                case "ru": offset_x, offset_y = fl, nh
+                case "lc": offset_x, offset_y = nl, hh
+                case "cc": offset_x, offset_y = hl, hh
+                case "rc": offset_x, offset_y = fl, hh
+                case "ld": offset_x, offset_y = nl, fh
+                case "cd": offset_x, offset_y = hl, fh
+                case "rd": offset_x, offset_y = fl, fh
+
+
+            self.tavolozza.blit(pre_rotation, (pos[0] - offset_x, pos[1] - offset_y))
+            
+            if need_reset:
+                need_reset = False
+                self.font.scala_font(1/size)
 
     
     def _paste_array(self, array, position):
