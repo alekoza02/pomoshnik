@@ -731,6 +731,12 @@ class RadioButton(BaseElement):
         return [bottone.state_toggle for bottone in self.toggles]
 
 
+    def set_state(self, states):
+        
+        for bottone, stato in zip(self.toggles, states):
+            bottone.state_toggle = stato
+
+
     def check_for_diff(self, list1, list2):
 
         elemento_vecchio = None
@@ -2340,3 +2346,6 @@ class Screen(BaseElement):
         except FileNotFoundError:
             pass
     
+
+    def load_image(self):
+        self.loaded_image = pygame.image.load("./TEXTURES/molecola.svg")

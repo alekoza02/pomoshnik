@@ -7,7 +7,7 @@ NON_ESEGUIRE = False
 
 if NON_ESEGUIRE:    
     from GRAFICA._modulo_UI import Logica, UI
-    from GRAFICA._modulo_elementi_grafici import Label_Text, Screen, Entrata, Bottone_Toggle, Scroll, ColorPicker, Bottone_Push
+    from GRAFICA._modulo_elementi_grafici import Label_Text, Screen, Entrata, Bottone_Toggle, Scroll, ColorPicker, Bottone_Push, RadioButton
 
 
 class PomoPlot:
@@ -77,6 +77,9 @@ class PomoPlot:
         self.screen_render = UI.costruttore.scene["main"].screens["renderer"]
 
         self.scale_factor_viewport = 1
+
+        self.tools: 'RadioButton' = UI.costruttore.scene["main"].bottoni_r["tools"]
+        self.reset_tools: 'Bottone_Push' = UI.costruttore.scene["main"].bottoni_p["reset_zoom"]
 
         self.labels[0] = UI.costruttore.scene["main"].label["title"]
         self.labels[1] = UI.costruttore.scene["main"].label["label_x"]
@@ -208,6 +211,10 @@ class PomoPlot:
 
             self.plot(logica, screenshot=1)
             self.plot(logica, screenshot=1)
+
+            # self.screen.load_image()
+            # self.screen.tavolozza.blit(self.screen.loaded_image, (self.screen.x, self.screen.y))
+            
             self.screen._save_screenshot(self.save_single_plot.paths[-1])
             self.save_single_plot.paths.pop()
             
@@ -224,8 +231,8 @@ class PomoPlot:
             [self.max_plot_square[2], self.max_plot_square[3]],
         ], [255, 255, 255], 10)
         
-        # logica zoom
-        if logica.dragging_finished_FLAG and self.screen.bounding_box.collidepoint(logica.mouse_pos) and logica.original_start_pos[0] != logica.dragging_end_pos[0] and logica.original_start_pos[1] != logica.dragging_end_pos[1]:
+        # logica zoom mouse
+        if self.tools.cb_s[0] and logica.dragging_finished_FLAG and self.screen.bounding_box.collidepoint(logica.mouse_pos) and logica.original_start_pos[0] != logica.dragging_end_pos[0] and logica.original_start_pos[1] != logica.dragging_end_pos[1]:
             logica.dragging_finished_FLAG = False
             
             dragging_1 = self._extract_mouse_coordinate(logica.original_start_pos)          # x1 and y1
@@ -260,7 +267,32 @@ class PomoPlot:
 
             self.zoom_boundaries = np.array([x1, y1, x2, y2])
 
-        if logica.ctrl:
+
+        # logica zoom rotella
+        if logica.scroll_down and self.screen.bounding_box.collidepoint(logica.mouse_pos):
+            self.zoom_boundaries[0] -= logica.scroll_down * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 100
+            self.zoom_boundaries[1] -= logica.scroll_down * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 100
+            self.zoom_boundaries[2] += logica.scroll_down * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 100
+            self.zoom_boundaries[3] += logica.scroll_down * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 100
+        if logica.scroll_up and self.screen.bounding_box.collidepoint(logica.mouse_pos):
+            self.zoom_boundaries[0] += logica.scroll_up * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 100
+            self.zoom_boundaries[1] += logica.scroll_up * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 100
+            self.zoom_boundaries[2] -= logica.scroll_up * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 100
+            self.zoom_boundaries[3] -= logica.scroll_up * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 100
+
+
+        # logica pan
+        if self.tools.cb_s[1] and self.screen.bounding_box.collidepoint(logica.mouse_pos) and logica.dragging:
+            self.zoom_boundaries[0] -= (self.zoom_boundaries[2] - self.zoom_boundaries[0]) * logica.dragging_dx / self.screen.w
+            self.zoom_boundaries[1] -= (self.zoom_boundaries[3] - self.zoom_boundaries[1]) * logica.dragging_dy / self.screen.h
+            self.zoom_boundaries[2] -= (self.zoom_boundaries[2] - self.zoom_boundaries[0]) * logica.dragging_dx / self.screen.w
+            self.zoom_boundaries[3] -= (self.zoom_boundaries[3] - self.zoom_boundaries[1]) * logica.dragging_dy / self.screen.h
+
+
+        # reset pan & zoom
+        if self.reset_tools.flag_foo:
+            self.reset_tools.flag_foo = 0
+            self.tools.set_state([0, 0])
             self.zoom_boundaries = np.array([0., 0., 1., 1.])
 
 
@@ -286,7 +318,7 @@ class PomoPlot:
 
     def _disegna_mouse_zoom(self, logica: 'Logica'):
         
-        if logica.dragging:
+        if logica.dragging and self.tools.cb_s[0]:
 
             rectangle = [logica.original_start_pos[0], logica.original_start_pos[1], logica.dragging_end_pos[0], logica.dragging_end_pos[1]]
 
@@ -300,6 +332,13 @@ class PomoPlot:
             rectangle[1] -= self.screen.y
 
             self.screen._add_rectangle(rectangle, [0, 255, 0], 2)
+
+        if logica.dragging and self.tools.cb_s[1]:
+            x1 = logica.original_start_pos[0] - self.screen.x
+            y1 = logica.original_start_pos[1] - self.screen.y
+            x2 = logica.dragging_end_pos[0] - self.screen.x
+            y2 = logica.dragging_end_pos[1] - self.screen.y
+            self.screen._add_line([[x1, y1], [x2, y2]], [0, 255, 0], 2)
 
 
     def _disegna_mouse_coordinate(self, logica: 'Logica'):
@@ -993,6 +1032,8 @@ class PomoPlot:
             self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(self.coords_of_ticks[0]))
             self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(self.coords_of_ticks[1]))
 
+        else:
+            self.spazio_coordinate_native = np.array([0., 0., 1., 1.])
 
         swap_0 = self.spazio_coordinate_native[0] + (self.spazio_coordinate_native[2] - self.spazio_coordinate_native[0]) * self.zoom_boundaries[0]
         swap_1 = self.spazio_coordinate_native[1] + (self.spazio_coordinate_native[3] - self.spazio_coordinate_native[1]) * self.zoom_boundaries[1]
@@ -1007,33 +1048,38 @@ class PomoPlot:
         if at_least_one and self.zoom_boundaries[0] != 0 and self.zoom_boundaries[1] != 0 and self.zoom_boundaries[2] != 1 and self.zoom_boundaries[3] != 1:
             self._get_nice_ticks()
 
-            fix = 1
-            while fix:
-                if self.coords_of_ticks[0][0] < self.spazio_coordinate_native[0]:
-                    _ = self.coords_of_ticks[0].pop(0)
-                else:
-                    fix = 0
-        
-            fix = 1
-            while fix:
-                if self.coords_of_ticks[0][-1] > self.spazio_coordinate_native[2]:
-                    _ = self.coords_of_ticks[0].pop()
-                else:
-                    fix = 0
+            try:
 
-            fix = 1
-            while fix:
-                if self.coords_of_ticks[1][0] < self.spazio_coordinate_native[1]:
-                    _ = self.coords_of_ticks[1].pop(0)
-                else:
-                    fix = 0
-        
-            fix = 1
-            while fix:
-                if self.coords_of_ticks[1][-1] > self.spazio_coordinate_native[3]:
-                    _ = self.coords_of_ticks[1].pop()
-                else:
-                    fix = 0
+                fix = 1
+                while fix:
+                    if self.coords_of_ticks[0][0] < self.spazio_coordinate_native[0]:
+                        _ = self.coords_of_ticks[0].pop(0)
+                    else:
+                        fix = 0
+            
+                fix = 1
+                while fix:
+                    if self.coords_of_ticks[0][-1] > self.spazio_coordinate_native[2]:
+                        _ = self.coords_of_ticks[0].pop()
+                    else:
+                        fix = 0
+
+                fix = 1
+                while fix:
+                    if self.coords_of_ticks[1][0] < self.spazio_coordinate_native[1]:
+                        _ = self.coords_of_ticks[1].pop(0)
+                    else:
+                        fix = 0
+            
+                fix = 1
+                while fix:
+                    if self.coords_of_ticks[1][-1] > self.spazio_coordinate_native[3]:
+                        _ = self.coords_of_ticks[1].pop()
+                    else:
+                        fix = 0
+
+            except IndexError:
+                ...
 
 
         # applico lo spostamento dei dati in base all'offset minimo richiesto dagli assi cartesiani

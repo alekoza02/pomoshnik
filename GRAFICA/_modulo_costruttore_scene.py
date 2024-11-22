@@ -78,23 +78,25 @@ class Costruttore:
         
         # ----------------------------------------------------------------------------------------------------
 
-        s.screens["viewport"] = Screen(37.5, 50, "cc", 70, 90, mantain_aspect_ratio=False, latex_font=True)
+        s.screens["viewport"] = Screen(37.5, 50, "cc", 65, 90, mantain_aspect_ratio=False, latex_font=True)
         
         moltiplier = s.screens["viewport"].h / s.screens["viewport"].w
 
         s.screens["renderer"] = Screen(f"{s.screens["viewport"].x}", f"{s.screens["viewport"].y}", "lu", "4000", f"{4000 * moltiplier}", mantain_aspect_ratio=False, latex_font=True, hide=True)
 
-        s.drop_menu["item1"] = DropMenu(76.5, 5, "lu", 22, 90, "item1", hide=True)
+        s.scrolls["elenco_plots"] = Scroll(76.5, 5, "lu", 22, 33, "Grafici caricati", mantain_aspect_ratio=False)
+
+        s.drop_menu["item1"] = DropMenu(76.5, 40, "lu", 22, 55, "item1", hide=True)
         s.drop_menu["item2"] = DropMenu(76.5, 40, "lu", 22, 55, "item2", hide=True)
-        s.drop_menu["item3"] = DropMenu(76.5, 5, "lu", 22, 90, "item3", hide=True)
-        s.drop_menu["item4"] = DropMenu(76.5, 5, "lu", 22, 90, "item4", hide=True)
-        s.drop_menu["item5"] = DropMenu(76.5, 5, "lu", 22, 90, "item5", hide=True)
+        s.drop_menu["item3"] = DropMenu(76.5, 40, "lu", 22, 55, "item3", hide=True)
+        s.drop_menu["item4"] = DropMenu(76.5, 40, "lu", 22, 55, "item4", hide=True)
+        s.drop_menu["item5"] = DropMenu(76.5, 40, "lu", 22, 55, "item5", hide=True)
         s.drop_menu["item6"] = DropMenu(76.5, 40, "lu", 22, 55, "item6", hide=True)
-        s.drop_menu["item7"] = DropMenu(76.5, 5, "lu", 22, 90, "item7", hide=True)
-        s.drop_menu["item8"] = DropMenu(76.5, 5, "lu", 22, 90, "item8", hide=True)
-        s.drop_menu["item9"] = DropMenu(76.5, 5, "lu", 22, 90, "item9", hide=True)
-        s.drop_menu["item10"] = DropMenu(76.5, 5, "lu", 22, 90, "item10", hide=True)
-        s.drop_menu["item11"] = DropMenu(76.5, 5, "lu", 22, 90, "item11", hide=True)
+        s.drop_menu["item7"] = DropMenu(76.5, 40, "lu", 22, 55, "item7", hide=True)
+        s.drop_menu["item8"] = DropMenu(76.5, 40, "lu", 22, 55, "item8", hide=True)
+        s.drop_menu["item9"] = DropMenu(76.5, 40, "lu", 22, 55, "item9", hide=True)
+        s.drop_menu["item10"] = DropMenu(76.5, 40, "lu", 22, 55, "item10", hide=True)
+        s.drop_menu["item11"] = DropMenu(76.5, 40, "lu", 22, 55, "item11", hide=True)
 
         # ITEM 1 GEOMETRY ------------------------------------------------
         s.drop_menu["item1"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Geometria}", font_size=28))
@@ -120,8 +122,6 @@ class Costruttore:
         s.drop_menu["item2"].add_element("function_toggle", Bottone_Toggle(50, "190", "ru", "30", "30", text="Toggle function", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
         s.drop_menu["item2"].add_element("errorbar", Bottone_Toggle(50, "225", "ru", "30", "30", text="Toggle errors", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
         s.drop_menu["item2"].add_element("dashed", Bottone_Toggle(50, "485", "ru", "30", "30", text="Dashed line", type_checkbox=True, mantain_aspect_ratio=False, text_on_right=False, state=True))
-        
-        s.scrolls["elenco_plots"] = Scroll(76.5, 5, "lu", 22, 35, "Grafici caricati", mantain_aspect_ratio=False)
         
         s.drop_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", 30, "340", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
         s.drop_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", 30, "395", "cc", 10, "40", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
@@ -224,9 +224,15 @@ class Costruttore:
         starting = 1
         stato_iniziale_tab = [False for _ in range(11)]
         stato_iniziale_tab[starting] = True        
-        s.bottoni_r["modes"] = RadioButton(anchor=("rc", "lc", s.drop_menu["item3"], 0, 0), w="70", h="900", bg=array([35, 35, 35]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="70", h_button="70")
+        s.bottoni_r["modes"] = RadioButton(anchor=("rc", "lc", s.drop_menu["item3"], 0, 0), w="70", h="900", bg=array([30, 30, 30]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="70", h_button="70")
         [bottone.load_texture(f"item{index + 1}") for index, bottone in enumerate(s.bottoni_r["modes"].toggles)]
         
+        s.bottoni_r["tools"] = RadioButton(x=0, y=5, anchor="lu", w="70", h="150", bg=array([30, 30, 30]), axis="y", cb_n=2, cb_s=[0, 0], cb_t=["" for _ in range(2)], type_checkbox=False, w_button="70", h_button="70")
+        [bottone.load_texture(f"tool{index + 1}") for index, bottone in enumerate(s.bottoni_r["tools"].toggles)]
+
+        s.bottoni_p["reset_zoom"] = Bottone_Push(anchor=("cu", "cd", s.bottoni_r["tools"], 0, 10), w="70", h="70", function=BottoniCallbacks.change_state)
+        s.bottoni_p["reset_zoom"].load_texture(f"tool3")
+
         s.label["label_x"] = Label_Text(latex_font=True)
         s.label["label_y"] = Label_Text(latex_font=True)
         s.label["title"] = Label_Text(latex_font=True)
