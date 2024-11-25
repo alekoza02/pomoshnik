@@ -1,6 +1,7 @@
 # DONE:
 
 - General geometry
+    - Zoom (DO mantain proportions)
     - Force square plot shape
     - Custom dimension
     - Set percentage of plot area cover
@@ -21,6 +22,7 @@
     - Setting Title
     - Report errors
         - Size of the bars
+    - Show the coordinates
 ---
 - Labels
     - XY label ticks offset
@@ -59,7 +61,6 @@
     - Multiple plots grid
     - alpha
     - Support 2° ax
-    - Zoom (DO mantain proportions)
     - Zoom (DO NOT mantain proportions)
     - Select plots from clicking
     - Force mantain proportion in XY data
@@ -90,9 +91,8 @@
         - Setting change on Y axis
         - Setting progressive change
         - Setting zone change
-    - Normalize (1 ax 2 plots same height) (0-1)
+    - Normalize (1 ax 2 plots same height) (0-1) and (0-100)
     - Normalize (2 axes 2 plots same height) (x-y, x2-y2)
-    - Show the coordinates
 ---
 - Labels
     - Custom offset

@@ -106,6 +106,10 @@ class Costruttore:
         s.drop_menu["item1"].add_element("y_plot_area", Entrata(75, "240", "lu", 20, "30", text="0.1", title="Y plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
         s.drop_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", 30, "400", "cc", 10, "40", [50, 50, 50], bg=[50, 50, 50], text="Color plot area"))
         s.drop_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", 30, "450", "cc", 10, "40", [40, 40, 40], bg=[50, 50, 50], text="Color background"))
+        
+        s.drop_menu["item1"].add_element("normalizza", Bottone_Toggle(10, "525", "lc", 35, "50", False, False, "[0..1]"))
+        s.drop_menu["item1"].add_element("percentualizza", Bottone_Toggle(90, "525", "rc", 35, "50", False, False, "[%]"))
+        s.drop_menu["item1"].add_element("overlap", Bottone_Toggle(50, "600", "cc", 35, "50", True, False, "Plots Overlap"))
         # ITEM 1 GEOMETRY ------------------------------------------------
         
         
@@ -246,54 +250,51 @@ class Costruttore:
                     self.scene["main"].drop_menu[f"item{index + 1}"].inizializzato = True
                     self.scene["main"].drop_menu[f"item{index + 1}"].update_window_change()
 
-                if index == 1 or index == 5:
-                    self.scene["main"].scrolls["elenco_plots"].hide_plus_children(True)
-                else:
-                    self.scene["main"].scrolls["elenco_plots"].hide_plus_children(False)
-
 
         def hide_UI_element_with_toggle_legend_section():
             
-            
-            stato = not self.scene["main"].drop_menu["item5"].elements["show_legend"].state_toggle
-            stato2 = not self.scene["main"].drop_menu["item5"].elements["show_legend_background"].state_toggle
+            if self.scene["main"].bottoni_r["modes"].cb_s[4]:
+                stato = not self.scene["main"].drop_menu["item5"].elements["show_legend"].state_toggle
+                stato2 = not self.scene["main"].drop_menu["item5"].elements["show_legend_background"].state_toggle
 
 
-            self.scene["main"].drop_menu["item5"].elements["legend_color_background"].hide_plus_children(stato or stato2)
-            self.scene["main"].drop_menu["item5"].elements["transparent_background"].hide_plus_children(stato or stato2)
-            self.scene["main"].drop_menu["item5"].elements["blur_strenght"].hide_plus_children(stato or stato2)
-            
-            self.scene["main"].drop_menu["item5"].elements["x_legend"].hide_plus_children(stato)
-            self.scene["main"].drop_menu["item5"].elements["y_legend"].hide_plus_children(stato)
-            self.scene["main"].drop_menu["item5"].elements["font_size_legend"].hide_plus_children(stato)
-            self.scene["main"].drop_menu["item5"].elements["show_legend_background"].hide_plus_children(stato)
-            self.scene["main"].drop_menu["item5"].elements["show_icons"].hide_plus_children(stato)
+                self.scene["main"].drop_menu["item5"].elements["legend_color_background"].hide_plus_children(stato or stato2)
+                self.scene["main"].drop_menu["item5"].elements["transparent_background"].hide_plus_children(stato or stato2)
+                self.scene["main"].drop_menu["item5"].elements["blur_strenght"].hide_plus_children(stato or stato2)
+                
+                self.scene["main"].drop_menu["item5"].elements["x_legend"].hide_plus_children(stato)
+                self.scene["main"].drop_menu["item5"].elements["y_legend"].hide_plus_children(stato)
+                self.scene["main"].drop_menu["item5"].elements["font_size_legend"].hide_plus_children(stato)
+                self.scene["main"].drop_menu["item5"].elements["show_legend_background"].hide_plus_children(stato)
+                self.scene["main"].drop_menu["item5"].elements["show_icons"].hide_plus_children(stato)
 
-            self.scene["main"].drop_menu["item5"].elements["match_color_text"].hide_plus_children(stato)
-            
-            stato2 = self.scene["main"].drop_menu["item5"].elements["match_color_text"].state_toggle
+                self.scene["main"].drop_menu["item5"].elements["match_color_text"].hide_plus_children(stato)
+                
+                stato2 = self.scene["main"].drop_menu["item5"].elements["match_color_text"].state_toggle
 
-            self.scene["main"].drop_menu["item5"].elements["color_text"].hide_plus_children(stato or stato2)
+                self.scene["main"].drop_menu["item5"].elements["color_text"].hide_plus_children(stato or stato2)
 
 
 
         def hide_UI_element_with_toggle_plot_section():
 
-            if not self.scene["main"].drop_menu["item2"].elements["scatter_toggle"].state_toggle:
-                self.scene["main"].drop_menu["item2"].elements["scatter_size"].hide_plus_children(True)
-                self.scene["main"].drop_menu["item2"].elements["colore_scatter"].hide_plus_children(True)
-            else:
-                self.scene["main"].drop_menu["item2"].elements["scatter_size"].hide_plus_children(False)
-                self.scene["main"].drop_menu["item2"].elements["colore_scatter"].hide_plus_children(False)
+            if self.scene["main"].bottoni_r["modes"].cb_s[1]:
 
-            if not self.scene["main"].drop_menu["item2"].elements["function_toggle"].state_toggle:
-                self.scene["main"].drop_menu["item2"].elements["function_size"].hide_plus_children(True)
-                self.scene["main"].drop_menu["item2"].elements["colore_function"].hide_plus_children(True)
-                self.scene["main"].drop_menu["item2"].elements["dashed"].hide_plus_children(True)
-            else:
-                self.scene["main"].drop_menu["item2"].elements["function_size"].hide_plus_children(False)
-                self.scene["main"].drop_menu["item2"].elements["colore_function"].hide_plus_children(False)
-                self.scene["main"].drop_menu["item2"].elements["dashed"].hide_plus_children(False)
+                if not self.scene["main"].drop_menu["item2"].elements["scatter_toggle"].state_toggle:
+                    self.scene["main"].drop_menu["item2"].elements["scatter_size"].hide_plus_children(True)
+                    self.scene["main"].drop_menu["item2"].elements["colore_scatter"].hide_plus_children(True)
+                else:
+                    self.scene["main"].drop_menu["item2"].elements["scatter_size"].hide_plus_children(False)
+                    self.scene["main"].drop_menu["item2"].elements["colore_scatter"].hide_plus_children(False)
+
+                if not self.scene["main"].drop_menu["item2"].elements["function_toggle"].state_toggle:
+                    self.scene["main"].drop_menu["item2"].elements["function_size"].hide_plus_children(True)
+                    self.scene["main"].drop_menu["item2"].elements["colore_function"].hide_plus_children(True)
+                    self.scene["main"].drop_menu["item2"].elements["dashed"].hide_plus_children(True)
+                else:
+                    self.scene["main"].drop_menu["item2"].elements["function_size"].hide_plus_children(False)
+                    self.scene["main"].drop_menu["item2"].elements["colore_function"].hide_plus_children(False)
+                    self.scene["main"].drop_menu["item2"].elements["dashed"].hide_plus_children(False)
 
 
         def remove_selected_element():

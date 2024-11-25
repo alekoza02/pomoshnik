@@ -93,6 +93,9 @@ class PomoPlot:
         self.plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item1"].elements["plot_area_bg"]
         self.canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item1"].elements["canvas_area_bg"]
         
+        self.normalizza: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item1"].elements["normalizza"]
+        self.percentualizza: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item1"].elements["percentualizza"]
+        self.overlap: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item1"].elements["overlap"]
         
         self.scroll_plots: 'Scroll' = UI.costruttore.scene["main"].scrolls["elenco_plots"]
 
@@ -167,8 +170,6 @@ class PomoPlot:
             self.active_plot: _Single1DPlot = self.scroll_plots.elementi[self.scroll_plots.ele_selected_index]
 
             if self.active_plot != old_active:
-
-                self.zoom_boundaries = np.array([0., 0., 1., 1.])
 
                 self.scatter_size.change_text(f"{self.active_plot.scatter_width}")
                 self.function_size.change_text(f"{self.active_plot.function_width}")
@@ -270,15 +271,15 @@ class PomoPlot:
 
         # logica zoom rotella
         if logica.scroll_down and self.screen.bounding_box.collidepoint(logica.mouse_pos):
-            self.zoom_boundaries[0] -= logica.scroll_down * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 100
-            self.zoom_boundaries[1] -= logica.scroll_down * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 100
-            self.zoom_boundaries[2] += logica.scroll_down * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 100
-            self.zoom_boundaries[3] += logica.scroll_down * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 100
+            self.zoom_boundaries[0] -= logica.scroll_down * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 20
+            self.zoom_boundaries[1] -= logica.scroll_down * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 20
+            self.zoom_boundaries[2] += logica.scroll_down * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 20
+            self.zoom_boundaries[3] += logica.scroll_down * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 20
         if logica.scroll_up and self.screen.bounding_box.collidepoint(logica.mouse_pos):
-            self.zoom_boundaries[0] += logica.scroll_up * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 100
-            self.zoom_boundaries[1] += logica.scroll_up * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 100
-            self.zoom_boundaries[2] -= logica.scroll_up * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 100
-            self.zoom_boundaries[3] -= logica.scroll_up * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 100
+            self.zoom_boundaries[0] += logica.scroll_up * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 20
+            self.zoom_boundaries[1] += logica.scroll_up * (self.zoom_boundaries[2] - self.zoom_boundaries[0]) / 20
+            self.zoom_boundaries[2] -= logica.scroll_up * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 20
+            self.zoom_boundaries[3] -= logica.scroll_up * (self.zoom_boundaries[3] - self.zoom_boundaries[1]) / 20
 
 
         # logica pan
@@ -343,20 +344,22 @@ class PomoPlot:
 
     def _disegna_mouse_coordinate(self, logica: 'Logica'):
         
-        try:
+        if len([1 for status in self.scroll_plots.ele_mask if status]) > 0:
 
-            value = self._extract_mouse_coordinate(logica.mouse_pos)
-            value = self._transform_native_space(value)
+            try:
 
-            posizione = np.array(logica.mouse_pos)
+                value = self._extract_mouse_coordinate(logica.mouse_pos)
+                value = self._transform_native_space(value)
 
-            posizione[0] -= self.screen.x
-            posizione[1] -= self.screen.y
+                posizione = np.array(logica.mouse_pos)
 
-            self.screen._add_text(f"({float(value[0]):.{int(self.round_ticks_x.get_text())}f}, {float(value[1]):.{int(self.round_ticks_y.get_text())}f})", size=1.2, pos=posizione, anchor="cd", color=[150, 160, 150])
+                posizione[0] -= self.screen.x
+                posizione[1] -= self.screen.y
 
-        except Exception as e:
-            print(e)
+                self.screen._add_text(f"({float(value[0]):.{int(self.round_ticks_x.get_text())}f}, {float(value[1]):.{int(self.round_ticks_y.get_text())}f})", size=1.2, pos=posizione, anchor="cd", color=[150, 160, 150])
+
+            except Exception as e:
+                print(e)
 
 
     def _transform_native_space(self, value):
@@ -782,11 +785,21 @@ class PomoPlot:
         self._find_max_square()
         self._get_native_data_bounds()
 
+        numero_plot_attivi = len([active for active in self.scroll_plots.ele_mask if active])
 
+        plot_attivi_analizzati = 0
         for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
             # copia dei dati per trasformarle in screen coordinates
             if status:
                 plot.data2plot = plot.data.copy()
+
+                if self.normalizza.state_toggle or self.percentualizza.state_toggle:
+                    plot.data2plot[:, 1] -= np.min(plot.data2plot[:, 1])
+                    plot.data2plot[:, 1] /= np.max(plot.data2plot[:, 1])
+
+                    if self.percentualizza.state_toggle and self.overlap.state_toggle:
+                        plot.data2plot[:, 1] *= 100
+
 
                 # set dello 0
                 plot.data2plot[:, 0] -= self.spazio_coordinate_native[0]
@@ -802,6 +815,10 @@ class PomoPlot:
                 # stessa cosa ma per l'asse y
                 plot.data2plot[:, 1] -= self.spazio_coordinate_native[1]
                 plot.data2plot[:, 1] /= self.spazio_coordinate_native[3]
+                
+                if not self.overlap.state_toggle:
+                    plot.data2plot[:, 1] += (1 - self.minimal_offset_data_y * 2) * plot_attivi_analizzati / numero_plot_attivi
+                    
                 plot.data2plot[:, 1] *= (self.max_plot_square[3])
                 
                 # inverto i dati per avere le Y che aumentano salendo sullo schermo
@@ -815,6 +832,8 @@ class PomoPlot:
                 if plot.data.shape[1] > 2:
                     plot.data2plot[:, 2] /= self.spazio_coordinate_native[3]
                     plot.data2plot[:, 2] *= (self.max_plot_square[3])
+                
+                plot_attivi_analizzati += 1
 
 
         # ticks x
@@ -1000,7 +1019,7 @@ class PomoPlot:
 
 
     def _get_native_data_bounds(self):
-        self.spazio_coordinate_native = np.array([np.inf, np.inf, -np.inf, -np.inf])
+        self.spazio_coordinate_native = np.array([1e38, 1e38, -1e38, -1e38])
         
         at_least_one = False
         for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
@@ -1022,6 +1041,17 @@ class PomoPlot:
                     self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, 0]))
                     self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.data[:, 1]))
 
+        if self.normalizza.state_toggle or self.percentualizza.state_toggle:
+            self.spazio_coordinate_native[1] = 0.0
+           
+        if self.percentualizza.state_toggle:
+            self.spazio_coordinate_native[3] = 100.0
+        elif self.normalizza.state_toggle:
+            self.spazio_coordinate_native[3] = 1.0
+        
+        if not self.overlap.state_toggle:
+            self.spazio_coordinate_native[3] = 1.0 * len([active for active in self.scroll_plots.ele_mask if active])
+
         # ottengo i ticks belli
         if at_least_one:
             self._get_nice_ticks()
@@ -1032,8 +1062,6 @@ class PomoPlot:
             self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(self.coords_of_ticks[0]))
             self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(self.coords_of_ticks[1]))
 
-        else:
-            self.spazio_coordinate_native = np.array([0., 0., 1., 1.])
 
         swap_0 = self.spazio_coordinate_native[0] + (self.spazio_coordinate_native[2] - self.spazio_coordinate_native[0]) * self.zoom_boundaries[0]
         swap_1 = self.spazio_coordinate_native[1] + (self.spazio_coordinate_native[3] - self.spazio_coordinate_native[1]) * self.zoom_boundaries[1]

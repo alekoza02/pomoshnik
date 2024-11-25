@@ -2137,6 +2137,7 @@ class DropMenu(BaseElement):
 
         self.elements[id] = element
         
+        
     def update_window_change(self, offset_x=None, offset_y=None):
         super().update_window_change(offset_x, offset_y)
         [ele.update_window_change(offset_y=f"{self.get_y_top_side()}") for index, ele in self.elements.items()]
