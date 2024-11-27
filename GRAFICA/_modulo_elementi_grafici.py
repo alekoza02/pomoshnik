@@ -37,12 +37,11 @@ class BaseElement:
 
     pappardella = None
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_size=24, font_mode="auto", mantain_aspect_ratio=True, color_text=[200, 200, 200], latex_font=False, bg=None) -> None:
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, bg=None) -> None:
         
         self.latex_font = latex_font
 
         self.schermo = BaseElement.pappardella["screen"]
-        self.aspect_ratio = mantain_aspect_ratio
 
         self.color_text = color_text
 
@@ -54,21 +53,21 @@ class BaseElement:
         self.hide: bool = hide
 
         self.testo: str = text
-        self.len_testo_diplayed = len(self.testo)
-        self.anchor = anchor
+        self.testo_diplayed = (f"{self.testo}", 1)
+        
+        self.font_size_update = 24
+        self.font: Font = Font(24, self.latex_font)
 
-        self.font_size_original = font_size
+        self.ori_coords = (x, y, w, h, anchor)
 
-        if font_mode == "auto":
-            self.font_mode = "auto"
-            self.font_size = (2 * font_size / 3) + (font_size / 3) * BaseElement.pappardella["y_screen"] / 1800
-        else:    
-            self.font_mode = "manu"
-            self.font_size = font_size
-    
         self.need_update = False
-        self._init_coords = (x, y, w, h, anchor)
-        self.recalc_geometry(x, y, w, h)
+
+        self.x_Context = 0
+        self.y_Context = 0
+        self.w_Context = self.pappardella["x_screen"]
+        self.h_Context = self.pappardella["y_screen"]
+
+        self.recalc_geometry(x, y, w, h, anchor)
 
 
 
@@ -89,176 +88,179 @@ class BaseElement:
         self.testo = text
 
 
-    def update_window_change(self, offset_x=None, offset_y=None):
-        """
-        Usare gli offset SOLO nei drop menu per gestire il cambio dimensione finestra
-        """
-        
-        val1, val2, val3, val4, val5 = self._init_coords
-        
-        if type(offset_x) == str:
-            val1 = f"{float(val1) + float(offset_x)}"
-        if type(offset_y) == str:  
-            val2 = f"{float(val2) + float(offset_y)}"
-        
-        self.recalc_geometry(val1, val2, val3, val4, val5)
-        self.need_update = True
+    def change_font_size(self, new_size):
+        self.font_size_update = new_size
+        self.font: Font = Font(new_size, self.latex_font)
 
 
-    def change_font_size(self, value):
-        self.font_size_original = value
+    def update_window_change(self):
+        self.recalc_geometry(*self.ori_coords)
 
-
-    def recalc_geometry(self, new_x=None, new_y=None, new_w=None, new_h=None, anchor_point=None, update=False):
-
-        ancoraggio = self.anchor if anchor_point is None else anchor_point
-
-        if self.font_mode == "auto":
-            self.font_size = (self.font_size_original / 2) + (self.font_size_original / 2) * BaseElement.pappardella["y_screen"] / 1800
-        else: 
-            self.font_size = self.font_size_original
-
-        self.font: Font = Font(self.font_size, self.latex_font)           
-        
-        if new_h is None or new_w is None:
-            new_h = f"{self.font.font_pixel_dim[1] * len(self.testo.split("\n"))}" 
-            new_w = f"{self.len_testo_diplayed}" 
-        
-        # new_w         
-        if type(new_w) == str:
-            self.w: float = float(new_w)
-        else: 
-            self.w: float = BaseElement.pappardella["x_screen"] * new_w / 100
-        
-        # new_h 
-        if type(new_h) == str:
-            self.h: float = float(new_h)
-        else: 
-            if self.aspect_ratio:
-                self.h: float = BaseElement.pappardella["x_screen"] * new_h / 100
-            else:
-                self.h: float = BaseElement.pappardella["y_screen"] * new_h / 100
-        
-        offset_x, offset_y = self.get_anchor_offset(ancoraggio)
-
-        # new_x        
-        if type(new_x) == str: 
-            self.original_x = float(new_x)
-            self.x: float = offset_x + self.original_x
-        elif not new_x is None and not update:
-            self.original_x = BaseElement.pappardella["x_screen"] * new_x / 100
-            self.x: float = offset_x + self.original_x
-        elif update:
-            self.x: float = offset_x + self.original_x
-        elif new_x is None:
-            self.x: float = offset_x
-            self.original_x = offset_x
-
-        # new_y         
-        if type(new_y) == str: 
-            self.original_y = float(new_y)
-            self.y: float = offset_y + self.original_y
-            
-        elif not new_y is None and not update: 
-            self.original_y = BaseElement.pappardella["y_screen"] * new_y / 100
-            self.y: float = offset_y + self.original_y
-            
-        elif update:
-            self.y: float = offset_y + self.original_y
-            
-        elif new_y is None:
-            self.y: float = offset_y
-            self.original_y = offset_y
-            
-        offset = (0, 0, 0, 0)
-        if type(self) == Palette:
-            offset = (-100, -100, 200, 200)
-
-        self.recalc_BB(*offset)
-        self.set_anchors()
-
-
-    def set_anchors(self):
-        self.lu = (self.x + 0,           self.y + 0)    
-        self.cu = (self.x + self.w / 2,  self.y + 0)    
-        self.ru = (self.x + self.w,      self.y + 0)    
-        self.lc = (self.x + 0,           self.y + self.h / 2)    
-        self.cc = (self.x + self.w / 2,  self.y + self.h / 2)    
-        self.rc = (self.x + self.w,      self.y + self.h / 2)    
-        self.ld = (self.x + 0,           self.y + self.h)    
-        self.cd = (self.x + self.w / 2,  self.y + self.h)    
-        self.rd = (self.x + self.w,      self.y + self.h)    
-
-
-    def retrieve_anchor(elemento, ancoraggio):
-        match ancoraggio:
-            case "lu":
-                return elemento.lu
-            case "cu":
-                return elemento.cu
-            case "ru":
-                return elemento.ru
-            case "lc":
-                return elemento.lc
-            case "cc":
-                return elemento.cc
-            case "rc":
-                return elemento.rc
-            case "ld":
-                return elemento.ld
-            case "cd":
-                return elemento.cd
-            case "rd":
-                return elemento.rd
-
-
-    def get_anchor_offset(self, ancoraggio):
-
-        x_nuovo_ancoraggio = 0
-        y_nuovo_ancoraggio = 0
-
-        anchor_local = ancoraggio
-
-        if type(ancoraggio) == tuple:
-
-            anchor_local = ancoraggio[0]                                    # anchor of the selected element    
-            anchor_targetted = ancoraggio[2].retrieve_anchor(ancoraggio[1]) # anchor of the targetted element: (x, y in pixels)
-            x = ancoraggio[3]                                               # amount of x to be offset
-            y = ancoraggio[4]                                               # amount of y to be offset
-
-            x_nuovo_ancoraggio = anchor_targetted[0] + x
-            y_nuovo_ancoraggio = anchor_targetted[1] + y
-
-        match anchor_local:
-            case "lu":
-                offset_x, offset_y = 0,              0 
-            case "cu":
-                offset_x, offset_y = - self.w / 2,   0
-            case "ru":
-                offset_x, offset_y = - self.w,       0
-            case "lc":
-                offset_x, offset_y = 0,              - self.h / 2
-            case "cc":
-                offset_x, offset_y = - self.w / 2,   - self.h / 2
-            case "rc":
-                offset_x, offset_y = - self.w,       - self.h / 2
-            case "ld":
-                offset_x, offset_y = 0,              - self.h 
-            case "cd":
-                offset_x, offset_y = - self.w / 2,   - self.h
-            case "rd":
-                offset_x, offset_y = - self.w,       - self.h
-        
-        return offset_x + x_nuovo_ancoraggio, offset_y + y_nuovo_ancoraggio
-
-
-    def recalc_BB(self, offset_x=0, offset_y=0, offset_w=0, offset_h=0):
-        self.bounding_box = pygame.Rect(self.x + offset_x, self.y + offset_y, self.w + offset_w, self.h + offset_h)
-
-
-    def get_perc_value(self, value, ax):
-        return 100 * value / BaseElement.pappardella[f"{ax}_screen"]
     
+    def update_context_menu(self, *args):
+        self.x_Context = args[0]
+        self.y_Context = args[1]
+        self.w_Context = args[2]
+        self.h_Context = args[3]
+
+
+    def recalc_geometry(self, new_x="", new_y="", new_w="", new_h="", anchor_point=""):
+        
+        '''
+        Come fornire le coordinate:
+        ---
+        - X%w               -> valore percentuale in larghezza
+        - X%h               -> valore percenutale in altezza
+        - Xpx               -> valore in pixel
+        - -*w               -> automatico (si adatta alla larghezza del testo)
+        - -*h               -> automatico (si adatta all'altezza del testo)
+
+        Ancoraggio:
+        ---
+        - Type 1:
+            - lu                        -> simple anchor point of the child element
+        - Type 2:
+            - lu                        -> anchor point of the child
+            - rd                        -> anchor point of the parent
+            - (X)                       -> offset X same as coords
+            - (Y)                       -> offset Y same as coords
+            - element.coords | None     -> coords of the parent element, or relative to the container
+
+        Example:
+        --- 
+        - 50%w 10px is my new X position
+        - 30%h 50px is my new Y position
+        - 200px is my new width
+        - --- is my new height
+
+        - ("lu rd (-10%w -30px) (0)", label_time.coords) 
+
+        Example combined:
+        ---
+        - Bottone(x="50%w 10px", y="30%h 50px", w="200px", h="-*h", anchor=("lu rd (-10%w -30px) (0)", label_time.coords))
+
+        '''
+
+        self.need_update = False
+
+        self.one_percent_x = self.w_Context / 100
+        self.one_percent_y = self.h_Context / 100
+        
+        def analyze_string_coordinate(string: str):
+
+            # divido le varie componenti della coordinata (percentuali, valori puri, ecc...)
+            sub_coords = string.split()
+
+            # inizializzo la posizione finale, a cui aggiungo i vari valori ottenuti dalle coordinate
+            posizione_finale = 0
+
+            for sub_coord in sub_coords:
+                if "px" in sub_coord:
+                    posizione_finale += float(sub_coord[:-2])
+                elif "%w" in sub_coord:
+                    posizione_finale += float(sub_coord[:-2]) * self.one_percent_x
+                elif "%h" in sub_coord:
+                    posizione_finale += float(sub_coord[:-2]) * self.one_percent_y
+                elif "-*w" in sub_coord:
+                    posizione_finale += self.font.font_pyg_r.size(self.testo_diplayed[0])[0]
+                elif "-*h" in sub_coord:
+                    posizione_finale += self.font.font_pyg_r.size(self.testo_diplayed[0])[1] * self.testo_diplayed[1] # prendo l'altezza del carattere e la moltiplico per il numero di righe
+
+
+            return posizione_finale
+
+
+        def analyze_anchor_coordinate(string: str, coords_child, coords_parent):
+
+            if len(string) == 2:
+                # caso semplice di ancoraggio
+
+                match string:
+                    case "lu":
+                        return (coords_child[0] - 0,                    coords_child[1] - 0)    
+                    case "cu":
+                        return (coords_child[0] - coords_child[2] / 2,  coords_child[1] - 0)    
+                    case "ru":
+                        return (coords_child[0] - coords_child[2],      coords_child[1] - 0)    
+                    case "lc":
+                        return (coords_child[0] - 0,                    coords_child[1] - coords_child[3] / 2)    
+                    case "cc":
+                        return (coords_child[0] - coords_child[2] / 2,  coords_child[1] - coords_child[3] / 2)    
+                    case "rc":
+                        return (coords_child[0] - coords_child[2],      coords_child[1] - coords_child[3] / 2)    
+                    case "ld":
+                        return (coords_child[0] - 0,                    coords_child[1] - coords_child[3])    
+                    case "cd":
+                        return (coords_child[0] - coords_child[2] / 2,  coords_child[1] - coords_child[3])    
+                    case "rd":
+                        return (coords_child[0] - coords_child[2],      coords_child[1] - coords_child[3])    
+
+            else:
+                # divido le varie componenti dell'istruzione
+                sub_instructions = string.split()
+
+                anchor_child = sub_instructions[0]
+                anchor_parent = sub_instructions[1]
+        
+                coords_raw = string.split("(")                                  # -> (ciao) (pippo) = ["ciao) ", "pippo)"]
+                coords_ref = [string.split(")")[0] for string in coords_raw]    # -> ["ciao) ", "pippo)"] = ["ciao", "pippo"]
+
+                x_offset = analyze_string_coordinate(coords_ref[1]) # il numero 0 sono le anchor, 1 è X e 2 è Y
+                y_offset = analyze_string_coordinate(coords_ref[2]) 
+
+                match anchor_parent:
+                    case "lu":
+                        anchor_parent_coords = (coords_parent[0] + 0,                    coords_parent[1] + 0)    
+                    case "cu":
+                        anchor_parent_coords = (coords_parent[0] + coords_parent[2] / 2,  coords_parent[1] + 0)    
+                    case "ru":
+                        anchor_parent_coords = (coords_parent[0] + coords_parent[2],      coords_parent[1] + 0)    
+                    case "lc":
+                        anchor_parent_coords = (coords_parent[0] + 0,                    coords_parent[1] + coords_parent[3] / 2)    
+                    case "cc":
+                        anchor_parent_coords = (coords_parent[0] + coords_parent[2] / 2,  coords_parent[1] + coords_parent[3] / 2)    
+                    case "rc":
+                        anchor_parent_coords = (coords_parent[0] + coords_parent[2],      coords_parent[1] + coords_parent[3] / 2)    
+                    case "ld":
+                        anchor_parent_coords = (coords_parent[0] + 0,                    coords_parent[1] + coords_parent[3])    
+                    case "cd":
+                        anchor_parent_coords = (coords_parent[0] + coords_parent[2] / 2,  coords_parent[1] + coords_parent[3])    
+                    case "rd":
+                        anchor_parent_coords = (coords_parent[0] + coords_parent[2],      coords_parent[1] + coords_parent[3]) 
+
+                self.coords[0] = anchor_parent_coords[0] + x_offset
+                self.coords[1] = anchor_parent_coords[1] + y_offset
+
+                return analyze_anchor_coordinate(anchor_child, self.coords, None)
+
+
+
+        # estraggo informazioni su x, y, w, h
+        self.x = analyze_string_coordinate(new_x)
+        self.y = analyze_string_coordinate(new_y)
+        self.w = analyze_string_coordinate(new_w)
+        self.h = analyze_string_coordinate(new_h)
+
+        self.coords = [self.x, self.y, self.w, self.h]
+        self.ori_coords = (new_x, new_y, new_w, new_h, anchor_point)
+        
+        # aggiusto la posizione in base all'ancoraggio se diverso dal default
+        if anchor_point != "lu":
+            if type(anchor_point) == str:
+                self.x, self.y = analyze_anchor_coordinate(anchor_point, self.coords, None)
+            elif type(anchor_point) == tuple:
+                self.x, self.y = analyze_anchor_coordinate(anchor_point[0], self.coords, anchor_point[1].coords)
+
+            self.coords[0] = self.x
+            self.coords[1] = self.y
+
+
+        # aggiusto per posizione del context menù
+        self.x += self.x_Context
+        self.y += self.y_Context
+
+        self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
+
 
     def hide_plus_children(self, booleano):
         self.hide = booleano
@@ -267,32 +269,28 @@ class BaseElement:
 
 class Label_Text(BaseElement):
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, color_text=[200, 200, 200], latex_font=False) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio, color_text, latex_font=latex_font)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, color_text, latex_font=latex_font)
         self.debug = False
-
-        old_hide = self.hide
-        self.need_update = True
-        self.hide = False # forces an update od drawing
-        self.disegnami(None)
-        self.hide = old_hide
 
 
     def disegnami(self, logica, rotation=0, DANG_surface=None, DANG_offset_x=0, DANG_offset_y=0):
 
         surface_to_use = self.schermo if DANG_surface is None else DANG_surface
 
+        if self.need_update:
+            self.recalc_geometry(*self.ori_coords)
+
         if not self.hide:
 
             # sostituzione caratteri speciali
             testo_analisi = SubStringa.analisi_caratteri_speciali(self.testo)
 
-            self.len_testo_diplayed = 0
-
-            pixel_ancoraggio = self.h / 2 if self.anchor == "cc" else 0
-            pixel_ancoraggio = 0
+            self.testo_diplayed = ["", 0]
             
             for index, frase in enumerate(testo_analisi.split("\n")):
+
+                self.testo_diplayed[1] += 1                
 
                 # offset multi-riga
                 offset_frase = index * self.font.font_pixel_dim[1]
@@ -308,7 +306,14 @@ class Label_Text(BaseElement):
                 offset_orizzontale_pedice = 0
 
                 iteration_lenght = 0
+
+                testo_diplayed_iteration = ""
                 for substringa_analizzata in elenco_substringhe:
+
+                    if substringa_analizzata.pedice or substringa_analizzata.apice:
+                        testo_diplayed_iteration += substringa_analizzata.testo[:int(len(substringa_analizzata.testo) / 2)]
+                    else:
+                        testo_diplayed_iteration += substringa_analizzata.testo
 
                     if substringa_analizzata.pedice or substringa_analizzata.apice:
                         self.font.scala_font(0.5)
@@ -336,23 +341,23 @@ class Label_Text(BaseElement):
                         pre_rotation = self.font.font_pyg_r.render("" + "█" * (len(substringa_analizzata.testo)) + "", True, [100, 100, 100])
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        surface_to_use.blit(pre_rotation, (self.x + original_spacing_x * offset_highlight + offset_usato + DANG_offset_x, self.y + pixel_ancoraggio + offset_frase + offset_pedice_apice + DANG_offset_y))
+                        surface_to_use.blit(pre_rotation, (self.x + original_spacing_x * offset_highlight + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
 
                     if substringa_analizzata.bold:
                         pre_rotation = self.font.font_pyg_b.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + pixel_ancoraggio + offset_frase + offset_pedice_apice + DANG_offset_y))
+                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
                     elif substringa_analizzata.italic:
                         pre_rotation = self.font.font_pyg_i.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + pixel_ancoraggio + offset_frase + offset_pedice_apice + DANG_offset_y))
+                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
                     else:
                         pre_rotation = self.font.font_pyg_r.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
                         if rotation != 0:
                             pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + pixel_ancoraggio + offset_frase + offset_pedice_apice + DANG_offset_y))
+                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
                     
 
                     font_usato = self.font.font_pyg_i if substringa_analizzata.italic else (self.font.font_pyg_b if substringa_analizzata.bold else self.font.font_pyg_r)
@@ -370,38 +375,27 @@ class Label_Text(BaseElement):
 
                     iteration_lenght += substringa_analizzata.end(font_usato)
 
-                self.len_testo_diplayed = max(self.len_testo_diplayed, iteration_lenght)
-
-
-        if self.need_update:
-            self.need_update = False
-            self.recalc_geometry(update=True)
-
-        
-        if self.debug:
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.lu, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.lc, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.ld, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.cu, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.cc, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.cd, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.ru, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.rc, 5)
-            pygame.draw.circle(self.schermo, [255, 0, 0], self.rd, 5)
+                    if max(len(self.testo_diplayed[0]), len(testo_diplayed_iteration)) == len(testo_diplayed_iteration):
+                        self.testo_diplayed[0] = testo_diplayed_iteration
 
 
     def change_text(self, text):
-        old_text = self.testo
-        self.testo = text
-        if old_text != self.testo:
-            self.need_update = True
+        if self.latex_font:
+            old_text = self.testo
+            self.testo = text
+            if old_text != self.testo:
+                self.need_update = True
+        else:
+            if len(text) != len(self.testo):
+                self.need_update = True
+            self.testo = text
 
 
 
 class Bottone_Push(BaseElement):
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, function=None, text="", hide=False, disable=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", function=None, text="", hide=False, disable=False) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide)
 
         self.contorno = 2
 
@@ -421,7 +415,7 @@ class Bottone_Push(BaseElement):
         self.disable: bool = disable
         self.suppress_animation: bool = False
 
-        self.label_title = Label_Text(anchor=("cc", "cc", self, 0, 0), text=text, hide=hide, font_mode=font_mode, font_size=font_size)
+        self.label_title = Label_Text(anchor=("cc cc (0px) (0px)", self), w="-*w", h="-*h", text=text, hide=hide)
 
         self.smussatura = 20
         self.debug = False
@@ -521,8 +515,13 @@ class Bottone_Push(BaseElement):
         super().change_text(text)
 
     
-    def update_window_change(self, offset_x=None, offset_y=None):
-        super().update_window_change(offset_x, offset_y)
+    def update_context_menu(self, *args):
+        super().update_context_menu(*args)
+        self.label_title.update_context_menu(*args)
+
+
+    def update_window_change(self):
+        super().update_window_change()
         try:
             self.load_texture()
         except FileNotFoundError:
@@ -537,18 +536,18 @@ class Bottone_Push(BaseElement):
 
         
 class Bottone_Toggle(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, state=False, type_checkbox=True, text="", hide=False, disable=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, text_on_right=True) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", state=False, type_checkbox=True, text="", hide=False, disable=False, text_on_right=True) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide)
         
         self.contorno = 2
 
         if type_checkbox:
             if text_on_right:
-                self.label_title = Label_Text(anchor=("lc", "rc", self, 10, 0), text=text, font_mode=font_mode, font_size=font_size)
+                self.label_title = Label_Text(anchor=("lc rc (10px) (0px)", self), w="-*w", h="-*h", text=text)
             else:
-                self.label_title = Label_Text(anchor=("rc", "lc", self, -10, 0), text=text, font_mode=font_mode, font_size=font_size)
+                self.label_title = Label_Text(anchor=("rc lc (-10px) (0px)", self), w="-*w", h="-*h", text=text)
         else:
-            self.label_title = Label_Text(anchor=("cc", "cc", self, 0, 0), text=text, font_mode=font_mode, font_size=font_size)
+            self.label_title = Label_Text(anchor=("cc cc (0px) (0px)", self), w="-*w", h="-*h", text=text)
 
 
         self.checkbox = type_checkbox
@@ -646,8 +645,13 @@ class Bottone_Toggle(BaseElement):
         return colore
 
 
-    def update_window_change(self, offset_x=None, offset_y=None):
-        super().update_window_change(offset_x, offset_y)
+    def update_context_menu(self, *args):
+        super().update_context_menu(*args)
+        self.label_title.update_context_menu(*args)
+
+
+    def update_window_change(self):
+        super().update_window_change()
         try:
             self.load_texture()
         except FileNotFoundError:
@@ -657,8 +661,8 @@ class Bottone_Toggle(BaseElement):
 
 
 class RadioButton(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=0, h=0, axis="x", bg=None, cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, hide=False, type_checkbox=True, w_button="30", h_button="30", font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:
-        super().__init__(x, y, anchor, w, h, title, hide, font_size, font_mode, mantain_aspect_ratio)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", axis="x", bg=None, cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, hide=False, type_checkbox=True, w_button="30px", h_button="30px") -> None:
+        super().__init__(x, y, anchor, w, h, title, hide)
 
         if not bg is None:
             self.bg = bg
@@ -677,15 +681,27 @@ class RadioButton(BaseElement):
         self.w_button, self.h_button = w_button, h_button
         
         self.toggles: list[Bottone_Toggle] = []
+
+        self.w_button_calcoli, self.h_button_calcoli = self.w_button, self.h_button
+
+        if self.w_button[-2:] == "%w":
+            self.w_button_calcoli = f"{float(self.w_button[:-2]) * self.one_percent_x}px"
+        if self.w_button[-2:] == "%h":
+            self.w_button_calcoli = f"{float(self.w_button[:-2]) * self.one_percent_y}px"
+        if self.h_button[-2:] == "%w":
+            self.h_button_calcoli = f"{float(self.h_button[:-2]) * self.one_percent_x}px"
+        if self.h_button[-2:] == "%h":
+            self.h_button_calcoli = f"{float(self.h_button[:-2]) * self.one_percent_y}px"
+        
         for index, state, text  in zip(range(cb_n), cb_s, cb_t):
             
             match self.main_ax:
                 case "x": 
-                        spacing = (self.w - float(w_button) * cb_n) / (cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(f"{self.x + index * (float(w_button) + spacing)}", f"{self.y}", "lu", w_button, h_button, state, type_checkbox, text=text, hide=hide, font_mode=font_mode, font_size=font_size))
+                        spacing = (self.w - float(self.w_button_calcoli[:-2]) * cb_n) / (cb_n - 1)
+                        self.toggles.append(Bottone_Toggle(f"{self.x}px {index * (float(self.w_button_calcoli[:-2]) + spacing)}px", f"{self.y}px", "lu", w_button, h_button, state, type_checkbox, text=text, hide=hide))
                 case "y":
-                        spacing = (self.h - float(h_button) * cb_n) / (cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(f"{self.x}", f"{self.y + index * (float(h_button) + spacing)}", "lu", w_button, h_button, state, type_checkbox, text=text, hide=hide, font_mode=font_mode, font_size=font_size))
+                        spacing = (self.h - float(self.h_button_calcoli[:-2]) * cb_n) / (cb_n - 1)
+                        self.toggles.append(Bottone_Toggle(f"{self.x}px", f"{self.y}px {index * (float(self.h_button_calcoli[:-2]) + spacing)}px", "lu", w_button, h_button, state, type_checkbox, text=text, hide=hide))
                     
                 case _: raise TypeError(f"Invalid mode {self.main_ax}, accepted types: 'x', 'y'.")
         
@@ -752,8 +768,8 @@ class RadioButton(BaseElement):
         return elemento_vecchio, elemento_nuovo
 
 
-    def update_window_change(self, offset_x=None, offset_y=None):
-        super().update_window_change(offset_x, offset_y)
+    def update_window_change(self):
+        super().update_window_change()
 
         textures_info = [bottone.texture_name for bottone in self.toggles]
 
@@ -763,17 +779,31 @@ class RadioButton(BaseElement):
 
         self.toggles = []
 
+        if self.w_button[-2:] == "%w":
+            self.w_button_calcoli = f"{float(self.w_button[:-2]) * self.one_percent_x}px"
+        if self.w_button[-2:] == "%h":
+            self.w_button_calcoli = f"{float(self.w_button[:-2]) * self.one_percent_y}px"
+        if self.h_button[-2:] == "%w":
+            self.h_button_calcoli = f"{float(self.h_button[:-2]) * self.one_percent_x}px"
+        if self.h_button[-2:] == "%h":
+            self.h_button_calcoli = f"{float(self.h_button[:-2]) * self.one_percent_y}px"
+        
         for index, state, text  in zip(range(self.cb_n), self.cb_s, self.cb_t):
             
             match self.main_ax:
                 case "x": 
-                        spacing = (self.w - float(self.w_button) * self.cb_n) / (self.cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(f"{self.x + index * (float(self.w_button) + spacing)}", f"{self.y}", "lu", self.w_button, self.h_button, state, self.type_checkbox, text=text, hide=self.hide, font_mode=self.font_mode, font_size=self.font_size))
+                        spacing = (self.w - float(self.w_button_calcoli[:-2]) * self.cb_n) / (self.cb_n - 1)
+                        self.toggles.append(Bottone_Toggle(f"{self.x}px {index * (float(self.w_button_calcoli[:-2]) + spacing)}px", f"{self.y}px", "lu", self.w_button_calcoli, self.h_button_calcoli, state, self.type_checkbox, text=text, hide=self.hide))
                 case "y":
-                        spacing = (self.h - float(self.h_button) * self.cb_n) / (self.cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(f"{self.x}", f"{self.y + index * (float(self.h_button) + spacing)}", "lu", self.w_button, self.h_button, state, self.type_checkbox, text=text, hide=self.hide, font_mode=self.font_mode, font_size=self.font_size))
+                        spacing = (self.h - float(self.h_button_calcoli[:-2]) * self.cb_n) / (self.cb_n - 1)
+                        self.toggles.append(Bottone_Toggle(f"{self.x}px", f"{self.y}px {index * (float(self.h_button_calcoli[:-2]) + spacing)}px", "lu", self.w_button_calcoli, self.h_button_calcoli, state, self.type_checkbox, text=text, hide=self.hide))
                     
                 case _: raise TypeError(f"Invalid mode {self.main_ax}, accepted types: 'x', 'y'.")
+        
+            self.toggles[-1].x_Context = self.x_Context
+            self.toggles[-1].y_Context = self.y_Context
+            self.toggles[-1].w_Context = self.w_Context
+            self.toggles[-1].h_Context = self.h_Context
 
             if not textures_info[index] is None:
                 self.toggles[-1].load_texture(textures_info[index])
@@ -787,12 +817,12 @@ class RadioButton(BaseElement):
 
 
 class Entrata(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=0, h=0, text="", title="Entrata", hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:       
-        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", title="Entrata", hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False) -> None:       
+        super().__init__(x, y, anchor, w, h, text, hide)
 
         self.contorno = 0
 
-        self.label_title = Label_Text(anchor=("rc", "lc", self, -10, 0), color_text=[i / 2 for i in self.color_text], text=title, font_mode=font_mode, font_size=font_size)
+        self.label_title = Label_Text(anchor=("rc lc (-10px) (0)", self), w="-*w", h="-*h", color_text=[i / 2 for i in self.color_text], text=title)
 
         self.offset_grafico_testo = 5
         self.puntatore_pos = 0
@@ -1284,17 +1314,22 @@ class Entrata(BaseElement):
             return restituisco
 
 
-    def update_window_change(self, offset_x=None, offset_y=None):
-        super().update_window_change(offset_x, offset_y)
+    def update_context_menu(self, *args):
+        super().update_context_menu(*args)
+        self.label_title.update_context_menu(*args)
+
+
+    def update_window_change(self):
+        super().update_window_change()
         self.label_title.update_window_change()
 
 
 
 class Scroll(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="Scroll console...", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="Scroll console...", hide=False) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide)
 
-        self.label_title = Label_Text(anchor=("lu", "lu", self, 10, 10), w=w, h=f"40", text=text, hide=hide, font_mode=font_mode, font_size=font_size)
+        self.label_title = Label_Text(anchor=("lu lu (10px) (10px)", self), w=w, h="40px", text=text, hide=hide)
         self.color_text_selected = (40, 100, 40)
 
         self.bg_selected = (60, 70, 70)
@@ -1303,6 +1338,7 @@ class Scroll(BaseElement):
 
         self.no_dragging_animation = False
 
+        # self.elementi = [f"{i}" for i in range(100)]
         self.elementi = []
         self.ele_mask = [False for _ in range(len(self.elementi))]
         self.ele_selected_index = 0
@@ -1311,7 +1347,7 @@ class Scroll(BaseElement):
         self.ele_max = int((self.h - self.label_title.font.font_pixel_dim[1] * 2) // self.label_title.font.font_pixel_dim[1])
 
         # creazione toggles
-        self.ele_toggle = [Bottone_Toggle(anchor=("lu", "lu", self, self.w * 0.01, self.label_title.font.font_pixel_dim[1] * (i + 2)), w=f"{self.label_title.font.font_pixel_dim[1]}", h=f"{self.label_title.font.font_pixel_dim[1]}", state=False, text="", font_mode=font_mode, font_size=font_size) for i in range(self.ele_max)]
+        self.ele_toggle = [Bottone_Toggle(anchor=(f"lu lu ({self.w * 0.01}px) ({self.label_title.font.font_pixel_dim[1] * (i + 2)}px)", self), w=f"{self.label_title.font.font_pixel_dim[1]}px", h=f"{self.label_title.font.font_pixel_dim[1]}px", state=False, text="") for i in range(self.ele_max)]
 
         for ele in self.ele_toggle:
             ele.bg += array([10, 10, 10])
@@ -1511,28 +1547,36 @@ class Scroll(BaseElement):
                                         bottone.state_toggle = status
 
 
-    def update_window_change(self, offset_x=None, offset_y=None):
-        super().update_window_change(offset_x, offset_y)
+    def update_context_menu(self, *args):
+        super().update_context_menu(*args)
+        self.label_title.update_context_menu(*args)
+
+
+    def update_window_change(self):
+        super().update_window_change()
         self.label_title.update_window_change()
 
         self.ele_max = int((self.h - self.label_title.font.font_pixel_dim[1] * 2) // self.label_title.font.font_pixel_dim[1])
 
         status_toggle = self.ele_mask + [False for _ in range(self.ele_max - len(self.ele_mask))]
 
-        self.ele_toggle = [Bottone_Toggle(anchor=("lu", "lu", self, self.w * 0.01, self.label_title.font.font_pixel_dim[1] * (i + 2)), w=f"{self.label_title.font.font_pixel_dim[1]}", h=f"{self.label_title.font.font_pixel_dim[1]}", state=stato, text="", font_mode=self.font_mode, font_size=self.font_size) for i, stato in zip(range(self.ele_max), status_toggle)]
+        self.ele_toggle = [Bottone_Toggle(anchor=(f"lu lu ({self.w * 0.01}px) ({self.label_title.font.font_pixel_dim[1] * (i + 2)}px)", self), w=f"{self.label_title.font.font_pixel_dim[1]}px", h=f"{self.label_title.font.font_pixel_dim[1]}px", state=stato, text="") for i, stato in zip(range(self.ele_max), status_toggle)]
+        [ele.update_context_menu(self.x_Context, self.y_Context, self.w_Context, self.h_Context) for ele in self.ele_toggle]
+        [ele.update_window_change() for ele in self.ele_toggle]
 
         for ele in self.ele_toggle:
             ele.bg += array([10, 10, 10])
 
 
+
 class ColorPicker(BaseElement):
-    def __init__(self, palette, id, x=0, y=0, anchor="lu", w=None, h=None, initial_color=[200, 200, 200], text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, bg=None) -> None:
+    def __init__(self, palette, id, x="", y="", anchor="lu", w="", h="", initial_color=[200, 200, 200], text="", hide=False, bg=None) -> None:
         
-        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
+        super().__init__(x, y, anchor, w, h, text, hide)
 
-        self.label_title = Label_Text(anchor=("lc", "rc", self, + 10 + self.w / 2, 0), text=text, hide=hide, font_mode=font_mode, font_size=font_size)
+        self.label_title = Label_Text(anchor=(f"lc rc (10px) (0px)", self), w="-*w", h="-*h", text=text, hide=hide)
 
-        self.opener = Bottone_Push(anchor=("cc", "cc", self, 0, 0), w=w, h=h, function=self.apri_picker, hide=hide, font_mode=font_mode, font_size=font_size)
+        self.opener = Bottone_Push(anchor=("cc cc (0px) (0px)", self), w=w, h=h, function=self.apri_picker, hide=hide)
         self.opener.suppress_animation = True
         self.opener.contorno = 0
         self.opener.bg = initial_color
@@ -1594,17 +1638,24 @@ class ColorPicker(BaseElement):
         return self.picked_color
 
 
-    def update_window_change(self, offset_x=None, offset_y=None):
-        super().update_window_change(offset_x, offset_y)
+    def update_context_menu(self, *args):
+        super().update_context_menu(*args)
+        self.label_title.update_context_menu(*args)
+        self.opener.update_context_menu(*args)
+        
+
+    def update_window_change(self):
+        super().update_window_change()
         self.label_title.update_window_change()
         self.opener.update_window_change()
         self.palette.update_window_change()
 
 
-class Palette(BaseElement):
-    def __init__(self, x=50, y=50, anchor="cc", w=40, h=40, initial_color=[200, 200, 200], font_mode="auto", font_size=24, mantain_aspect_ratio=False, bg=None) -> None:
 
-        super().__init__(x, y, anchor, w, h, "", False, font_size, font_mode, mantain_aspect_ratio, bg=bg)
+class Palette(BaseElement):
+    def __init__(self, x="", y="", anchor="cc", w="", h="", initial_color=[200, 200, 200], bg=None) -> None:
+
+        super().__init__(x, y, anchor, w, h, "", False, bg=bg)
 
         self.colore_scelto = initial_color
         self.aggiorna_colore = False
@@ -1648,13 +1699,13 @@ class Palette(BaseElement):
                 
                 if x == 0:
                     if y == 0:
-                        anchor = ("lu", "lu", self, 0, 0)
+                        anchor = ("lu lu (0px) (0px)", self)
                     else:
-                        anchor = ("lu", "ld", self.colori_bottoni[(y - 1) * 11 + x], 0, -1)
+                        anchor = ("lu ld (0px) (-1px)", self.colori_bottoni[(y - 1) * 11 + x])
                 else:
-                    anchor = ("lu", "ru", self.colori_bottoni[-1], -1, 0)
+                    anchor = ("lu ru (-1px) (0px)", self.colori_bottoni[-1])
 
-                ele_iter = Bottone_Push(anchor=anchor, w=2.4, h=2, function=color_functions[y * 11 + x], font_mode=font_mode, font_size=font_size)
+                ele_iter = Bottone_Push(anchor=anchor, w="2.4%w", h="2%w", function=color_functions[y * 11 + x])
                 self.colori_bottoni.append(ele_iter)
             
         for bottone, colore in zip(self.colori_bottoni, colori):
@@ -1678,9 +1729,9 @@ class Palette(BaseElement):
         self.intens_bottoni: list[Bottone_Push] = []
         for y in range(9):
     
-            anchor = ("lu", "ru", self.colori_bottoni[y * 11 + 10], self.w / 12, 0)
+            anchor = (f"lu ru ({self.w / 12}px) (0px)", self.colori_bottoni[y * 11 + 10])
 
-            ele_iter = Bottone_Push(anchor=anchor, w=2.4, h=2, function=intensities_functions[y], font_mode=font_mode, font_size=font_size)
+            ele_iter = Bottone_Push(anchor=anchor, w="2.4%w", h="2%w", function=intensities_functions[y])
             self.intens_bottoni.append(ele_iter)
     
 
@@ -1691,28 +1742,28 @@ class Palette(BaseElement):
             bottone.smussatura = 0
 
         ###### generazione preview ###### 
-        self.preview_button = Bottone_Push(anchor=("ru", "ru", self, 0, 0), w=5, h=9 * 1.9, disable=True, font_mode=font_mode, font_size=font_size)
+        self.preview_button = Bottone_Push(anchor=("ru ru (0px) (0px)", self), w="5%w", h=f"{9 * 1.9}%w", disable=True)
         self.preview_button.contorno = 0
-
+        
         ###### generazione entrate ###### 
         self.RGB_inputs: list[Entrata] = []
         for y in range(3):
     
             if y == 0:
-                anchor = ("ld", "ld", self, 10, -self.h / 12)
+                anchor = (f"ld ld (5%w) ({-self.h / 12}px)", self)
             else:
-                anchor = ("lu", "ru", self.RGB_inputs[-1], 5, 0)
+                anchor = (f"lu ru (5%w) (0px)", self.RGB_inputs[-1])
 
-            ele_iter = Entrata(anchor=anchor, w=20/6, h="30", text=f"{self.colore_scelto[y]}", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255, font_mode=font_mode, font_size=font_size, title="")
+            ele_iter = Entrata(anchor=anchor, w=f"{20/6}%w", h="-*h", text=f"{self.colore_scelto[y]}", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255, title="")
             self.RGB_inputs.append(ele_iter)
         
         for index, entrata in enumerate(self.RGB_inputs):
             entrata.bg = array([90, 90, 90])
             entrata.bg[index] = 180
 
-        self.HEX_input: Entrata = Entrata(anchor=("rd", "rd", self, -10, -self.h / 12), w=20/3, h="30",
+        self.HEX_input: Entrata = Entrata(anchor=(f"lu ru (5%w) (0px)", self.RGB_inputs[-1]), w=f"{20/3}%w", h="-*h",
                                  text=f"{MateUtils.rgb2hex(self.colore_scelto)}", title="", 
-                                 lunghezza_max=6, is_hex=True, font_mode=font_mode, font_size=font_size)
+                                 lunghezza_max=6, is_hex=True)
         self.HEX_input.bg = array([60, 60, 60])
 
         
@@ -1780,8 +1831,8 @@ class Palette(BaseElement):
             self.aggiorna_colore = False
 
     
-    def update_window_change(self, offset_x=None, offset_y=None):
-        super().update_window_change(offset_x, offset_y)
+    def update_window_change(self):
+        super().update_window_change()
         [ele.update_window_change() for ele in self.colori_bottoni]
         [ele.update_window_change() for ele in self.intens_bottoni]
         [ele.update_window_change() for ele in self.RGB_inputs]
@@ -2021,19 +2072,18 @@ class Font:
         self.font_pixel_dim = self.font_pyg_r.size("a")
 
 
-
-class DropMenu(BaseElement):
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, text="", hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=False, separator_size=2) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, font_size, font_mode, mantain_aspect_ratio)
+class ContextMenu(BaseElement):
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, separator_size=2, bg=[25, 25, 25]) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide)
 
         self.inizializzato = False
 
         self.progression = 0
         self.max_progression = 0
         self.offset_progression = self.h
-        self.bg = [25, 25, 25]
+        self.bg = bg
         self.debug = False
-        self.elements: dict[str, Label_Text | Bottone_Push | Bottone_Toggle | Entrata | Scroll | DropMenu | ColorPicker] = {}
+        self.elements: dict[str, Label_Text | Bottone_Push | Bottone_Toggle | Entrata | Scroll | ContextMenu | ColorPicker] = {}
         self.separators = []
         self.separator_size = separator_size
 
@@ -2093,54 +2143,42 @@ class DropMenu(BaseElement):
 
     
     def add_element(self, id: str, element: Label_Text):
-        """
-        Consigliabile usare:
-        - x: valore percentuale (riferito al dropmenu)
-        - y: valore pixel (assoluto)
-        - w: valore percentuale (riferito al dropmenu)
-        - h: valore pixel (assoluto)
-        """
-
-        info = list(element._init_coords)
-        
-        try:
-            componente0 = self.get_perc_value(self.x, "x") + info[0] * self._init_coords[2] / 100
-        except TypeError:
-            componente0 = None
-        try:
-            componente1 = f"{float(info[1])}"
-        except TypeError:
-            componente1 = None
-        try:
-            if type(info[2]) == str:
-                componente2 = info[2]
-            else:
-                componente2 = info[2] * self._init_coords[2] / 100
-        except TypeError:
-            componente2 = None
-        try:
-            componente3 = info[3]
-        except TypeError:
-            componente3 = None
-        try:
-            componente4 = info[4]
-        except TypeError:
-            componente4 = "lu"
-                
-        element._init_coords = (componente0, componente1, componente2, componente3, componente4)
-        element.aspect_ratio = True
-
-        try:
-            self.max_progression = max(self.max_progression, float(info[1]) + float(info[3]))
-        except TypeError:
-            self.max_progression = max(self.max_progression, float(info[1]) + 50)
-
+        element.update_context_menu(self.x, self.y, self.w, self.h)
         self.elements[id] = element
+
+
+
+    def update_window_change(self):
+
+        self.x = float(self.ori_coords[0][:-2]) * self.pappardella["x_screen"] / 100
+        self.y = float(self.ori_coords[1][:-2]) * self.pappardella["y_screen"] / 100
+        self.w = float(self.ori_coords[2][:-2]) * self.pappardella["x_screen"] / 100
+        self.h = float(self.ori_coords[3][:-2]) * self.pappardella["y_screen"] / 100
+
+        match self.ori_coords[-1]:
+            case "lu":
+                self.x, self.y = (self.x - 0,                    self.y - 0)    
+            case "cu":
+                self.x, self.y = (self.x - self.w / 2,  self.y - 0)    
+            case "ru":
+                self.x, self.y = (self.x - self.w,      self.y - 0)    
+            case "lc":
+                self.x, self.y = (self.x - 0,                    self.y - self.h / 2)    
+            case "cc":
+                self.x, self.y = (self.x - self.w / 2,  self.y - self.h / 2)    
+            case "rc":
+                self.x, self.y = (self.x - self.w,      self.y - self.h / 2)    
+            case "ld":
+                self.x, self.y = (self.x - 0,                    self.y - self.h)    
+            case "cd":
+                self.x, self.y = (self.x - self.w / 2,  self.y - self.h)    
+            case "rd":
+                self.x, self.y = (self.x - self.w,      self.y - self.h)  
         
-        
-    def update_window_change(self, offset_x=None, offset_y=None):
-        super().update_window_change(offset_x, offset_y)
-        [ele.update_window_change(offset_y=f"{self.get_y_top_side()}") for index, ele in self.elements.items()]
+        for index, ele in self.elements.items():
+            ele.update_context_menu(self.x, self.y, self.w, self.h)
+
+        [ele.update_window_change() for index, ele in self.elements.items()]
         
 
     def update_scroll(self, pm: int):
@@ -2169,19 +2207,20 @@ class DropMenu(BaseElement):
 
 class Screen(BaseElement):
 
-    def __init__(self, x=0, y=0, anchor="lu", w=None, h=None, hide=False, font_mode="auto", font_size=24, mantain_aspect_ratio=True, latex_font=False):
-        super().__init__(x, y, anchor, w, h, "", hide, font_size, font_mode, mantain_aspect_ratio, latex_font=latex_font)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", hide=False, latex_font=False, screenshot_type=False):
+        super().__init__(x, y, anchor, w, h, "", hide, latex_font=latex_font)
 
+        self.screenshot_type = screenshot_type
         self.tavolozza = pygame.Surface((self.w, self.h))
 
     
-    def update_window_change(self, offset_x=None, offset_y=None):
-        super().update_window_change(offset_x, offset_y)
+    def update_window_change(self):
+        super().update_window_change()
         self.tavolozza = pygame.Surface((self.w, self.h))
     
 
     def disegnami(self, logica):
-        if not self.hide:
+        if not self.hide and not self.screenshot_type:
             self.schermo.blit(self.tavolozza, (self.x, self.y))
 
 
@@ -2340,6 +2379,9 @@ class Screen(BaseElement):
 
     def _save_screenshot(self, path):
         try:
+            self.screenshot_type = False
+            self.disegnami(None)
+            self.screenshot_type = True
             pygame.image.save(self.tavolozza, path)
             img = Image.open(path)
             img.save(path, dpi=(300, 300))

@@ -85,6 +85,8 @@ class UI:
         self.logica = Logica()
         self.event_manager = EventManager()
         self.costruttore = Costruttore(self.MAIN, self.w_screen * 0.9, self.h_screen * 0.9)
+        self.costruttore.scene["main"].disegna_scena_inizio_ciclo(self.logica)
+        self.costruttore.scene["main"].disegna_scena_fine_ciclo(self.logica)
 
         self.cpu_sample: list[int] = [0 for i in range(100)]
 
@@ -213,36 +215,36 @@ class UI:
 
     def pc_attributes(self):
         
-        self.costruttore.scene["main"].label["memory"].change_text(r"\h{ " + f' Memory: {psutil.Process().memory_info().rss / 1024**2:>7.2f} MB' + " }")
+        self.costruttore.scene["main"].context_menu["main"].elements["memory"].change_text(r"\h{ " + f' Memory: {psutil.Process().memory_info().rss / 1024**2:>7.2f} MB' + " }")
         
         if psutil.Process().memory_info().rss / 1024**2 > 4000:
-            self.costruttore.scene["main"].label["memory"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].label["memory"].testo + "}")
+            self.costruttore.scene["main"].context_menu["main"].elements["memory"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].context_menu["main"].elements["memory"].testo + "}")
 
         # -----------------------------------------------------------------------------
 
         self.cpu_sample.pop(0)
         self.cpu_sample.append(psutil.cpu_percent(interval=0))
-        self.costruttore.scene["main"].label["cpu"].change_text(r"\h{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }")
+        self.costruttore.scene["main"].context_menu["main"].elements["cpu"].change_text(r"\h{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }")
 
         if sum(self.cpu_sample) / len(self.cpu_sample) > 30:
-            self.costruttore.scene["main"].label["cpu"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].label["cpu"].testo + "}")
+            self.costruttore.scene["main"].context_menu["main"].elements["cpu"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].context_menu["main"].elements["cpu"].testo + "}")
 
         if sum(self.cpu_sample) / len(self.cpu_sample) > 70:
-            self.costruttore.scene["main"].label["cpu"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].label["cpu"].testo + "}")
+            self.costruttore.scene["main"].context_menu["main"].elements["cpu"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].context_menu["main"].elements["cpu"].testo + "}")
 
         # -----------------------------------------------------------------------------
         
-        self.costruttore.scene["main"].label["fps"].change_text(r"\h{ " + f"FPS: {self.current_fps:>6.2f}" + " }")
+        self.costruttore.scene["main"].context_menu["main"].elements["fps"].change_text(r"\h{ " + f"FPS: {self.current_fps:>6.2f}" + " }")
         
         if self.current_fps < 60:
-            self.costruttore.scene["main"].label["fps"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].label["fps"].testo + "}")
+            self.costruttore.scene["main"].context_menu["main"].elements["fps"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].context_menu["main"].elements["fps"].testo + "}")
 
         if self.current_fps < 24:
-            self.costruttore.scene["main"].label["fps"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].label["fps"].testo + "}")
+            self.costruttore.scene["main"].context_menu["main"].elements["fps"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].context_menu["main"].elements["fps"].testo + "}")
         
         # -----------------------------------------------------------------------------
         
-        self.costruttore.scene["main"].label["clock"].change_text(r"\h{ " + f" {strftime("%X, %x")}" " }")
+        self.costruttore.scene["main"].context_menu["main"].elements["clock"].change_text(r"\h{ " + f" {strftime("%X, %x")}" " }")
 
         # -----------------------------------------------------------------------------
 
@@ -267,13 +269,13 @@ class UI:
                 case 10: simbolo_corretto = "󰂅" if battery.power_plugged else "󰁹";  # 100%
 
 
-            self.costruttore.scene["main"].label["battery"].testo = r"\h{ " + f"{simbolo_corretto} {battery.percent:>3}%" + " }"
+            self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\h{ " + f"{simbolo_corretto} {battery.percent:>3}%" + " }")
 
             if battery.percent < 20:
-                self.costruttore.scene["main"].label["battery"].testo = r"\#ddaa88{" + self.costruttore.scene["main"].label["battery"].testo + "}"
+                self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].context_menu["main"].elements["battery"].testo + "}")
 
             if battery.percent < 10:
-                self.costruttore.scene["main"].label["battery"].testo = r"\#dc143c{" + self.costruttore.scene["main"].label["battery"].testo + "}"
+                self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].context_menu["main"].elements["battery"].testo + "}")
 
 
     @staticmethod

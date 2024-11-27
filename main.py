@@ -8,10 +8,10 @@ def main():
         app = UI()
         plot = PomoPlot()
         plot.link_ui(app)
-        # plot.import_plot_data("C:\\users\\aless\\desktop\\default\\led_corrente_V_interpolazione.txt")
-        # plot.import_plot_data("C:\\users\\aless\\desktop\\default\\spettro_3v.txt")
-        # plot.import_plot_data("C:\\users\\aless\\desktop\\default\\polarizzazione_diretta.txt")
-        # plot.import_plot_data("C:\\users\\aless\\desktop\\default\\polarizzazione_inversa.txt")
+        plot.import_plot_data("C:\\users\\aless\\desktop\\default\\led_corrente_V_interpolazione.txt")
+        plot.import_plot_data("C:\\users\\aless\\desktop\\default\\spettro_3v.txt")
+        plot.import_plot_data("C:\\users\\aless\\desktop\\default\\polarizzazione_diretta.txt")
+        plot.import_plot_data("C:\\users\\aless\\desktop\\default\\polarizzazione_inversa.txt")
         
         while app.running:
             app.start_cycle()
@@ -35,11 +35,11 @@ def main():
         # Get the formatted traceback as a string
         traceback_info = traceback.format_exc(chain=1)
 
-        traceback_info = traceback_info.split("\\")[-1]
-        traceback_info = traceback_info.split("/")[-1]
+        # traceback_info = traceback_info.split("\\")[-1]
+        # traceback_info = traceback_info.split("/")[-1]
 
-        traceback_info = traceback_info.replace('"', "", 1)
-        traceback_info = traceback_info.replace('\n', "\n\n", 1)
+        # traceback_info = traceback_info.replace('"', "", 1)
+        # traceback_info = traceback_info.replace('\n', "\n\n", 1)
 
         traceback_info = traceback_info[:traceback_info.find("line")] + GREEN + traceback_info[traceback_info.find("line") : traceback_info.find(", in ")] + RESET + traceback_info[traceback_info.find(", in "):]
         
@@ -50,6 +50,7 @@ def main():
 if __name__ == "__main__":
 
     PROFILATORE = 0
+    from time import perf_counter; start_time = perf_counter() 
 
     if PROFILATORE:
         import yappi
@@ -61,3 +62,5 @@ if __name__ == "__main__":
         yappi.stop()
         func_stats = yappi.get_func_stats()
         func_stats.save('profilatore.prof', type='pstat')
+
+    print(f"Il programma è stato in esecuzione per {perf_counter() - start_time:.0f}s")

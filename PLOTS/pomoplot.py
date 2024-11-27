@@ -73,87 +73,87 @@ class PomoPlot:
 
     def link_ui(self, UI: 'UI'):
         """Richiesta UI pomoshnik, si puù modificare manualmente per adattarla alla propria UI. Serve per intereagire con il grafico"""
-        self.screen = UI.costruttore.scene["main"].screens["viewport"]
-        self.screen_render = UI.costruttore.scene["main"].screens["renderer"]
+        self.screen = UI.costruttore.scene["main"].context_menu["main"].elements["viewport"]
+        self.screen_render = UI.costruttore.scene["main"].context_menu["main"].elements["renderer"]
 
         self.scale_factor_viewport = 1
 
-        self.tools: 'RadioButton' = UI.costruttore.scene["main"].bottoni_r["tools"]
-        self.reset_tools: 'Bottone_Push' = UI.costruttore.scene["main"].bottoni_p["reset_zoom"]
+        self.tools: 'RadioButton' = UI.costruttore.scene["main"].context_menu["main"].elements["tools"]
+        self.reset_tools: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["reset_zoom"]
 
         self.labels[0] = UI.costruttore.scene["main"].label["title"]
         self.labels[1] = UI.costruttore.scene["main"].label["label_x"]
         self.labels[2] = UI.costruttore.scene["main"].label["label_y"]
         self.labels[4] = UI.costruttore.scene["main"].label["legend"]
 
-        self.x_plot_area: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item1"].elements["x_plot_area"]
-        self.y_plot_area: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item1"].elements["y_plot_area"]
-        self.w_plot_area: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item1"].elements["w_plot_area"]
-        self.h_plot_area: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item1"].elements["h_plot_area"]
-        self.plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item1"].elements["plot_area_bg"]
-        self.canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item1"].elements["canvas_area_bg"]
+        self.x_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["x_plot_area"]
+        self.y_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["y_plot_area"]
+        self.w_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["w_plot_area"]
+        self.h_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["h_plot_area"]
+        self.plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["plot_area_bg"]
+        self.canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["canvas_area_bg"]
         
-        self.normalizza: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item1"].elements["normalizza"]
-        self.percentualizza: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item1"].elements["percentualizza"]
-        self.overlap: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item1"].elements["overlap"]
+        self.normalizza: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["normalizza"]
+        self.percentualizza: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["percentualizza"]
+        self.overlap: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["overlap"]
         
-        self.scroll_plots: 'Scroll' = UI.costruttore.scene["main"].scrolls["elenco_plots"]
+        self.scroll_plots: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots"]
 
-        self.plot_name: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["plot_name"]
+        self.plot_name: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["plot_name"]
 
-        self.scatter_size: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["scatter_size"]
-        self.function_size: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["function_size"]
-        self.dashed_density: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item2"].elements["dashed_density"]
+        self.scatter_size: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_size"]
+        self.function_size: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["function_size"]
+        self.dashed_density: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["dashed_density"]
         
-        self.scatter_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item2"].elements["scatter_toggle"]
-        self.function_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item2"].elements["function_toggle"]
-        self.dashed_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item2"].elements["dashed"]
-        self.error_bar: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item2"].elements["errorbar"]
+        self.scatter_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_toggle"]
+        self.function_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["function_toggle"]
+        self.dashed_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["dashed"]
+        self.error_bar: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["errorbar"]
 
-        self.colore_function: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item2"].elements["colore_function"]
-        self.colore_scatter: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item2"].elements["colore_scatter"]
+        self.colore_function: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item2"].elements["colore_function"]
+        self.colore_scatter: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item2"].elements["colore_scatter"]
 
-        self.font_size_title: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["font_size_title"]
-        self.font_size_label_x: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["font_size_label_x"]
-        self.font_size_label_y: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["font_size_label_y"]
+        self.font_size_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_title"]
+        self.font_size_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_x"]
+        self.font_size_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_y"]
         
-        self.text_title: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["text_title"]
-        self.text_label_x: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["text_label_x"]
-        self.text_label_y: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item3"].elements["text_label_y"]
-        self.label_title_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item3"].elements["label_title_color"]
-        self.label_x_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item3"].elements["label_x_color"]
-        self.label_y_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item3"].elements["label_y_color"]
+        self.text_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_title"]
+        self.text_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_x"]
+        self.text_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_y"]
+        self.label_title_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_title_color"]
+        self.label_x_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_x_color"]
+        self.label_y_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_y_color"]
 
-        self.round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item4"].elements["round_x"]
-        self.round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item4"].elements["round_y"]
+        self.round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_x"]
+        self.round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_y"]
         
-        self.ax_color_x: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item4"].elements["ax_color_x"]
-        self.ax_color_y: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item4"].elements["ax_color_y"]
-        self.tick_color_x: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item4"].elements["tick_color_x"]
-        self.tick_color_y: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item4"].elements["tick_color_y"]
+        self.ax_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_x"]
+        self.ax_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_y"]
+        self.tick_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_x"]
+        self.tick_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_y"]
         
-        self.formatting_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item4"].elements["formatting_x"]
-        self.formatting_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item4"].elements["formatting_y"]
+        self.formatting_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_x"]
+        self.formatting_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_y"]
         
-        self.show_grid_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item4"].elements["show_grid_x"]
-        self.show_grid_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item4"].elements["show_grid_y"]
+        self.show_grid_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_x"]
+        self.show_grid_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_y"]
         
-        self.show_legend: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["show_legend"]
-        self.x_legend: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item5"].elements["x_legend"]
-        self.y_legend: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item5"].elements["y_legend"]
-        self.font_size_legend: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item5"].elements["font_size_legend"]
-        self.show_legend_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["show_legend_background"]
-        self.legend_bg_color: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item5"].elements["legend_color_background"]
-        self.transparent_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["transparent_background"]
-        self.blur_strenght: 'Entrata' = UI.costruttore.scene["main"].drop_menu["item5"].elements["blur_strenght"]
-        self.show_icons: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["show_icons"]
-        self.match_color_text: 'Bottone_Toggle' = UI.costruttore.scene["main"].drop_menu["item5"].elements["match_color_text"]
-        self.color_text: 'ColorPicker' = UI.costruttore.scene["main"].drop_menu["item5"].elements["color_text"]
+        self.show_legend: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend"]
+        self.x_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["x_legend"]
+        self.y_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["y_legend"]
+        self.font_size_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["font_size_legend"]
+        self.show_legend_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend_background"]
+        self.legend_bg_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["legend_color_background"]
+        self.transparent_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["transparent_background"]
+        self.blur_strenght: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["blur_strenght"]
+        self.show_icons: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_icons"]
+        self.match_color_text: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["match_color_text"]
+        self.color_text: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["color_text"]
 
-        self.import_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item6"].elements["import_single_plot"]
-        self.import_multip_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item6"].elements["import_multip_plot"]
+        self.import_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item6"].elements["import_single_plot"]
+        self.import_multip_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item6"].elements["import_multip_plot"]
 
-        self.save_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].drop_menu["item7"].elements["save_single_plot"]
+        self.save_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item7"].elements["save_single_plot"]
 
 
     def update_plot_list(self, added_plot):
@@ -426,7 +426,7 @@ class PomoPlot:
             
             self.labels[4].change_font_size(float(new_dim_legend) * self.scale_factor_viewport)
 
-            self.labels[4].recalc_geometry(f"{legend_position[0]}", f"{legend_position[1]}", anchor_point="cc")
+            self.labels[4].recalc_geometry(f"{legend_position[0]}px", f"{legend_position[1]}px", anchor_point="cc", new_w="-*w", new_h=f"{self.labels[4].font.font_pixel_dim[1] * len([1 for status in self.scroll_plots.ele_mask if status])}px")
 
             offset_icona = self.labels[4].h / len([1 for status in self.scroll_plots.ele_mask if status])
             plot_attivo_analizzato = 0
@@ -575,25 +575,30 @@ class PomoPlot:
         new_dim_x = self.font_size_label_x.get_text()
         new_dim_y = self.font_size_label_y.get_text()
         
-        self.labels[0].change_font_size(float(new_dim_title) * self.scale_factor_viewport)
-        self.labels[1].change_font_size(float(new_dim_x) * self.scale_factor_viewport)
-        self.labels[2].change_font_size(float(new_dim_y) * self.scale_factor_viewport)
+        if self.labels[0].font_size_update != float(new_dim_title) * self.scale_factor_viewport:
+            self.labels[0].change_font_size(float(new_dim_title) * self.scale_factor_viewport)
+    
+        if self.labels[1].font_size_update != float(new_dim_title) * self.scale_factor_viewport:
+            self.labels[1].change_font_size(float(new_dim_x) * self.scale_factor_viewport)
+    
+        if self.labels[2].font_size_update != float(new_dim_title) * self.scale_factor_viewport:
+            self.labels[2].change_font_size(float(new_dim_y) * self.scale_factor_viewport)
 
         # titolo
         self.labels[0].change_text(f"{self.text_title.get_text()}")
-        self.labels[0].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}", f"{self.screen.y + self.max_plot_square[1] / 2}", anchor_point="cc")
+        self.labels[0].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}px", f"{self.screen.y + self.max_plot_square[1] / 2}px", new_w="-*w", new_h="-*h", anchor_point="cc")
         self.labels[0].color_text = self.label_title_color.get_color()
         self.labels[0].disegnami(logica, 0, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
         # X label
         self.labels[1].change_text(f"{self.text_label_x.get_text()}")
-        self.labels[1].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}", f"{self.screen.y + self.max_plot_square[3] + 2 * self.max_plot_square[1]}", anchor_point="cd")
+        self.labels[1].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}px", f"{self.screen.y + self.max_plot_square[3] + 2 * self.max_plot_square[1]}px", new_w="-*w", new_h="-*h", anchor_point="cd")
         self.labels[1].color_text = self.label_x_color.get_color()
         self.labels[1].disegnami(logica, 0, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
         # Y label
         self.labels[2].change_text(f"{self.text_label_y.get_text()}")
-        self.labels[2].recalc_geometry(f"{self.screen.x + self.max_canvas_square[0]}", f"{self.screen.y + self.max_plot_square[1] + self.max_plot_square[3] / 2 - self.labels[2].len_testo_diplayed / 2}", anchor_point="lu")
+        self.labels[2].recalc_geometry(f"{self.screen.x + self.max_canvas_square[0]}px", f"{self.screen.y + self.max_plot_square[1] + self.max_plot_square[3] / 2 - self.labels[2].font.font_pyg_r.size(self.labels[2].testo_diplayed[0])[0] / 2}px", new_w="-*w", new_h="-*h", anchor_point="lu")
         self.labels[2].color_text = self.label_y_color.get_color()
         self.labels[2].disegnami(logica, 90, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
 
