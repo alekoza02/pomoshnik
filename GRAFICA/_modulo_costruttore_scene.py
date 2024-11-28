@@ -87,19 +87,19 @@ class Costruttore:
 
         s.context_menu["main"].add_element("renderer", Screen(f"{s.context_menu["main"].elements["viewport"].x}px", f"{s.context_menu["main"].elements["viewport"].y}px", anchor="lu", w="4000px", h=f"{4000 * moltiplier}px", latex_font=True, screenshot_type=True))
 
-        s.context_menu["main"].add_element("elenco_plots", Scroll(x="76.5%w", y="5%h", anchor="lu", w="22%w", h="33%h", text="Grafici caricati"))
+        s.context_menu["main"].add_element("elenco_plots", Scroll(x="73.5%w", y="5%h", anchor="lu", w="26%w", h="33%h", text="Grafici caricati"))
 
-        s.context_menu["item1"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item2"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item3"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item4"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item5"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item6"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item7"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item8"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item9"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item10"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
-        s.context_menu["item11"] = ContextMenu(x="76.5%w", y="40%h", anchor="lu", w="22%w", h="55%h")
+        s.context_menu["item1"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item2"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item3"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item4"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item5"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item6"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item7"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item8"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item9"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item10"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
+        s.context_menu["item11"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
 
         # # ITEM 1 GEOMETRY ------------------------------------------------
         s.context_menu["item1"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Geometria}"))
@@ -119,7 +119,7 @@ class Costruttore:
         # # ITEM 2 PLOTS ---------------------------------------------------
         s.context_menu["item2"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Grafici}"))
         
-        s.context_menu["item2"].add_element("plot_name", Entrata("50%w", "90px", "lu", "45%w", "30px", text="", title="Plot name"))
+        s.context_menu["item2"].add_element("plot_name", Entrata("20%w", "90px", "lu", "75%w", "30px", text="", title="Name: "))
         
         s.context_menu["item2"].add_element("scatter_size", Entrata("75%w", "155px", "lu", "20%w", "30px", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
         s.context_menu["item2"].add_element("function_size", Entrata("75%w", "190px", "lu", "20%w", "30px", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
@@ -132,6 +132,9 @@ class Costruttore:
         
         s.context_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", "30%w", "340px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
         s.context_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", "30%w", "395px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
+        
+        s.context_menu["item2"].add_element("gradient", Bottone_Toggle("50%w", "590px", "ru", "30px", "30px", 0, text="Gradient", text_on_right=0))
+        s.context_menu["item2"].add_element("grad_mode", RadioButton("90%w", "590px", "ru", "35%w", "80px", axis="y", cb_n=2, cb_s=[0, 1], cb_t=["Horizontal", "Vertical"], type_checkbox=False, w_button="35%w", h_button="40px"))
         # # ITEM 2 PLOTS ---------------------------------------------------
 
 
@@ -231,7 +234,7 @@ class Costruttore:
         starting = 1
         stato_iniziale_tab = [False for _ in range(11)]
         stato_iniziale_tab[starting] = True        
-        s.context_menu["main"].add_element("modes", RadioButton(x="76.5%w", y="40%h", anchor="ru", w="70px", h="900px", bg=array([30, 30, 30]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="70px", h_button="70px"))
+        s.context_menu["main"].add_element("modes", RadioButton(x="73.5%w", y="40%h", anchor="ru", w="70px", h="900px", bg=array([30, 30, 30]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="70px", h_button="70px"))
         [bottone.load_texture(f"item{index + 1}") for index, bottone in enumerate(s.context_menu["main"].elements["modes"].toggles)]
         
         s.context_menu["main"].add_element("tools", RadioButton(x="0px", y="5%h", anchor="lu", w="70px", h="150px", bg=array([30, 30, 30]), axis="y", cb_n=2, cb_s=[0, 0], cb_t=["" for _ in range(2)], type_checkbox=False, w_button="70px", h_button="70px"))

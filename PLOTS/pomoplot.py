@@ -69,6 +69,8 @@ class PomoPlot:
         self.unused_area_color: list[int] = np.array([40, 40, 40]) # FIX unify
         self.zoom_boundaries = np.array([0., 0., 1., 1.])
 
+        self.zero_y = 0
+
 
 
     def link_ui(self, UI: 'UI'):
@@ -97,6 +99,7 @@ class PomoPlot:
         self.percentualizza: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["percentualizza"]
         self.overlap: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["overlap"]
         
+
         self.scroll_plots: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots"]
 
         self.plot_name: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["plot_name"]
@@ -112,6 +115,9 @@ class PomoPlot:
 
         self.colore_function: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item2"].elements["colore_function"]
         self.colore_scatter: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item2"].elements["colore_scatter"]
+        
+        self.gradient: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["gradient"]
+        self.grad_mode: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item2"].elements["grad_mode"]
 
         self.font_size_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_title"]
         self.font_size_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_x"]
@@ -181,6 +187,15 @@ class PomoPlot:
                 self.dashed_density.change_text(f"{self.active_plot.dashed_traits}")
                 self.colore_scatter.set_color(self.active_plot.scatter_color)
                 self.colore_function.set_color(self.active_plot.function_color)
+                self.gradient.state_toggle = self.active_plot.gradiente
+                
+                grad_status = [0, 0]
+                if self.active_plot.grad_mode == "hori":
+                    grad_status[0] = 1
+                elif self.active_plot.grad_mode == "vert":
+                    grad_status[1] = 1
+
+                self.grad_mode.set_state(grad_status)
 
                 if self.active_plot.data.shape[1] <= 2:
                     self.error_bar.bg = np.array([70, 40, 40])
@@ -305,7 +320,11 @@ class PomoPlot:
         if not screenshot:
             self.update(logica)
 
+        # preparazione dati
+        self._normalize_data2screen()
+
         self._disegna_bg()
+        self._disegna_gradiente()
         self._disegna_assi()
         self._disegna_labels(logica)
         self._disegna_ticks()
@@ -316,6 +335,116 @@ class PomoPlot:
             self._disegna_mouse_coordinate(logica)
             self._disegna_mouse_zoom(logica)
             
+
+    def _disegna_gradiente(self):
+        
+        for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
+            # disegno i dati se plot acceso
+            if status:
+
+                cond1 = plot.data2plot[:, :2][:, 0] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
+                cond2 = plot.data2plot[:, :2][:, 1] >= self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
+                cond3 = plot.data2plot[:, :2][:, 0] <=  self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
+                cond4 = plot.data2plot[:, :2][:, 1] <=  self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
+
+                # Combine all conditions with logical AND
+                combined_condition = cond1 & cond2 & cond3 & cond4
+
+                extracted = plot.data2plot[combined_condition]
+
+                if plot.gradiente and plot.grad_mode == "vert":
+                    # VERTICAL
+                    for x1, y1, x2, y2 in zip(extracted[:, 0].astype(int)[:-1], extracted[:, 1].astype(int)[:-1], extracted[:, 0].astype(int)[1:], extracted[:, 1].astype(int)[1:]):
+                        m = (y2 - y1) / (x2 - x1)
+                        for i in range(0, x2 - x1):
+                            y_interpolated = int(y1 + m * i)
+                            
+                            colore = (self.max_plot_square[1] + self.max_plot_square[3] - y_interpolated) / (self.max_plot_square[1] + self.max_plot_square[3])
+                            
+                            colore_finale = np.array(self.plot_area_color.get_color()) + (np.array(plot.function_color) - np.array(self.plot_area_color.get_color())) * colore
+                            
+                            self.screen._add_line([[x1 + i, self.max_plot_square[1] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)], [x1 + i, y_interpolated]], colore_finale, 1)
+                
+
+                elif plot.gradiente and plot.grad_mode == "hori":
+                    # HORIZONTAL
+
+                    start_y = self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
+                    end_y = self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
+                    start_x = self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
+                    end_x = self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
+                    
+                    gradient = np.zeros((int(end_x - start_x), int(start_y - end_y), 3), dtype=np.uint8)
+                    
+                    bg_color = self.plot_area_color.get_color()
+
+                    # CASO 1 -> 0 In mezzo al range
+                    if self.zero_y > end_y and self.zero_y < start_y:
+                        
+                        # coloro il gradiente UPPER
+                        limite = int(self.zero_y - end_y)
+                        for i in range(3):
+                            gradient[:, :limite, i] = np.tile(np.linspace(plot.function_color[i] / 2, bg_color[i], limite), (int(end_x - start_x), 1)).reshape(int(end_x - start_x), limite)
+                        # coloro il gradiente LOWER
+                        limite = int(start_y - self.zero_y)
+                        for i in range(3):
+                            gradient[:, -limite:, i] = np.tile(np.linspace(bg_color[i], plot.function_color[i] / 2, limite), (1, int(end_x - start_x))).reshape(int(end_x - start_x), limite)
+                        
+                        # rimozione X esterni
+                        gradient[:int(np.min(extracted[:, 0]) - start_x + 1), :, :] = bg_color
+                        gradient[int(np.max(extracted[:, 0]) - start_x - 1):, :, :] = bg_color
+                        
+                        self.screen._paste_array(gradient, (start_x, end_y))
+                        
+                        # lancio della maschera (zero fuori dagli estremi) UPPER  
+                        for x1, y1, x2, y2 in zip(extracted[:, 0].astype(int)[:-1], extracted[:, 1].astype(int)[:-1], extracted[:, 0].astype(int)[1:], extracted[:, 1].astype(int)[1:]):
+                            m = (y2 - y1) / (x2 - x1)
+                            
+                            for i in range(0, x2 - x1):
+                                y_interpolated = int(y1 + m * i)
+                                obiettivo = y_interpolated if y_interpolated < self.zero_y else self.zero_y
+                                self.screen._add_line([[x1 + i, end_y], [x1 + i, obiettivo]], bg_color, 1)
+
+                        # lancio della maschera (zero fuori dagli estremi) LOWER
+                        for x1, y1, x2, y2 in zip(extracted[:, 0].astype(int)[:-1], extracted[:, 1].astype(int)[:-1], extracted[:, 0].astype(int)[1:], extracted[:, 1].astype(int)[1:]):
+                            m = (y2 - y1) / (x2 - x1)
+                            
+                            for i in range(0, x2 - x1):
+                                y_interpolated = int(y1 + m * i)
+                                obiettivo = y_interpolated if y_interpolated > self.zero_y else self.zero_y 
+                                self.screen._add_line([[x1 + i, start_y], [x1 + i, obiettivo]], bg_color, 1)
+
+                    else:
+                        # CASO 2 -> Tutto sotto lo 0
+                        if self.zero_y <= end_y: 
+                            from_y = start_y
+                            colore_start = bg_color
+                            colore_finale = np.array(plot.function_color) / 2
+                        
+                        # CASO 3 -> Tutto sopra lo 0
+                        elif self.zero_y >= start_y:
+                            from_y = end_y
+                            colore_start = np.array(plot.function_color) / 2
+                            colore_finale = bg_color
+
+                        # coloro il gradiente
+                        for i in range(3):
+                            gradient[:, :, i] = np.linspace(colore_start[i], colore_finale[i], int(start_y - end_y)).reshape(1, int(start_y - end_y))
+                        
+                        # rimozione X esterni
+                        gradient[:int(np.min(extracted[:, 0]) - start_x + 1), :, :] = bg_color
+                        gradient[int(np.max(extracted[:, 0]) - start_x - 1):, :, :] = bg_color
+
+                        self.screen._paste_array(gradient, (start_x, end_y))
+                        
+                        # lancio della maschera (zero fuori dagli estremi)    
+                        for x1, y1, x2, y2 in zip(extracted[:, 0].astype(int)[:-1], extracted[:, 1].astype(int)[:-1], extracted[:, 0].astype(int)[1:], extracted[:, 1].astype(int)[1:]):
+                            m = (y2 - y1) / (x2 - x1)
+                            
+                            for i in range(0, x2 - x1):
+                                y_interpolated = int(y1 + m * i)
+                                self.screen._add_line([[x1 + i, from_y], [x1 + i, y_interpolated]], bg_color, 1)
+
 
     def _disegna_mouse_zoom(self, logica: 'Logica'):
         
@@ -570,6 +699,17 @@ class PomoPlot:
             self.active_plot.function_color = self.colore_function.get_color()
             self.active_plot.scatter_color = self.colore_scatter.get_color()
             self.active_plot.nome = self.plot_name.get_text()
+            self.active_plot.gradiente = self.gradient.state_toggle
+            
+            try:
+                mode_grad = [i for i, ele in enumerate(self.grad_mode.cb_s) if ele][0]
+            except IndexError:
+                mode_grad = 0
+
+            match mode_grad:
+                case 0: self.active_plot.grad_mode = "hori"
+                case 1: self.active_plot.grad_mode = "vert"
+
 
         new_dim_title = self.font_size_title.get_text()
         new_dim_x = self.font_size_label_x.get_text()
@@ -669,9 +809,7 @@ class PomoPlot:
     
                     
     def _disegna_dati(self):
-        # preparazione dati
-        self._normalize_data2screen()
-
+        
         larg_error = self.max_plot_square[2] / 100
 
         for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
@@ -857,6 +995,20 @@ class PomoPlot:
         self.coords_of_ticks[1] += (self.max_canvas_square[3] * float(self.y_plot_area.get_text()))
         self.coords_of_ticks[1] += self.max_canvas_square[1]
         
+
+        # Calcolo la posizione della coordinata Y=0
+        # Questo permette di disegnare gradienti e assi cartesiani
+        self.zero_y = 0
+        self.zero_y -= self.spazio_coordinate_native[1]
+        self.zero_y /= self.spazio_coordinate_native[3]
+        self.zero_y *= (self.max_plot_square[3])
+        
+        # inverto i dati per avere le Y che aumentano salendo sullo schermo
+        if invert_y_coord:
+            self.zero_y = self.max_canvas_square[3] * float(self.h_plot_area.get_text()) - self.zero_y
+        
+        self.zero_y += (self.max_canvas_square[3] * float(self.y_plot_area.get_text()))
+        self.zero_y += self.max_canvas_square[1]
 
 
     def _find_equivalent_pixels(self, values, ax="x"):
@@ -1233,6 +1385,9 @@ class _Single1DPlot:
         self.dashed = False
         self.dashed_traits = 21
         self.errorbar = True if data.shape[1] > 2 else False
+
+        self.gradiente = True
+        self.grad_mode = "vert"
 
         self.scatter_color = [100, 100, 255]
         self.function_color = [80, 80, 200]
