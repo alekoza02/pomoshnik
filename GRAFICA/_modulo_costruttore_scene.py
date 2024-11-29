@@ -121,14 +121,15 @@ class Costruttore:
         
         s.context_menu["item2"].add_element("plot_name", Entrata("20%w", "90px", "lu", "75%w", "30px", text="", title="Name: "))
         
-        s.context_menu["item2"].add_element("scatter_size", Entrata("75%w", "155px", "lu", "20%w", "30px", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
-        s.context_menu["item2"].add_element("function_size", Entrata("75%w", "190px", "lu", "20%w", "30px", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
-        s.context_menu["item2"].add_element("dashed_density", Entrata("75%w", "485px", "lu", "20%w", "30px", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101))
+        s.context_menu["item2"].add_element("scatter_size", Entrata("55%w", "155px", "lu", "10%w", "30px", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
+        s.context_menu["item2"].add_element("scatter_border", Entrata("95%w", "155px", "ru", "10%w", "30px", text="0", title="width", lunghezza_max=2, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=9))
+        s.context_menu["item2"].add_element("function_size", Entrata("55%w", "190px", "lu", "10%w", "30px", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
+        s.context_menu["item2"].add_element("dashed_density", Entrata("75%w", "485px", "lu", "10%w", "30px", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101))
 
-        s.context_menu["item2"].add_element("scatter_toggle", Bottone_Toggle("50%w", "155px", "ru", "30px", "30px", text="Toggle scatter", type_checkbox=True, text_on_right=False, state=True))
-        s.context_menu["item2"].add_element("function_toggle", Bottone_Toggle("50%w", "190px", "ru", "30px", "30px", text="Toggle function", type_checkbox=True, text_on_right=False, state=True))
-        s.context_menu["item2"].add_element("errorbar", Bottone_Toggle("50%w", "225px", "ru", "30px", "30px", text="Toggle errors", type_checkbox=True, text_on_right=False, state=True))
-        s.context_menu["item2"].add_element("dashed", Bottone_Toggle("50%w", "485px", "ru", "30px", "30px", text="Dashed line", type_checkbox=True, text_on_right=False, state=True))
+        s.context_menu["item2"].add_element("scatter_toggle", Bottone_Toggle("40%w", "155px", "ru", "30px", "30px", text="Toggle scatter", type_checkbox=True, text_on_right=False, state=True))
+        s.context_menu["item2"].add_element("function_toggle", Bottone_Toggle("40%w", "190px", "ru", "30px", "30px", text="Toggle function", type_checkbox=True, text_on_right=False, state=True))
+        s.context_menu["item2"].add_element("errorbar", Bottone_Toggle("40%w", "225px", "ru", "30px", "30px", text="Toggle errors", type_checkbox=True, text_on_right=False, state=True))
+        s.context_menu["item2"].add_element("dashed", Bottone_Toggle("40%w", "485px", "ru", "30px", "30px", text="Dashed line", type_checkbox=True, text_on_right=False, state=True))
         
         s.context_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", "30%w", "340px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
         s.context_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", "30%w", "395px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
@@ -228,7 +229,9 @@ class Costruttore:
 
 
         # # ITEM 11 METADATA -----------------------------------------------
-        # s.context_menu["item11"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Metadata}", font_size=28))
+        s.context_menu["item11"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Metadata}"))
+        s.context_menu["item11"].add_element("molecule_input", Entrata("30%w", "100px", "lu", "67.5%w", "40px", "", "SMILE code"))
+        s.context_menu["item11"].add_element("molecule_preview", Screen("50%w", "180px", "cu", "95%w", "95%w"))
         # # ITEM 11 METADATA -----------------------------------------------
 
         starting = 1

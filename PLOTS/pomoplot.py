@@ -1,7 +1,14 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter 
 from MATEMATICA._modulo_mate_utils import MateUtils
-from PIL import Image
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem import Draw
+from rdkit.Chem import rdChemReactions as Reactions
+from rdkit import RDLogger
+
+RDLogger.DisableLog('rdApp.*') 
+
 
 NON_ESEGUIRE = False
 
@@ -70,6 +77,7 @@ class PomoPlot:
         self.zoom_boundaries = np.array([0., 0., 1., 1.])
 
         self.zero_y = 0
+        self.old_SMILE: str = ""
 
 
 
@@ -105,6 +113,7 @@ class PomoPlot:
         self.plot_name: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["plot_name"]
 
         self.scatter_size: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_size"]
+        self.scatter_border: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_border"]
         self.function_size: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["function_size"]
         self.dashed_density: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["dashed_density"]
         
@@ -161,6 +170,9 @@ class PomoPlot:
 
         self.save_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item7"].elements["save_single_plot"]
 
+        self.molecule_input: "Entrata" = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_input"]
+        self.molecule_preview: "Screen" = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_preview"]
+
 
     def update_plot_list(self, added_plot):
         self.scroll_plots.add_element_scroll(added_plot, False)
@@ -178,6 +190,7 @@ class PomoPlot:
             if self.active_plot != old_active:
 
                 self.scatter_size.change_text(f"{self.active_plot.scatter_width}")
+                self.scatter_border.change_text(f"{self.active_plot.scatter_border}")
                 self.function_size.change_text(f"{self.active_plot.function_width}")
                 self.plot_name.change_text(f"{self.active_plot.nome}")
                 self.scatter_toggle.state_toggle = self.active_plot.scatter
@@ -228,7 +241,7 @@ class PomoPlot:
             self.plot(logica, screenshot=1)
             self.plot(logica, screenshot=1)
 
-            # self.screen.load_image()
+            # self.screen.load_image("./TEXTURES/sfondo_molecola.svg")
             # self.screen.tavolozza.blit(self.screen.loaded_image, (self.screen.x, self.screen.y))
             
             self.screen._save_screenshot(self.save_single_plot.paths[-1])
@@ -331,10 +344,77 @@ class PomoPlot:
         self._disegna_dati()
         self._disegna_legend(logica)
 
+        self._disegna_molecola(logica)
+
         if not screenshot:
             self._disegna_mouse_coordinate(logica)
             self._disegna_mouse_zoom(logica)
             
+
+    def _disegna_molecola(self, logica: 'Logica'):
+        
+        colore_generico = "A8A8A8"
+
+        def molecola(stringa_SMILE,d):
+            try:
+                molecola = Chem.MolFromSmiles(stringa_SMILE)
+                AllChem.Compute2DCoords(molecola)
+                Draw.MolToFile(molecola, "./TEXTURES/" + ('sfondo_molecola.svg'),(int(d),int(d)))
+                return 1
+            except:
+                return 0
+
+        def reazione(stringa_SMILE,d):
+            try:
+                rxn = Reactions.ReactionFromSmarts(stringa_SMILE, useSmiles=True)
+                Draw.ReactionToImage(rxn, useSVG=True)
+                nome = "./TEXTURES/" + ('sfondo_molecola.svg')
+                with open(nome, "w") as file:
+                    file.write(Draw.ReactionToImage(rxn, useSVG=True, subImgSize=(int(d/(3+stringa_SMILE.count("."))),int(d))))
+
+                return 1
+            except:
+                return 0
+
+        def alpha():
+            try:
+                nome = "./TEXTURES/" + ('sfondo_molecola.svg')
+                with open(nome, "r") as file:
+                    data = file.read()
+                    data = data.replace(r"<rect style='opacity:1.0", r"<rect style='opacity:0")
+                    data = data.replace("#000000", "#" + colore_generico)
+                    data = data.replace("#191919", "#" + colore_generico)
+                with open(nome, "w") as file:
+                    file.write(data)
+            except:
+                pass
+
+        new_SMILE = self.molecule_input.testo
+        
+        if new_SMILE != self.old_SMILE:
+
+            self.old_SMILE = new_SMILE
+
+            esito = molecola(self.molecule_input.testo, self.molecule_preview.w)
+            alpha()
+
+            self.molecule_input.color_text = [200, 200, 200] if esito else [220, 20, 60]
+        
+            self.molecule_preview.tavolozza.fill([25, 25, 25])
+            self.molecule_preview.load_image("./TEXTURES/sfondo_molecola.svg")
+            self.molecule_preview._blit_surface(self.molecule_preview.loaded_image, (0, 0))
+
+        # SMILE istruzioni: 
+        # ATOMS:          C, O, N      [Na+], [13C], [O-]
+        # BONDS:          CC, C-C, C=C, C#C, c1ccccc1
+        # BRANCHING:      CC(C)O
+        # STEREO:         "C[C@H](O)C" @ means centro tetraedrico, "C/C=C/C" / means E isomero, "C/C=C\C" \ means Z isomero 
+        # CHARGE:         [NH4+], [O-]
+        # ISOTOPI:        [13C]
+        # JOLLY:          *, [#6] 6->Carbon
+        # DISCONNECT:     .
+        # EXPL. H:        [CH4] (not shown in image)
+
 
     def _disegna_gradiente(self):
         
@@ -387,8 +467,9 @@ class PomoPlot:
                             gradient[:, :limite, i] = np.tile(np.linspace(plot.function_color[i] / 2, bg_color[i], limite), (int(end_x - start_x), 1)).reshape(int(end_x - start_x), limite)
                         # coloro il gradiente LOWER
                         limite = int(start_y - self.zero_y)
-                        for i in range(3):
-                            gradient[:, -limite:, i] = np.tile(np.linspace(bg_color[i], plot.function_color[i] / 2, limite), (1, int(end_x - start_x))).reshape(int(end_x - start_x), limite)
+                        if limite > 0:
+                            for i in range(3):
+                                gradient[:, -limite:, i] = np.tile(np.linspace(bg_color[i], plot.function_color[i] / 2, limite), (1, int(end_x - start_x))).reshape(int(end_x - start_x), limite)
                         
                         # rimozione X esterni
                         gradient[:int(np.min(extracted[:, 0]) - start_x + 1), :, :] = bg_color
@@ -627,7 +708,7 @@ class PomoPlot:
                             if plot.scatter:
                                 self.screen._add_points_static(superficie_alpha, [
                                     [self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625, inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato]
-                                ], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport)
+                                ], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport, plot.scatter_border * self.scale_factor_viewport)
 
 
                             plot_attivo_analizzato += 1
@@ -678,7 +759,7 @@ class PomoPlot:
                             if plot.scatter:
                                 self.screen._add_points([
                                     [legend_position[0] - leg_lar_2 - self.icon_size_pixel + self.icon_size_pixel / 2 - self.icon_size_pixel * 0.0625, legend_position[1] - leg_alt_2 + inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato],
-                                ], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport)
+                                ], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport, plot.scatter_border * self.scale_factor_viewport)
 
 
                             plot_attivo_analizzato += 1
@@ -690,6 +771,7 @@ class PomoPlot:
 
         if not self.active_plot is None:
             self.active_plot.scatter_width = int(self.scatter_size.get_text())
+            self.active_plot.scatter_border = int(self.scatter_border.get_text())
             self.active_plot.function_width = int(self.function_size.get_text())
             self.active_plot.dashed_traits = int(self.dashed_density.get_text())
             self.active_plot.scatter = self.scatter_toggle.state_toggle
@@ -842,7 +924,7 @@ class PomoPlot:
                         self.screen._add_line([[x - larg_error, y - e], [x + larg_error, y - e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
                         
                 if plot.scatter:
-                    self.screen._add_points(extracted[:, :2], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport)
+                    self.screen._add_points(extracted[:, :2], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport, plot.scatter_border * self.scale_factor_viewport)
 
 
     def _disegna_spezzata_tratteggiata(self, plot:'_Single1DPlot'):
@@ -1380,6 +1462,7 @@ class _Single1DPlot:
 
         self.scatter = True
         self.scatter_width = 3
+        self.scatter_border = 0
         self.function = True
         self.function_width = 1
         self.dashed = False

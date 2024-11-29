@@ -1619,8 +1619,11 @@ class ColorPicker(BaseElement):
 
 
     def apri_picker(self, __useless):
-        pygame.mouse.set_pos(self.palette.x + self.palette.w / 2, self.palette.y + self.palette.h / 2)
-        self.update_mouse_position = True
+        # pygame.mouse.set_pos(self.palette.x + self.palette.w / 2, self.palette.y + self.palette.h / 2)
+        # self.update_mouse_position = True
+        
+        self.palette.mouse_inside_BB = False
+
         self.palette.colore_scelto = self.picked_color
         self.palette.intensity = 1
         self.palette.toggle = False if self.palette.toggle else True
@@ -1664,6 +1667,7 @@ class Palette(BaseElement):
 
         self.chosen_id = ""
         self.toggle = False
+        self.mouse_inside_BB = False
 
         ###### generazione colori ###### 
         def generate_color_function(color):
@@ -1790,9 +1794,13 @@ class Palette(BaseElement):
     
         stato_prima = self.toggle
 
-        if not self.bounding_box.collidepoint(logica.mouse_pos): 
+        BB_collision = self.bounding_box.collidepoint(logica.mouse_pos)
+        if not BB_collision and self.mouse_inside_BB: 
             self.toggle = False
-            
+            self.mouse_inside_BB = False
+        elif BB_collision:
+            self.mouse_inside_BB = True
+
         for event in events:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: 
                 self.toggle = False
@@ -2231,9 +2239,9 @@ class Screen(BaseElement):
             self.tavolozza.fill(color)
 
 
-    def _add_points(self, points, color, size=1):
+    def _add_points(self, points, color, radius=1, width=0):
         for point in points:
-            pygame.draw.circle(self.tavolozza, color, point[:2], ceil(size))
+            pygame.draw.circle(self.tavolozza, color, point[:2], ceil(radius), ceil(width))
     
     
     def _add_rectangle(self, coords4, color, width=0):
@@ -2250,9 +2258,9 @@ class Screen(BaseElement):
 
 
     @staticmethod
-    def _add_points_static(schermo, points, color, size=1):
+    def _add_points_static(schermo, points, color, radius=1, width=0):
         for point in points:
-            pygame.draw.circle(schermo, color, point[:2], ceil(size))
+            pygame.draw.circle(schermo, color, point[:2], ceil(radius), ceil(width))
     
     
     @staticmethod
@@ -2390,5 +2398,5 @@ class Screen(BaseElement):
             pass
     
 
-    def load_image(self):
-        self.loaded_image = pygame.image.load("./TEXTURES/molecola.svg")
+    def load_image(self, path:str):
+        self.loaded_image = pygame.image.load(path)
