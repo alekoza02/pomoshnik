@@ -103,8 +103,7 @@ class PomoPlot:
         self.plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["plot_area_bg"]
         self.canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["canvas_area_bg"]
         
-        self.normalizza: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["normalizza"]
-        self.percentualizza: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["percentualizza"]
+        self.norma_perc: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item1"].elements["norma_perc"]
         self.overlap: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["overlap"]
         
 
@@ -318,10 +317,41 @@ class PomoPlot:
             self.zoom_boundaries[3] -= (self.zoom_boundaries[3] - self.zoom_boundaries[1]) * logica.dragging_dy / self.screen.h
 
 
+        # logica add coords
+        if not self.tools.cb_s[2]:
+            self.screen.last_click_pos_changed = False
+
+        if self.tools.cb_s[2] and self.screen.bounding_box.collidepoint(logica.mouse_pos) and self.screen.last_click_pos_changed:
+            self.screen.last_click_pos_changed = False
+
+            min_info = [None, None]
+            min_value = 1e6
+            for index_plot, plot, status in zip(range(len(self.plots)), self.plots, self.scroll_plots.ele_mask):
+                
+                if status:
+                    search = plot.data2plot[:, :2] - [logica.mouse_pos[0] - self.screen.x, logica.mouse_pos[1] - self.screen.y]
+                    search = np.linalg.norm(search, axis=1)
+                    index = np.argmin(search)
+                    value = np.min(search)
+
+                    if value < min_value:
+                        
+                        min_value = value
+
+                        min_info[0] = index
+                        min_info[1] = index_plot
+
+
+            if self.plots[min_info[1]].display_coords.count(min_info[0]) == 0:
+                self.plots[min_info[1]].display_coords.append(min_info[0])
+            else:
+                self.plots[min_info[1]].display_coords.remove(min_info[0])
+
+
         # reset pan & zoom
         if self.reset_tools.flag_foo:
             self.reset_tools.flag_foo = 0
-            self.tools.set_state([0, 0])
+            self.tools.set_state([0 for _ in range(self.tools.cb_n)])
             self.zoom_boundaries = np.array([0., 0., 1., 1.])
 
 
@@ -431,6 +461,10 @@ class PomoPlot:
                 combined_condition = cond1 & cond2 & cond3 & cond4
 
                 extracted = plot.data2plot[combined_condition]
+
+                if len(extracted) < 2:
+                    # exit the function if too few points
+                    return
 
                 if plot.gradiente and plot.grad_mode == "vert":
                     # VERTICAL
@@ -927,6 +961,13 @@ class PomoPlot:
                     self.screen._add_points(extracted[:, :2], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport, plot.scatter_border * self.scale_factor_viewport)
 
 
+                # Add the logic to transform the index into value and coordinate
+                if len(plot.display_coords) > 0:
+                    coords = [[plot.data2plot[index, 0], plot.data2plot[index, 1] - 10 * self.scale_factor_viewport] for index in plot.display_coords]
+                    text = [f"({plot.data[index, 0]:.{self.round_ticks_x.get_text()}f}, {plot.data[index, 1]:.{self.round_ticks_y.get_text()}f})" for index in plot.display_coords]
+                    self.screen._add_text(text, coords, anchor=["cd" for i in plot.display_coords], size=1 * self.scale_factor_viewport, color=[self.label_title_color.get_color() for i in plot.display_coords], rotation=[0 for i in plot.display_coords])
+
+
     def _disegna_spezzata_tratteggiata(self, plot:'_Single1DPlot'):
 
         cond1 = plot.data2plot[:, :2][:, 0] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
@@ -1018,11 +1059,11 @@ class PomoPlot:
             if status:
                 plot.data2plot = plot.data.copy()
 
-                if self.normalizza.state_toggle or self.percentualizza.state_toggle:
+                if sum(self.norma_perc.buttons_state) > 0:
                     plot.data2plot[:, 1] -= np.min(plot.data2plot[:, 1])
                     plot.data2plot[:, 1] /= np.max(plot.data2plot[:, 1])
 
-                    if self.percentualizza.state_toggle and self.overlap.state_toggle:
+                    if self.norma_perc.buttons_state[1] and self.overlap.state_toggle:
                         plot.data2plot[:, 1] *= 100
 
 
@@ -1280,12 +1321,12 @@ class PomoPlot:
                     self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, 0]))
                     self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.data[:, 1]))
 
-        if self.normalizza.state_toggle or self.percentualizza.state_toggle:
+        if sum(self.norma_perc.buttons_state) > 0:
             self.spazio_coordinate_native[1] = 0.0
            
-        if self.percentualizza.state_toggle:
+        if self.norma_perc.buttons_state[1]:
             self.spazio_coordinate_native[3] = 100.0
-        elif self.normalizza.state_toggle:
+        elif self.norma_perc.buttons_state[0]:
             self.spazio_coordinate_native[3] = 1.0
         
         if not self.overlap.state_toggle:
@@ -1471,6 +1512,8 @@ class _Single1DPlot:
 
         self.gradiente = True
         self.grad_mode = "vert"
+
+        self.display_coords = []
 
         self.scatter_color = [100, 100, 255]
         self.function_color = [80, 80, 200]

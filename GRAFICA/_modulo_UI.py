@@ -226,8 +226,8 @@ class UI:
         self.cpu_sample.append(psutil.cpu_percent(interval=0))
         self.costruttore.scene["main"].context_menu["main"].elements["cpu"].change_text(r"\h{ " + f" CPU: {sum(self.cpu_sample) / len(self.cpu_sample):>3.0f}%" + " }")
 
-        if sum(self.cpu_sample) / len(self.cpu_sample) > 30:
-            self.costruttore.scene["main"].context_menu["main"].elements["cpu"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].context_menu["main"].elements["cpu"].testo + "}")
+        if sum(self.cpu_sample) / len(self.cpu_sample) > 30 and sum(self.cpu_sample) / len(self.cpu_sample) <= 70:
+            self.costruttore.scene["main"].context_menu["main"].elements["cpu"].change_text(r"\#ffdd60{" + self.costruttore.scene["main"].context_menu["main"].elements["cpu"].testo + "}")
 
         if sum(self.cpu_sample) / len(self.cpu_sample) > 70:
             self.costruttore.scene["main"].context_menu["main"].elements["cpu"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].context_menu["main"].elements["cpu"].testo + "}")
@@ -236,8 +236,8 @@ class UI:
         
         self.costruttore.scene["main"].context_menu["main"].elements["fps"].change_text(r"\h{ " + f"FPS: {self.current_fps:>6.2f}" + " }")
         
-        if self.current_fps < 60:
-            self.costruttore.scene["main"].context_menu["main"].elements["fps"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].context_menu["main"].elements["fps"].testo + "}")
+        if self.current_fps < 60 and self.current_fps >= 24:
+            self.costruttore.scene["main"].context_menu["main"].elements["fps"].change_text(r"\#ffdd60{" + self.costruttore.scene["main"].context_menu["main"].elements["fps"].testo + "}")
 
         if self.current_fps < 24:
             self.costruttore.scene["main"].context_menu["main"].elements["fps"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].context_menu["main"].elements["fps"].testo + "}")
@@ -271,8 +271,8 @@ class UI:
 
             self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\h{ " + f"{simbolo_corretto} {battery.percent:>3}%" + " }")
 
-            if battery.percent < 20:
-                self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\#ddaa88{" + self.costruttore.scene["main"].context_menu["main"].elements["battery"].testo + "}")
+            if battery.percent < 20 and battery.percent >= 10:
+                self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\#ffdd60{" + self.costruttore.scene["main"].context_menu["main"].elements["battery"].testo + "}")
 
             if battery.percent < 10:
                 self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\#dc143c{" + self.costruttore.scene["main"].context_menu["main"].elements["battery"].testo + "}")

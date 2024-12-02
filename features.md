@@ -2,6 +2,7 @@
 
 - General geometry
     - Zoom (DO mantain proportions)
+    - Zoom (DO NOT mantain proportions)
     - Force square plot shape
     - Custom dimension
     - Set percentage of plot area cover
@@ -20,9 +21,16 @@
         - Width
         - Color
     - Setting Title
+    - Setting Color
+        - Setting gradient
+            - Vertical
+            - Zero line sensible
+        - Setting change on Y axis
     - Report errors
         - Size of the bars
     - Show the coordinates
+    - Normalize (1 ax 2 plots same height) (0-1) and (0-100)
+    - Disable plot overlap
 ---
 - Labels
     - XY label ticks offset
@@ -55,16 +63,15 @@
     - Sort by X - Value
 ---
 - Metadata
+    - Adding molecules
 
 # UNDONE:
 - General geometry
     - Multiple plots grid
     - alpha
     - Support 2° ax
-    - Zoom (DO NOT mantain proportions)
     - Select plots from clicking
     - Force mantain proportion in XY data
-    - Plot are BB
     - Type of axis:
         - Plot style (left and bottom)
         - Function style (centered on the origin)
@@ -85,13 +92,8 @@
     - Smoothing points
     - Sample values (too many points)
     - Setting color
-        - Setting gradient
-            - Vertical
-            - Zero line sensible
-        - Setting change on Y axis
         - Setting progressive change
         - Setting zone change
-    - Normalize (1 ax 2 plots same height) (0-1) and (0-100)
     - Normalize (2 axes 2 plots same height) (x-y, x2-y2)
 ---
 - Labels
@@ -111,7 +113,6 @@
     - Import .ale extension
 ---
 - Metadata
-    - Adding molecules
     - Adding arrows
     - Adding boxes
     - Adding circles

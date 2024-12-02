@@ -261,8 +261,14 @@ class BaseElement:
 
         self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
 
+        # hides the element if it's outside the margins of the contextmenù
+        self.hide_plus_children(self.y < self.y_Context or self.y > self.y_Context + self.h_Context)
+
 
     def hide_plus_children(self, booleano):
+        if self.y < self.y_Context:
+            booleano = 1
+        
         self.hide = booleano
 
 
@@ -530,7 +536,12 @@ class Bottone_Push(BaseElement):
 
 
     def hide_plus_children(self, booleano):
+        if self.y < self.y_Context:
+            booleano = 1
+        
         super().hide_plus_children(booleano)
+        try: self.label_title.hide = booleano
+        except: ...
         self.disable = booleano
 
 
@@ -601,7 +612,7 @@ class Bottone_Toggle(BaseElement):
             else:
 
                 pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
-                
+
                 if self.texture is None:
                     self.label_title.disegnami(logica)
                 else:
@@ -659,6 +670,14 @@ class Bottone_Toggle(BaseElement):
         self.label_title.update_window_change()
 
 
+    def hide_plus_children(self, booleano):
+        if self.y < self.y_Context:
+            booleano = 1
+            
+        super().hide_plus_children(booleano)
+        try: self.label_title.hide_plus_children(booleano)
+        except: ...
+
 
 class RadioButton(BaseElement):
     def __init__(self, x="", y="", anchor="lu", w="", h="", axis="x", bg=None, cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, hide=False, type_checkbox=True, w_button="30px", h_button="30px") -> None:
@@ -707,39 +726,43 @@ class RadioButton(BaseElement):
         
         for bottone in self.toggles:
             if bottone.state_toggle:
-                bottone.bg = array([50, 100, 50])
+                bottone.bg = array([80, 100, 80])
             else:
                 bottone.bg = self.bg + 10 
 
 
 
     def disegnami(self, logica):
-        pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
 
-        for bottone in self.toggles:
-            if bottone.state_toggle:
-                bottone.bg = array([50, 100, 50])
-            else:
-                bottone.bg = self.bg + 10
+        if not self.hide:
+            pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
 
-        [bottone.disegnami(logica) for bottone in self.toggles]
+            for bottone in self.toggles:
+                if bottone.state_toggle:
+                    bottone.bg = array([80, 100, 80])
+                else:
+                    bottone.bg = self.bg + 10
+
+            [bottone.disegnami(logica) for bottone in self.toggles]
 
 
     def eventami(self, events, logica):
 
-        old_state = self.buttons_state
+        if not self.hide:
 
-        [bottone.eventami(events, logica) for bottone in self.toggles]
-        
-        new_state = self.buttons_state
+            old_state = self.buttons_state
 
-        if not self.multiple_choice:
-            ele_vecchio, ele_nuovo = self.check_for_diff(old_state, new_state)
+            [bottone.eventami(events, logica) for bottone in self.toggles]
+            
+            new_state = self.buttons_state
 
-            if not ele_nuovo is None and not ele_vecchio is None:
-                self.toggles[ele_vecchio].state_toggle = False
+            if not self.multiple_choice:
+                ele_vecchio, ele_nuovo = self.check_for_diff(old_state, new_state)
 
-        self.cb_s = [b.state_toggle for b in self.toggles]
+                if not ele_nuovo is None and not ele_vecchio is None:
+                    self.toggles[ele_vecchio].state_toggle = False
+
+            self.cb_s = [b.state_toggle for b in self.toggles]
 
 
     @property
@@ -771,14 +794,6 @@ class RadioButton(BaseElement):
     def update_window_change(self):
         super().update_window_change()
 
-        textures_info = [bottone.texture_name for bottone in self.toggles]
-
-        self.cb_n = len(self.toggles)
-        self.cb_s = [bottone.state_toggle for bottone in self.toggles]
-        self.cb_t = [bottone.testo for bottone in self.toggles]
-
-        self.toggles = []
-
         if self.w_button[-2:] == "%w":
             self.w_button_calcoli = f"{float(self.w_button[:-2]) * self.one_percent_x}px"
         if self.w_button[-2:] == "%h":
@@ -788,32 +803,37 @@ class RadioButton(BaseElement):
         if self.h_button[-2:] == "%h":
             self.h_button_calcoli = f"{float(self.h_button[:-2]) * self.one_percent_y}px"
         
-        for index, state, text  in zip(range(self.cb_n), self.cb_s, self.cb_t):
+        for index in range(self.cb_n):
+            
+            self.toggles[index].ori_coords = list(self.toggles[index].ori_coords)
             
             match self.main_ax:
                 case "x": 
                         spacing = (self.w - float(self.w_button_calcoli[:-2]) * self.cb_n) / (self.cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(f"{self.x}px {index * (float(self.w_button_calcoli[:-2]) + spacing)}px", f"{self.y}px", "lu", self.w_button_calcoli, self.h_button_calcoli, state, self.type_checkbox, text=text, hide=self.hide))
+                        self.toggles[index].ori_coords[0] = f"{self.x}px {index * (float(self.w_button_calcoli[:-2]) + spacing)}px" 
+                        self.toggles[index].ori_coords[1] = f"{self.y}px" 
+                        self.toggles[index].ori_coords[2] = self.w_button_calcoli
+                        self.toggles[index].ori_coords[3] = self.h_button_calcoli
+                        
                 case "y":
                         spacing = (self.h - float(self.h_button_calcoli[:-2]) * self.cb_n) / (self.cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(f"{self.x}px", f"{self.y}px {index * (float(self.h_button_calcoli[:-2]) + spacing)}px", "lu", self.w_button_calcoli, self.h_button_calcoli, state, self.type_checkbox, text=text, hide=self.hide))
-                    
+                        self.toggles[index].ori_coords[0] = f"{self.x}px"
+                        self.toggles[index].ori_coords[1] = f"{self.y}px {index * (float(self.h_button_calcoli[:-2]) + spacing)}px"
+                        self.toggles[index].ori_coords[2] = self.w_button_calcoli
+                        self.toggles[index].ori_coords[3] = self.h_button_calcoli
+                        
                 case _: raise TypeError(f"Invalid mode {self.main_ax}, accepted types: 'x', 'y'.")
-        
-            self.toggles[-1].x_Context = self.x_Context
-            self.toggles[-1].y_Context = self.y_Context
-            self.toggles[-1].w_Context = self.w_Context
-            self.toggles[-1].h_Context = self.h_Context
+            
+            self.toggles[index].ori_coords = tuple(self.toggles[index].ori_coords)
+            self.toggles[index].update_window_change()
 
-            if not textures_info[index] is None:
-                self.toggles[-1].load_texture(textures_info[index])
 
-        for bottone in self.toggles:
-            if bottone.state_toggle:
-                bottone.bg = array([50, 100, 50])
-            else:
-                bottone.bg = self.bg + 10 
-
+    def hide_plus_children(self, booleano):
+        if self.y < self.y_Context:
+            booleano = 1
+        super().hide_plus_children(booleano)
+        try: [ele.hide_plus_children(booleano) for ele in self.toggles]
+        except Exception as e: ...
 
 
 class Entrata(BaseElement):
@@ -1314,6 +1334,14 @@ class Entrata(BaseElement):
             return restituisco
 
 
+    def hide_plus_children(self, booleano):
+        if self.y < self.y_Context:
+            booleano = 1
+        super().hide_plus_children(booleano)
+        try: self.label_title.hide = booleano
+        except: ...
+
+
     def update_context_menu(self, *args):
         super().update_context_menu(*args)
         self.label_title.update_context_menu(*args)
@@ -1568,6 +1596,16 @@ class Scroll(BaseElement):
             ele.bg += array([10, 10, 10])
 
 
+    def hide_plus_children(self, booleano):
+        if self.y < self.y_Context:
+            booleano = 1
+        super().hide_plus_children(booleano)
+        try: [ele.hide_plus_children(booleano) for ele in self.ele_toggle]
+        except: ...
+        
+        try: self.label_title.hide = booleano
+        except: ...
+
 
 class ColorPicker(BaseElement):
     def __init__(self, palette, id, x="", y="", anchor="lu", w="", h="", initial_color=[200, 200, 200], text="", hide=False, bg=None) -> None:
@@ -1631,10 +1669,16 @@ class ColorPicker(BaseElement):
 
 
     def hide_plus_children(self, booleano):
+        if self.y < self.y_Context:
+            booleano = 1
+
         super().hide_plus_children(booleano)
-        self.label_title.hide_plus_children(booleano)
-        self.opener.hide_plus_children(booleano)
-        self.palette.hide_plus_children(booleano)
+        
+        try: self.label_title.hide = booleano
+        except: ...
+        
+        try: self.opener.hide = booleano
+        except: ...
 
     
     def get_color(self):
@@ -1651,8 +1695,7 @@ class ColorPicker(BaseElement):
         super().update_window_change()
         self.label_title.update_window_change()
         self.opener.update_window_change()
-        self.palette.update_window_change()
-
+        
 
 
 class Palette(BaseElement):
@@ -1929,61 +1972,63 @@ class SubStringa:
 
         valvola = 0
 
-        for i in range(len(self.testo)):
-            
-            # controlla se viene trovato un formattatore tra tutti i formattatori disponibili
-            for formattatore in formattatori:
+        if "{" in self.testo:
 
-                # se la substringa che va da i a i + len(form.) è uguale al form. -> trovato un candidato
-                if self.testo[i:i+len(formattatore)] == formattatore:
+            for i in range(len(self.testo)):
+                
+                # controlla se viene trovato un formattatore tra tutti i formattatori disponibili
+                for formattatore in formattatori:
 
-                    # se questa è la prima volta che si trova un formattatore, me lo segno
-                    if primo_formattatore is None:
-                        primo_formattatore = i
-                    
-                    # in generale, tengo traccia dei formattatori trovati, così da sapere quando finisce la parentesi
-                    formattatori_trovati.append([formattatore, i])
-                    break
+                    # se la substringa che va da i a i + len(form.) è uguale al form. -> trovato un candidato
+                    if self.testo[i:i+len(formattatore)] == formattatore:
 
-            if self.testo[i] == "}":
-                for j in range(len(formattatori_trovati),0,-1):
-                    if len(formattatori_trovati[j-1]) == 2:
-                        formattatori_trovati[j-1].append(i)
+                        # se questa è la prima volta che si trova un formattatore, me lo segno
+                        if primo_formattatore is None:
+                            primo_formattatore = i
+                        
+                        # in generale, tengo traccia dei formattatori trovati, così da sapere quando finisce la parentesi
+                        formattatori_trovati.append([formattatore, i])
                         break
 
-            # controllo se il primo formattatore è stato chiuso
-            if len(formattatori_trovati) > 0 and len(formattatori_trovati[0]) == 3:
+                if self.testo[i] == "}":
+                    for j in range(len(formattatori_trovati),0,-1):
+                        if len(formattatori_trovati[j-1]) == 2:
+                            formattatori_trovati[j-1].append(i)
+                            break
 
-                # controllo pre formattatore, presenza di testo default
-                if formattatori_trovati[0][1] > valvola:
-                    substringhe_create.append(SubStringa(self.colore, self.bold, self.italic, self.apice, self.pedice, self.highlight, self.testo[valvola:formattatori_trovati[0][1]]))
+                # controllo se il primo formattatore è stato chiuso
+                if len(formattatori_trovati) > 0 and len(formattatori_trovati[0]) == 3:
 
-
-                # gestione del tag                    
-                ris = SubStringa(self.colore, self.bold, self.italic, self.apice, self.pedice, self.highlight, None)
-                ris.testo = self.testo[formattatori_trovati[0][1] + lookup_lenghts[formattatori_trovati[0][0]]: formattatori_trovati[0][2]]
-                
-                match formattatori_trovati[0][0]:
-                    case r"\h{": ris.highlight = True
-                    case r"\^{": ris.apice = True
-                    case r"\_{": ris.pedice = True
-                    case r"\b{": ris.bold = True
-                    case r"\i{": ris.italic = True
-                    case r"\#": ris.colore = MateUtils.hex2rgb(self.testo[formattatori_trovati[0][1] + 2 : formattatori_trovati[0][1] + 8])
+                    # controllo pre formattatore, presenza di testo default
+                    if formattatori_trovati[0][1] > valvola:
+                        substringhe_create.append(SubStringa(self.colore, self.bold, self.italic, self.apice, self.pedice, self.highlight, self.testo[valvola:formattatori_trovati[0][1]]))
 
 
-                # controllo figli
-                depth_controllo = ris.analisi()
-                if len(depth_controllo) == 0:
-                    substringhe_create.append(ris)
-                else:
-                    substringhe_create.append(depth_controllo)
+                    # gestione del tag                    
+                    ris = SubStringa(self.colore, self.bold, self.italic, self.apice, self.pedice, self.highlight, None)
+                    ris.testo = self.testo[formattatori_trovati[0][1] + lookup_lenghts[formattatori_trovati[0][0]]: formattatori_trovati[0][2]]
+                    
+                    match formattatori_trovati[0][0]:
+                        case r"\h{": ris.highlight = True
+                        case r"\^{": ris.apice = True
+                        case r"\_{": ris.pedice = True
+                        case r"\b{": ris.bold = True
+                        case r"\i{": ris.italic = True
+                        case r"\#": ris.colore = MateUtils.hex2rgb(self.testo[formattatori_trovati[0][1] + 2 : formattatori_trovati[0][1] + 8])
 
 
-                # ripristino il ciclo
-                valvola = formattatori_trovati[0][2] + 1
-                formattatori_trovati = []
-                primo_formattatore = None
+                    # controllo figli
+                    depth_controllo = ris.analisi()
+                    if len(depth_controllo) == 0:
+                        substringhe_create.append(ris)
+                    else:
+                        substringhe_create.append(depth_controllo)
+
+
+                    # ripristino il ciclo
+                    valvola = formattatori_trovati[0][2] + 1
+                    formattatori_trovati = []
+                    primo_formattatore = None
 
 
         substringhe_create.append(SubStringa(self.colore, self.bold, self.italic, self.apice, self.pedice, self.highlight, self.testo[valvola:]))
@@ -2081,14 +2126,18 @@ class Font:
 
 
 class ContextMenu(BaseElement):
-    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, separator_size=2, bg=[25, 25, 25]) -> None:
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, separator_size=2, bg=[25, 25, 25], scrollable=True) -> None:
         super().__init__(x, y, anchor, w, h, text, hide)
+
+        self.previous_hide = None
 
         self.inizializzato = False
 
         self.progression = 0
         self.max_progression = 0
-        self.offset_progression = self.h
+        self.offset_progression = 0
+        self.scrollable = scrollable
+
         self.bg = bg
         self.debug = False
         self.elements: dict[str, Label_Text | Bottone_Push | Bottone_Toggle | Entrata | Scroll | ContextMenu | ColorPicker] = {}
@@ -2105,7 +2154,8 @@ class ContextMenu(BaseElement):
             [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) == ColorPicker]
 
             for sep in self.separators:
-                pygame.draw.line(self.schermo, [60, 60, 60], [self.x + self.w * 0.01, sep], [self.x + self.w * 0.99, sep], self.separator_size)
+                if sep > 0:
+                    pygame.draw.line(self.schermo, [60, 60, 60], [self.x + self.w * 0.01, sep + self.y], [self.x + self.w * 0.99, sep + self.y], self.separator_size)
 
             if self.debug:
                 pygame.draw.circle(self.schermo, [255, 0, 0], self.lu, 5)
@@ -2121,38 +2171,56 @@ class ContextMenu(BaseElement):
 
     def eventami(self, events, logica: 'Logica'):
         
-        if logica.scroll_up:
-            if self.progression > 0:
-                self.progression -= 1            
-                self.update_scroll(+1)
-        if logica.scroll_down:
-            if self.progression < self.max_progression - self.offset_progression:
-                self.progression += 1            
-                self.update_scroll(-1)
+        if not self.hide:
 
-        [ele.eventami(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
-        
-        self.hide_elements()
+            if self.bounding_box.collidepoint(logica.mouse_pos):
+                if logica.scroll_up:
+                    if self.progression > 0:
+                        self.progression -= 25            
+                        self.update_scroll(+25)
+                if logica.scroll_down:
+                    if self.progression < self.max_progression:
+                        self.progression += 25            
+                        self.update_scroll(-25)
+            else:
+                self.update_scroll(0)
 
-        for indice, ele in self.elements.items():
-            if type(ele) == ColorPicker:
-                pop_up_domanda_color = ele.eventami(events, logica)
-            
-                if pop_up_domanda_color:
-                    return ele
+
+            [ele.eventami(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
+
+            for indice, ele in self.elements.items():
+                if type(ele) == ColorPicker:
+                    pop_up_domanda_color = ele.eventami(events, logica)
+                
+                    if pop_up_domanda_color:
+                        return ele
         
         return 0
 
 
     def hide_elements(self):
         
-        for index, element in self.elements.items():
-            element.hide_plus_children(self.hide)
+        if self.previous_hide != self.hide:
+
+            for index, element in self.elements.items():
+
+                if element.y > self.y:
+                    element.hide_plus_children(self.hide)
+
+        self.previous_hide = self.hide
 
     
     def add_element(self, id: str, element: Label_Text):
         element.update_context_menu(self.x, self.y, self.w, self.h)
         self.elements[id] = element
+
+        # update max height of the context menù
+        pos_y = [ele.y for index, ele in self.elements.items()]
+        altezze = [ele.h for index, ele in self.elements.items()]
+
+        max_depth = max([i+j for i, j in zip(pos_y, altezze)])
+
+        self.max_progression = max_depth
 
 
 
@@ -2191,23 +2259,30 @@ class ContextMenu(BaseElement):
 
     def update_scroll(self, pm: int):
         
-        for index, ele in self.elements.items():
-            
-            if not type(ele.anchor) == tuple:
-                new_values = list(ele._init_coords)
-                new_values[1] += pm
-                ele._init_coords = tuple(new_values)
-            ele.update_window_change()
+        if self.scrollable:
+
+            self.separators = [sep + pm for sep in self.separators]
+
+            for _, ele in self.elements.items():
+                
+                new_values = list(ele.ori_coords)
+                
+                if "px" in new_values[1]:
+                    split = new_values[1].split()
+                    for index_2, coord in enumerate(split):
+                        if "px" in coord:  
+                            split[index_2] = f"{float(coord[:-2]) + pm}px"
+
+                    new_values[1] = "".join(split)
+
+                else:
+                    new_values[1] += f" {pm}px"
+
+                ele.ori_coords = tuple(new_values)
+
+                ele.update_window_change()
 
     
-    def get_bottom_height(self):
-        return self.h + self.y
-    
-
-    def get_y_top_side(self):
-        return self._init_coords[1] * self.pappardella["y_screen"] / 100
-    
-
     def add_separator(self, y):
         self.separators.append(y)
 
@@ -2220,11 +2295,24 @@ class Screen(BaseElement):
 
         self.screenshot_type = screenshot_type
         self.tavolozza = pygame.Surface((self.w, self.h))
+        self.last_click_pos = (-1, -1)
+        self.last_click_pos_changed = False
+
+
+    def eventami(self, events, logica: 'Logica'):
+
+        if self.hide == False or self.screenshot_type == False:
+
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if self.bounding_box.collidepoint(event.pos):
+                        self.last_click_pos = logica.mouse_pos
+                        self.last_click_pos_changed = True
 
     
     def update_window_change(self):
         super().update_window_change()
-        self.tavolozza = pygame.Surface((self.w, self.h))
+        self.tavolozza = pygame.transform.scale(self.tavolozza, (self.w, self.h))
     
 
     def disegnami(self, logica):

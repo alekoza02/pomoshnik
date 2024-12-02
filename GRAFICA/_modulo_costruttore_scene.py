@@ -68,7 +68,7 @@ class Costruttore:
         
         s.palette_popup = Palette(x="50%w", y="50%h", anchor="cc", w="40%w", h="40%h")
 
-        s.context_menu["main"] = ContextMenu(x="0px", y="0px", w="100%w", h="100%h", anchor="lu", bg=[30, 30, 30])
+        s.context_menu["main"] = ContextMenu(x="0px", y="0px", w="100%w", h="100%h", anchor="lu", bg=[30, 30, 30], scrollable=False)
 
         s.context_menu["main"].add_element("clock", Label_Text(x="100%w", y="100%h", w="-*w", h="-*h", anchor="rd", text="." * 22))
         s.context_menu["main"].add_element("memory", Label_Text(anchor=("rd ld (-20px) (0px)", s.context_menu["main"].elements["clock"]), w="-*w", h="-*h", text="." * 22))
@@ -110,8 +110,7 @@ class Costruttore:
         s.context_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", "30%w", "400px", "cc", "30%w", "40px", [50, 50, 50], bg=[50, 50, 50], text="Color plot area"))
         s.context_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", "30%w", "450px", "cc", "30%w", "40px", [40, 40, 40], bg=[50, 50, 50], text="Color background"))
         
-        s.context_menu["item1"].add_element("normalizza", Bottone_Toggle("10%w", "525px", "lc", "35%w", "50px", False, False, "[0..1]"))
-        s.context_menu["item1"].add_element("percentualizza", Bottone_Toggle("90%w", "525px", "rc", "35%w", "50px", False, False, "[%]"))
+        s.context_menu["item1"].add_element("norma_perc", RadioButton("50%w", "525px", "cc", "70%w", "50px", "x", cb_n=2, cb_s=[0, 0], cb_t=["[0..1]", "[%]"], type_checkbox=0, w_button="35%w", h_button="50px"))
         s.context_menu["item1"].add_element("overlap", Bottone_Toggle("50%w", "600px", "cc", "35%w", "50px", True, False, "Plots Overlap"))
         # # ITEM 1 GEOMETRY ------------------------------------------------
         
@@ -120,28 +119,27 @@ class Costruttore:
         s.context_menu["item2"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Grafici}"))
         
         s.context_menu["item2"].add_element("plot_name", Entrata("20%w", "90px", "lu", "75%w", "30px", text="", title="Name: "))
-        
-        s.context_menu["item2"].add_element("scatter_size", Entrata("55%w", "155px", "lu", "10%w", "30px", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
-        s.context_menu["item2"].add_element("scatter_border", Entrata("95%w", "155px", "ru", "10%w", "30px", text="0", title="width", lunghezza_max=2, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=9))
-        s.context_menu["item2"].add_element("function_size", Entrata("55%w", "190px", "lu", "10%w", "30px", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
-        s.context_menu["item2"].add_element("dashed_density", Entrata("75%w", "485px", "lu", "10%w", "30px", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101))
+    
+        s.context_menu["item2"].add_element("scatter_size", Entrata("55%w", "165px", "lu", "10%w", "30px", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
+        s.context_menu["item2"].add_element("scatter_border", Entrata("95%w", "165px", "ru", "10%w", "30px", text="0", title="width", lunghezza_max=2, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=9))
+        s.context_menu["item2"].add_element("function_size", Entrata("55%w", "200px", "lu", "10%w", "30px", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
+        s.context_menu["item2"].add_element("dashed_density", Entrata("75%w", "495px", "lu", "10%w", "30px", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101))
 
-        s.context_menu["item2"].add_element("scatter_toggle", Bottone_Toggle("40%w", "155px", "ru", "30px", "30px", text="Toggle scatter", type_checkbox=True, text_on_right=False, state=True))
-        s.context_menu["item2"].add_element("function_toggle", Bottone_Toggle("40%w", "190px", "ru", "30px", "30px", text="Toggle function", type_checkbox=True, text_on_right=False, state=True))
-        s.context_menu["item2"].add_element("errorbar", Bottone_Toggle("40%w", "225px", "ru", "30px", "30px", text="Toggle errors", type_checkbox=True, text_on_right=False, state=True))
-        s.context_menu["item2"].add_element("dashed", Bottone_Toggle("40%w", "485px", "ru", "30px", "30px", text="Dashed line", type_checkbox=True, text_on_right=False, state=True))
+        s.context_menu["item2"].add_element("scatter_toggle", Bottone_Toggle("40%w", "165px", "ru", "30px", "30px", text="Toggle scatter", type_checkbox=True, text_on_right=False, state=True))
+        s.context_menu["item2"].add_element("function_toggle", Bottone_Toggle("40%w", "200px", "ru", "30px", "30px", text="Toggle function", type_checkbox=True, text_on_right=False, state=True))
+        s.context_menu["item2"].add_element("errorbar", Bottone_Toggle("40%w", "235px", "ru", "30px", "30px", text="Toggle errors", type_checkbox=True, text_on_right=False, state=True))
+        s.context_menu["item2"].add_element("dashed", Bottone_Toggle("40%w", "495px", "ru", "30px", "30px", text="Dashed line", type_checkbox=True, text_on_right=False, state=True))
         
-        s.context_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", "30%w", "340px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
-        s.context_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", "30%w", "395px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
-        
-        s.context_menu["item2"].add_element("gradient", Bottone_Toggle("50%w", "590px", "ru", "30px", "30px", 0, text="Gradient", text_on_right=0))
-        s.context_menu["item2"].add_element("grad_mode", RadioButton("90%w", "590px", "ru", "35%w", "80px", axis="y", cb_n=2, cb_s=[0, 1], cb_t=["Horizontal", "Vertical"], type_checkbox=False, w_button="35%w", h_button="40px"))
+        s.context_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", "30%w", "350px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
+        s.context_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", "30%w", "405px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
+    
+        s.context_menu["item2"].add_element("gradient", Bottone_Toggle("50%w", "600px", "ru", "30px", "30px", 0, text="Gradient", text_on_right=0))
+        s.context_menu["item2"].add_element("grad_mode", RadioButton("90%w", "600px", "ru", "35%w", "80px", axis="y", cb_n=2, cb_s=[0, 1], cb_t=["Horizontal", "Vertical"], type_checkbox=False, w_button="35%w", h_button="40px"))
         # # ITEM 2 PLOTS ---------------------------------------------------
 
 
         # # ITEM 3 AX LABELS -----------------------------------------------
         s.context_menu["item3"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Label}"))
-        s.context_menu["item3"].add_element("_title_drop_menu_avanz", Label_Text("50%w", "680px", "cu", w="-*w", h="-*h", text=r"\#ddaa88{Impostazioni avanzate Label}"))
         
         s.context_menu["item3"].add_element("text_title", Entrata("50%w", "120px", "lu", "45%w", "30px", text="Title", title="Title text"))
         s.context_menu["item3"].add_element("text_label_x", Entrata("50%w", "170px", "lu", "45%w", "30px", text="X axis", title="Label text X"))
@@ -240,11 +238,11 @@ class Costruttore:
         s.context_menu["main"].add_element("modes", RadioButton(x="73.5%w", y="40%h", anchor="ru", w="70px", h="900px", bg=array([30, 30, 30]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="70px", h_button="70px"))
         [bottone.load_texture(f"item{index + 1}") for index, bottone in enumerate(s.context_menu["main"].elements["modes"].toggles)]
         
-        s.context_menu["main"].add_element("tools", RadioButton(x="0px", y="5%h", anchor="lu", w="70px", h="150px", bg=array([30, 30, 30]), axis="y", cb_n=2, cb_s=[0, 0], cb_t=["" for _ in range(2)], type_checkbox=False, w_button="70px", h_button="70px"))
+        s.context_menu["main"].add_element("tools", RadioButton(x="0px", y="5%h", anchor="lu", w="70px", h="225px", bg=array([30, 30, 30]), axis="y", cb_n=3, cb_s=[0, 0, 0], cb_t=["" for _ in range(3)], type_checkbox=False, w_button="70px", h_button="70px"))
         [bottone.load_texture(f"tool{index + 1}") for index, bottone in enumerate(s.context_menu["main"].elements["tools"].toggles)]
 
         s.context_menu["main"].add_element("reset_zoom", Bottone_Push(anchor=("cu cd (0px) (10px)", s.context_menu["main"].elements["tools"]), w="70px", h="70px", function=BottoniCallbacks.change_state))
-        s.context_menu["main"].elements["reset_zoom"].load_texture(f"tool3")
+        s.context_menu["main"].elements["reset_zoom"].load_texture(f"tool4")
 
         s.label["label_x"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True)
         s.label["label_y"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True)
@@ -254,7 +252,8 @@ class Costruttore:
         def set_active_tab():
             for index, state in enumerate(self.scene["main"].context_menu["main"].elements["modes"].cb_s):
                 self.scene["main"].context_menu[f"item{index + 1}"].hide_plus_children(not state)
-                
+                self.scene["main"].context_menu[f"item{index + 1}"].hide_elements()
+
                 if not self.scene["main"].context_menu[f"item{index + 1}"].hide and not self.scene["main"].context_menu[f"item{index + 1}"].inizializzato:
                     self.scene["main"].context_menu[f"item{index + 1}"].inizializzato = True
                     self.scene["main"].context_menu[f"item{index + 1}"].update_window_change()
@@ -313,9 +312,20 @@ class Costruttore:
                 self.scene["main"].context_menu["main"].elements["elenco_plots"].remove_selected_item()
 
 
+        def hide_overlap_normalization():
+
+            if not self.scene["main"].context_menu["item1"].elements["norma_perc"].cb_s[0]:
+                self.scene["main"].context_menu["item1"].elements["overlap"].hide_plus_children(True)
+                self.scene["main"].context_menu["item1"].elements["overlap"].state_toggle = True
+            else:
+                self.scene["main"].context_menu["item1"].elements["overlap"].hide_plus_children(False)
+                
+
+
         s.functions.append(set_active_tab)
         s.functions.append(hide_UI_element_with_toggle_plot_section)
         s.functions.append(hide_UI_element_with_toggle_legend_section)
+        s.functions.append(hide_overlap_normalization)
         s.functions.append(remove_selected_element)
 
 
