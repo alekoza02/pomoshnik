@@ -45,5 +45,5 @@ class MateUtils:
     def inp2flo(valore: str, std_return: float = 0.0) -> float:
         try:
             return float(valore)
-        except ValueError:
+        except:
             return std_return

@@ -212,17 +212,23 @@ class Costruttore:
 
 
         # # ITEM 8 STATSISTIC ----------------------------------------------
-        # s.context_menu["item8"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Statistica}", font_size=28))
+        s.context_menu["item8"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Statistica}"))
         # # ITEM 8 STATSISTIC ----------------------------------------------
 
 
         # # ITEM 9 INTERPOLATION -------------------------------------------
-        # s.context_menu["item9"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Interpolazioni}", font_size=28))
+        s.context_menu["item9"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Interpolazioni}"))
+        
+        s.context_menu["item9"].add_element("min_x", Entrata("40%w", "100px", "cu", "30%w", "-*h", text="", title="Min. X", solo_numeri=True))
+        s.context_menu["item9"].add_element("max_x", Entrata("40%w", "180px", "cd", "30%w", "-*h", text="", title="Max. X", solo_numeri=True))
+        s.context_menu["item9"].add_element("intersection", Bottone_Toggle("10%w", "250px", "ld", "30px", "30px", text="Find intersection X"))
+        s.context_menu["item9"].add_element("compute", Bottone_Push("90%w", "100px", "ru", "30%w", "80px", text="Compute", function=self.bott_calls.change_state))
+        s.context_menu["item9"].add_element("output", Label_Text("5%w", "320px", "lu", "90%w", "-*h", text="Interpolation results:\n---"))
         # # ITEM 9 INTERPOLATION -------------------------------------------
 
 
         # # ITEM 10 MULTI-PLOTS --------------------------------------------
-        # s.context_menu["item10"].add_element("_title_drop_menu_base", Label_Text(50, "10", "cu", text=r"\#88dd88{Impostazioni base Multi-Plots}", font_size=28))
+        s.context_menu["item10"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Multi-Plots}"))
         # # ITEM 10 MULTI-PLOTS --------------------------------------------
 
 
@@ -244,10 +250,10 @@ class Costruttore:
         s.context_menu["main"].add_element("reset_zoom", Bottone_Push(anchor=("cu cd (0px) (10px)", s.context_menu["main"].elements["tools"]), w="70px", h="70px", function=BottoniCallbacks.change_state))
         s.context_menu["main"].elements["reset_zoom"].load_texture(f"tool4")
 
-        s.label["label_x"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True)
-        s.label["label_y"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True)
-        s.label["title"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True)
-        s.label["legend"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True)
+        s.label["label_x"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
+        s.label["label_y"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
+        s.label["title"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
+        s.label["legend"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
 
         def set_active_tab():
             for index, state in enumerate(self.scene["main"].context_menu["main"].elements["modes"].cb_s):

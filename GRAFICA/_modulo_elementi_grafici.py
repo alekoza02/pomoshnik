@@ -98,6 +98,7 @@ class BaseElement:
 
     
     def update_context_menu(self, *args):
+        if type(self) == Label_Text and self.no_parent: return # caso dei label non appartenenti a nessuno schermo -> ignora i limiti di posizione
         self.x_Context = args[0]
         self.y_Context = args[1]
         self.w_Context = args[2]
@@ -268,16 +269,20 @@ class BaseElement:
     def hide_plus_children(self, booleano):
         if self.y < self.y_Context:
             booleano = 1
-        
+
         self.hide = booleano
 
 
 
 class Label_Text(BaseElement):
 
-    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False) -> None:
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, no_parent=False) -> None:
         super().__init__(x, y, anchor, w, h, text, hide, color_text, latex_font=latex_font)
         self.debug = False
+        self.no_parent = no_parent
+
+        self.h_Context = 1e6
+        self.w_Context = 1e6
 
 
     def disegnami(self, logica, rotation=0, DANG_surface=None, DANG_offset_x=0, DANG_offset_y=0):
@@ -1312,10 +1317,10 @@ class Entrata(BaseElement):
             else:
                 self.color_text = array((200, 200, 200))
 
-                if numero_equivalente > self.num_valore_massimo:
+                if not self.num_valore_minimo is None and numero_equivalente > self.num_valore_massimo:
                     self.change_text(f"{self.num_valore_massimo}")
                     return self.get_text()
-                elif numero_equivalente < self.num_valore_minimo:
+                elif not self.num_valore_massimo is None and numero_equivalente < self.num_valore_minimo:
                     self.change_text(f"{self.num_valore_minimo}")
                     return self.get_text()
                 else:
@@ -2230,6 +2235,8 @@ class ContextMenu(BaseElement):
         self.y = float(self.ori_coords[1][:-2]) * self.pappardella["y_screen"] / 100
         self.w = float(self.ori_coords[2][:-2]) * self.pappardella["x_screen"] / 100
         self.h = float(self.ori_coords[3][:-2]) * self.pappardella["y_screen"] / 100
+
+        self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
 
         match self.ori_coords[-1]:
             case "lu":

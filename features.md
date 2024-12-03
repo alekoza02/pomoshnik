@@ -31,6 +31,7 @@
     - Show the coordinates
     - Normalize (1 ax 2 plots same height) (0-1) and (0-100)
     - Disable plot overlap
+    - Interpolation (linear)
 ---
 - Labels
     - XY label ticks offset
@@ -95,6 +96,8 @@
         - Setting progressive change
         - Setting zone change
     - Normalize (2 axes 2 plots same height) (x-y, x2-y2)
+    - Interpolation (custom curve)
+    - Choose the column to plot (0 = x, 1 = y, 2 = ey)
 ---
 - Labels
     - Custom offset

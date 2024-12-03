@@ -80,7 +80,6 @@ class PomoPlot:
         self.old_SMILE: str = ""
 
 
-
     def link_ui(self, UI: 'UI'):
         """Richiesta UI pomoshnik, si puù modificare manualmente per adattarla alla propria UI. Serve per intereagire con il grafico"""
         self.screen = UI.costruttore.scene["main"].context_menu["main"].elements["viewport"]
@@ -169,8 +168,14 @@ class PomoPlot:
 
         self.save_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item7"].elements["save_single_plot"]
 
-        self.molecule_input: "Entrata" = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_input"]
-        self.molecule_preview: "Screen" = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_preview"]
+        self.molecule_input: 'Entrata' = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_input"]
+        self.molecule_preview: 'Screen' = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_preview"]
+
+        self.compute_interpolation: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["compute"]
+        self.min_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["min_x"]
+        self.max_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["max_x"]
+        self.output_interpolation: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["output"]
+        self.intersection_interpolation: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item9"].elements["intersection"]
 
 
     def update_plot_list(self, added_plot):
@@ -355,6 +360,170 @@ class PomoPlot:
             self.zoom_boundaries = np.array([0., 0., 1., 1.])
 
 
+        # compute interpolation
+        if self.compute_interpolation.flag_foo:
+            self.compute_interpolation.flag_foo = False
+            self.output_interpolation.change_text(self.linear_interpolation())
+
+
+
+    def linear_interpolation(self) -> str:
+        """Esegue un'interpolazione linare del grafico attivo in quel momento nel range selezionato. Restituisce un output stringa contenente tutti i dati relativi all'esito
+
+        Returns
+        -------
+        str
+            OUTPUT dell'interpolazione
+        """
+        try:    
+            
+            try:
+                base_data = self.plots[self.scroll_plots.ele_selected_index]
+            except IndexError as e:
+                return f"\\#dc143c{{ATTENZIONE! Carica un grafico prima.}}\n\nRaised error:\n\\i{{{e}}}"
+
+            needed_indices = (base_data.data[:, 0] >= MateUtils.inp2flo(self.min_x_interpolation.get_text(), np.min(base_data.data[:, 0]))) & (base_data.data[:, 0] <= MateUtils.inp2flo(self.max_x_interpolation.get_text(), np.max(base_data.data[:, 0])))
+
+            x = base_data.data[:, 0]
+            y = base_data.data[:, 1]
+            
+            ey = base_data.data[:, 2] if base_data.data.shape[1] > 2 else None
+
+            x = x[needed_indices]
+            y = y[needed_indices]
+            ey = ey[needed_indices] if base_data.data.shape[1] > 2 else None
+
+            if len(x) < 3: return f"\\#dc143c{{ATTENZIONE! Punti insufficienti.}}\n\nPunti minimi richiesti: \\#ffdd60{{3}}\nPunti presenti nel grafico: \\#ffdd60{{{len(x)}}}"
+
+            m = None
+            q = None
+            m_e = None
+            q_e = None
+            correlation = None
+            correlation_type = ""
+
+            if ey is None:
+                # INIZIO LOGICA INTERPOLAZIONE NON PESATA ----------------------------------------------------------
+                coeff, covar = np.polyfit(x, y, deg = 1, cov= True) 
+                m, q = coeff
+                m_e, q_e = np.sqrt(np.diag(covar))
+            else:
+                # INIZIO LOGICA INTERPOLAZIONE PESATA ----------------------------------------------------------
+                coeff, covar = np.polyfit(x, y, deg = 1, w = 1/ey, cov= True)
+                m, q = coeff
+                m_e, q_e = np.sqrt(np.diag(covar))
+            
+            params_str = f"Output interpolazione lineare.\n\\#aaffaa{{{base_data.nome}}}\n\nm: {m:.{self.round_ticks_y.get_text()}f} \\pm {m_e:.{self.round_ticks_y.get_text()}f}\nq: {q:.{self.round_ticks_y.get_text()}f} \\pm {q_e:.{self.round_ticks_y.get_text()}f}\n"
+
+            # compute interpolation plot
+            y_i = np.zeros(len(x))
+
+            for index, arg in enumerate(coeff[::-1]):
+                if arg is None: return None
+                y_i += x ** index * arg
+
+            if ey is None:        
+                correlation = 1 - np.sum( ( y - y_i )**2 ) /np.sum( ( y - (np.sum(y)/len(y)) )**2 )
+                correlation_type = f"R\\^{{2}}"
+                params_str += f"\n{correlation_type}: {correlation:.{self.round_ticks_y.get_text()}f}"
+            else:
+                correlation_intera = np.sum(((y - y_i)/ey)**2)
+                correlation_ridotta = np.sum(((y - y_i)/ey)**2) / (len(x)-2)
+                correlation_type = fr"\chi\^{{2}}"
+                params_str += f"\n{correlation_type}: {correlation_intera:.{self.round_ticks_y.get_text()}f}\n{correlation_type} ridotto: {correlation_ridotta:.{self.round_ticks_y.get_text()}f}"
+            
+            if self.intersection_interpolation.state_toggle:
+                # Y = MX + Q -> X = - Q / M
+                data_interpolazione = np.array([[x[0], y_i[0]], [-q / m, 0]])
+            else:
+                data_interpolazione = np.array([[x[0], y_i[0]], [x[-1], y_i[-1]]])
+            self.update_plot_list(_Single1DPlot(f"Interpolazione_{base_data.nome}", data_interpolazione, ""))
+
+            return params_str
+
+        except RuntimeError as e:
+            return f"\\#dc143c{{ATTENZIONE! Interpolazione fallita.}}\n\nCausa più probabile:\n\\#ffdd60{{Dati troppo divergenti.}}\n\nPossibile soluzione:\n\\#ffdd60{{Scegliere un range di dati più lineare.}}\n\nRaised error:\n\\i{{{e}}}"
+
+
+    def OUTDATED_customfoo_interpolation(self, curve: str = "gaussian") -> str:
+        """
+        OUTDATED
+
+        Esegue un'interpolazione con una curva specificata del grafico attivo in quel momento. Restituisce un output stringa contenente tutti i dati relativi all'esito
+
+        Parameters
+        ----------
+        curve : str, optional
+            nome della curva, opzioni accettate: 'gaussian', 'sigmoid', by default "gaussian"
+
+        Returns
+        -------
+        str
+            OUTPUT dell'interpolazione
+        """
+        # base_data = self.plots[self.active_plot]
+
+        # if base_data.maschera is None: return "Prego, Accendere un grafico per cominciare"
+        
+        # x = base_data.x[base_data.maschera]
+        # y = base_data.y[base_data.maschera]
+
+        # try:
+
+        #     match curve:
+        #         case "gaussian":
+        #             def gaussian(x, amplitude, mean, stddev):
+        #                 return amplitude * np.exp(-((x - mean) / stddev) ** 2 / 2)
+                
+        #             if len(x) < 3: return f"Punti insufficienti.\nNumero parametri: 3\nPunti minimi richiesti: 4\nPunti presenti nel grafico: {len(x)}"
+
+        #             initial_guess_gauss = [max(y)-min(y), x[len(x)//2], (len(x) - 6) // 2]  # Initial guess for amplitude, mean, and standard deviation
+        #             params_gaus, covariance = curve_fit(gaussian, x, y, p0=initial_guess_gauss)
+
+        #             base_data.y_interp_lin = gaussian(base_data.x, *params_gaus)
+        #             base_data.interpol_maschera = deepcopy(base_data.maschera)
+
+        #             base_data.interpolation_type = "Fit Gaussiano"
+
+        #             errori = np.sqrt(np.diag(covariance))
+        #             console_output = f"Interpolazione Guassiana del grafico {base_data.nome}:\nA: {params_gaus[0]:.{self.approx_label}f} \\pm {errori[0]:.{self.approx_label}f}\n\\mu: {params_gaus[1]:.{self.approx_label}f} \\pm {errori[1]:.{self.approx_label}f}\n\\sigma: {params_gaus[2]:.{self.approx_label}f} \\pm {errori[2]:.{self.approx_label}f}"
+
+        #             y_i = gaussian(x, initial_guess_gauss[0], initial_guess_gauss[1], initial_guess_gauss[2])
+
+        #             correlation = 1 - np.sum( ( y - y_i )**2 ) /np.sum( ( y - (np.sum(y)/len(y)) )**2 )
+        #             correlation_type = "R quadro"
+        #             console_output += f"\n{correlation_type}: {correlation}"
+
+        #         case "sigmoid":
+        #             def sigmoide(x, a, b, lambda_0, delta_lambda):
+        #                 return b + a / (1 + np.exp((-np.array(x) + lambda_0) / delta_lambda))
+
+        #             if len(x) < 5: return f"Punti insufficienti.\nNumero parametri: 4\nPunti minimi richiesti: 5\nPunti presenti nel grafico: {len(x)}"
+
+        #             initial_guess_sigmo = [max(y)-min(y), (max(y)-min(y)) // 2, x[len(x)//2], 1]
+        #             # a -> larghezza delta (segno determina orientamento scalino)
+        #             # b -> y_punto_medio
+        #             # lambda_0 -> x_punto_medio
+        #             # delta_lambda -> valore per il quale un ala raggiunge metà dell'altezza del flesso
+        #             params_sigm, covariance = curve_fit(sigmoide, x, y, p0=initial_guess_sigmo)
+
+        #             base_data.y_interp_lin = sigmoide(base_data.x, *params_sigm)
+        #             base_data.interpol_maschera = deepcopy(base_data.maschera)
+
+        #             base_data.interpolation_type = "Fit Sigmoide"
+
+        #             errori = np.sqrt(np.diag(covariance))
+        #             console_output = f"Interpolazione sigmoide del grafico {base_data.nome}:\na: {params_sigm[0]:.{self.approx_label}f} \\pm {errori[0]:.{self.approx_label}f}\nb: {params_sigm[1]:.{self.approx_label}f} \\pm {errori[1]:.{self.approx_label}f}\n\\lambda^2_0: {params_sigm[2]:.{self.approx_label}f} \\pm {errori[2]:.{self.approx_label}f}\n\\Delta\\lambda: {params_sigm[3]:.{self.approx_label}f} \\pm {errori[3]:.{self.approx_label}f}"
+
+        #             y_i = sigmoide(x, initial_guess_sigmo[0], initial_guess_sigmo[1], initial_guess_sigmo[2], initial_guess_sigmo[3])
+        #             correlation = 1 - np.sum( ( y - y_i )**2 ) /np.sum( ( y - (np.sum(y)/len(y)) )**2 )
+        #             correlation_type = "R quadro"
+        #             console_output += f"\n{correlation_type}: {correlation}"
+
+        #     return console_output
+
+        # except RuntimeError as e:
+        #     return f"Parametri ottimali non trovati, prova con un altro zoom.\n£{e}£"
 
 
     def plot(self, logica: 'Logica', screenshot=0):
@@ -848,7 +1017,7 @@ class PomoPlot:
         
         # X label
         self.labels[1].change_text(f"{self.text_label_x.get_text()}")
-        self.labels[1].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}px", f"{self.screen.y + self.max_plot_square[3] + 2 * self.max_plot_square[1]}px", new_w="-*w", new_h="-*h", anchor_point="cd")
+        self.labels[1].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}px", f"{self.screen.y + self.max_plot_square[3] + 2 * self.max_plot_square[1] - 5}px", new_w="-*w", new_h="-*h", anchor_point="cd")
         self.labels[1].color_text = self.label_x_color.get_color()
         self.labels[1].disegnami(logica, 0, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
@@ -1287,7 +1456,6 @@ class PomoPlot:
                 ])
 
 
-
     def _get_plot_area_coord(self):
         return (
             self.max_canvas_square[0] + self.max_canvas_square[2] * float(self.x_plot_area.get_text()),
@@ -1295,7 +1463,6 @@ class PomoPlot:
             self.max_canvas_square[0] + self.max_canvas_square[2] * (float(self.x_plot_area.get_text()) + float(self.w_plot_area.get_text())),
             self.max_canvas_square[1] + self.max_canvas_square[3] * (float(self.y_plot_area.get_text()) + float(self.h_plot_area.get_text())),
         )
-
 
 
     def _get_native_data_bounds(self):
@@ -1505,13 +1672,13 @@ class _Single1DPlot:
         self.scatter_width = 3
         self.scatter_border = 0
         self.function = True
-        self.function_width = 1
+        self.function_width = 2
         self.dashed = False
-        self.dashed_traits = 21
+        self.dashed_traits = 99
         self.errorbar = True if data.shape[1] > 2 else False
 
-        self.gradiente = True
-        self.grad_mode = "vert"
+        self.gradiente = False
+        self.grad_mode = "ori"
 
         self.display_coords = []
 
