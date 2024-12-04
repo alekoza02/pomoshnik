@@ -112,6 +112,7 @@ class Costruttore:
         
         s.context_menu["item1"].add_element("norma_perc", RadioButton("50%w", "525px", "cc", "70%w", "50px", "x", cb_n=2, cb_s=[0, 0], cb_t=["[0..1]", "[%]"], type_checkbox=0, w_button="35%w", h_button="50px"))
         s.context_menu["item1"].add_element("overlap", Bottone_Toggle("50%w", "600px", "cc", "35%w", "50px", True, False, "Plots Overlap"))
+        s.context_menu["item1"].add_element("second_y_axis", Bottone_Toggle("50%w", "700px", "cc", "35%w", "50px", False, False, "Toggle 2° Y axis"))
         # # ITEM 1 GEOMETRY ------------------------------------------------
         
         
@@ -133,8 +134,10 @@ class Costruttore:
         s.context_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", "30%w", "350px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
         s.context_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", "30%w", "405px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
     
-        s.context_menu["item2"].add_element("gradient", Bottone_Toggle("50%w", "600px", "ru", "30px", "30px", 0, text="Gradient", text_on_right=0))
+        s.context_menu["item2"].add_element("gradient", Bottone_Toggle("40%w", "600px", "ru", "30px", "30px", 0, text="Gradient", text_on_right=0))
         s.context_menu["item2"].add_element("grad_mode", RadioButton("90%w", "600px", "ru", "35%w", "80px", axis="y", cb_n=2, cb_s=[0, 1], cb_t=["Horizontal", "Vertical"], type_checkbox=False, w_button="35%w", h_button="40px"))
+        
+        s.context_menu["item2"].add_element("add_second_axis", Bottone_Toggle("40%w", "750px", "ru", "30px", "30px", 0, text="Add to the second Y axis"))
         # # ITEM 2 PLOTS ---------------------------------------------------
 
 
@@ -144,32 +147,42 @@ class Costruttore:
         s.context_menu["item3"].add_element("text_title", Entrata("50%w", "120px", "lu", "45%w", "30px", text="Title", title="Title text"))
         s.context_menu["item3"].add_element("text_label_x", Entrata("50%w", "170px", "lu", "45%w", "30px", text="X axis", title="Label text X"))
         s.context_menu["item3"].add_element("text_label_y", Entrata("50%w", "205px", "lu", "45%w", "30px", text="Y axis", title="Y"))
+        s.context_menu["item3"].add_element("text_label_2y", Entrata("50%w", "240px", "lu", "45%w", "30px", text="2°Y axis", title="2°Y"))
         
         s.context_menu["item3"].add_element("font_size_title", Entrata("75%w", "305px", "lu", "20%w", "30px", text="48", title="Title font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
         s.context_menu["item3"].add_element("font_size_label_x", Entrata("75%w", "355px", "lu", "20%w", "30px", text="48", title="Label font size X", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
         s.context_menu["item3"].add_element("font_size_label_y", Entrata("75%w", "390px", "lu", "20%w", "30px", text="48", title="Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
-        s.context_menu["item3"].add_element("label_title_color", ColorPicker(s.palette_popup, "4", "30%w", "495px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore titolo"))
-        s.context_menu["item3"].add_element("label_x_color", ColorPicker(s.palette_popup, "5", "30%w", "555px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label X"))
-        s.context_menu["item3"].add_element("label_y_color", ColorPicker(s.palette_popup, "6", "30%w", "605px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label Y"))
+        s.context_menu["item3"].add_element("font_size_label_2y", Entrata("75%w", "425px", "lu", "20%w", "30px", text="48", title="2°Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
+        s.context_menu["item3"].add_element("label_title_color", ColorPicker(s.palette_popup, "4", "30%w", "500px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore titolo"))
+        s.context_menu["item3"].add_element("label_x_color", ColorPicker(s.palette_popup, "5", "30%w", "570px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label X"))
+        s.context_menu["item3"].add_element("label_y_color", ColorPicker(s.palette_popup, "6", "30%w", "620px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label Y"))
+        s.context_menu["item3"].add_element("label_2y_color", ColorPicker(s.palette_popup, "7", "30%w", "670px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label 2Y"))
         
+        s.context_menu["item3"].add_element("show_coords_projection", Bottone_Toggle("95%w", "750px", "ru", "30px", "30px", text="Mostra proiezione coords", type_checkbox=True, text_on_right=False))
         # # ITEM 3 AX LABELS -----------------------------------------------
+        
 
         # # ITEM 4 AXES ----------------------------------------------------
         s.context_menu["item4"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Assi}"))
         
         s.context_menu["item4"].add_element("round_x", Entrata("75%w", "120px", "lu", "20%w", "30px", text="2", title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
         s.context_menu["item4"].add_element("round_y", Entrata("75%w", "155px", "lu", "20%w", "30px", text="2", title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
+        s.context_menu["item4"].add_element("round_2y", Entrata("75%w", "190px", "lu", "20%w", "30px", text="2", title="2°Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
         
         s.context_menu["item4"].add_element("show_grid_x", Bottone_Toggle("95%w", "255px", "ru", "30px", "30px", text="Mostra griglia X", state=True, type_checkbox=True, text_on_right=False))
         s.context_menu["item4"].add_element("show_grid_y", Bottone_Toggle("95%w", "290px", "ru", "30px", "30px", text="Mostra griglia Y", state=True, type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("show_grid_2y", Bottone_Toggle("95%w", "325px", "ru", "30px", "30px", text="Mostra griglia 2°Y", state=True, type_checkbox=True, text_on_right=False))
         
-        s.context_menu["item4"].add_element("formatting_x", Bottone_Toggle("95%w", "350px", "ru", "30px", "30px", text="Usa notazione scientifica asse X", type_checkbox=True, text_on_right=False))
-        s.context_menu["item4"].add_element("formatting_y", Bottone_Toggle("95%w", "390px", "ru", "30px", "30px", text="Usa notazione scientifica asse Y", type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("formatting_x", Bottone_Toggle("95%w", "385px", "ru", "30px", "30px", text="Usa notazione scientifica asse X", type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("formatting_y", Bottone_Toggle("95%w", "420px", "ru", "30px", "30px", text="Usa notazione scientifica asse Y", type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("formatting_2y", Bottone_Toggle("95%w", "455px", "ru", "30px", "30px", text="Usa notazione scientifica asse 2°Y", type_checkbox=True, text_on_right=False))
         
-        s.context_menu["item4"].add_element("ax_color_x", ColorPicker(s.palette_popup, "7", "30%w", "505px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse X"))
-        s.context_menu["item4"].add_element("ax_color_y", ColorPicker(s.palette_popup, "8", "30%w", "555px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse Y"))
-        s.context_menu["item4"].add_element("tick_color_x", ColorPicker(s.palette_popup, "9", "30%w", "620px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values X"))
-        s.context_menu["item4"].add_element("tick_color_y", ColorPicker(s.palette_popup, "10", "30%w", "670px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y"))
+        s.context_menu["item4"].add_element("ax_color_x", ColorPicker(s.palette_popup, "8", "30%w", "565px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse X"))
+        s.context_menu["item4"].add_element("ax_color_y", ColorPicker(s.palette_popup, "9", "30%w", "615px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse Y"))
+        s.context_menu["item4"].add_element("ax_color_2y", ColorPicker(s.palette_popup, "10", "30%w", "670px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse 2°Y"))
+        s.context_menu["item4"].add_element("tick_color_x", ColorPicker(s.palette_popup, "11", "30%w", "760px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values X"))
+        s.context_menu["item4"].add_element("tick_color_y", ColorPicker(s.palette_popup, "12", "30%w", "810px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y"))
+        s.context_menu["item4"].add_element("tick_color_2y", ColorPicker(s.palette_popup, "13", "30%w", "860px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values 2°Y"))
         # # ITEM 4 AXES ----------------------------------------------------
 
 
@@ -184,13 +197,13 @@ class Costruttore:
         s.context_menu["item5"].add_element("font_size_legend", Entrata("75%w", "255px", "lu", "20%w", "30px", text="48", title="Legend font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
         
         s.context_menu["item5"].add_element("show_legend_background", Bottone_Toggle("95%w", "350px", "ru", "30px", "30px", text="\\#dfffdf{\\b{Disegna bg}}", state=False, type_checkbox=True, text_on_right=False))
-        s.context_menu["item5"].add_element("legend_color_background", ColorPicker(s.palette_popup, "11", "30%w", "430px", "cc", "30%w", "40px", [250, 250, 250], bg=[50, 50, 50], text="Color legend bg"))
+        s.context_menu["item5"].add_element("legend_color_background", ColorPicker(s.palette_popup, "14", "30%w", "430px", "cc", "30%w", "40px", [250, 250, 250], bg=[50, 50, 50], text="Color legend bg"))
         s.context_menu["item5"].add_element("transparent_background", Bottone_Toggle("95%w", "490px", "ru", "30px", "30px", text="Trasparenza bg", state=True, type_checkbox=True, text_on_right=False))
         s.context_menu["item5"].add_element("blur_strenght", Entrata("75%w", "530px", "lu", "20%w", "30px", text="6", title="Forza di blur", lunghezza_max=2, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=12))
         
         s.context_menu["item5"].add_element("show_icons", Bottone_Toggle("95%w", "620px", "ru", "30px", "30px", text="Mostra icone", state=True, type_checkbox=True, text_on_right=False))
         s.context_menu["item5"].add_element("match_color_text", Bottone_Toggle("95%w", "660px", "ru", "30px", "30px", text="Match text color", state=True, type_checkbox=True, text_on_right=False))
-        s.context_menu["item5"].add_element("color_text", ColorPicker(s.palette_popup, "12", "30%w", "720px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Color legend text"))
+        s.context_menu["item5"].add_element("color_text", ColorPicker(s.palette_popup, "15", "30%w", "720px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Color legend text"))
         # # ITEM 5 LEGEND --------------------------------------------------
 
 
@@ -252,6 +265,7 @@ class Costruttore:
 
         s.label["label_x"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
         s.label["label_y"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
+        s.label["label_2y"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
         s.label["title"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
         s.label["legend"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
 
