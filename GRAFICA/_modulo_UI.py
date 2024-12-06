@@ -84,7 +84,7 @@ class UI:
 
         self.logica = Logica()
         self.event_manager = EventManager()
-        self.costruttore = Costruttore(self.MAIN, self.w_screen * 0.9, self.h_screen * 0.9)
+        self.costruttore = Costruttore(self.MAIN, self.w_screen * 0.9, self.h_screen * 0.9, self.h_screen / 75)
         self.costruttore.scene["main"].disegna_scena_inizio_ciclo(self.logica)
         self.costruttore.scene["main"].disegna_scena_fine_ciclo(self.logica)
 

@@ -16,6 +16,8 @@ if NON_ESEGUIRE:
     from GRAFICA._modulo_UI import Logica, UI
     from GRAFICA._modulo_elementi_grafici import Label_Text, Screen, Entrata, Bottone_Toggle, Scroll, ColorPicker, Bottone_Push, RadioButton
 
+from GRAFICA._modulo_elementi_grafici import Label_Text, Screen
+
 
 class PomoPlot:
     def __init__(self):
@@ -82,113 +84,217 @@ class PomoPlot:
 
     def link_ui(self, UI: 'UI'):
         """Richiesta UI pomoshnik, si puù modificare manualmente per adattarla alla propria UI. Serve per intereagire con il grafico"""
-        self.screen = UI.costruttore.scene["main"].context_menu["main"].elements["viewport"]
-        self.screen_render = UI.costruttore.scene["main"].context_menu["main"].elements["renderer"]
-
         self.scale_factor_viewport = 1
 
-        self.tools: 'RadioButton' = UI.costruttore.scene["main"].context_menu["main"].elements["tools"]
-        self.reset_tools: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["reset_zoom"]
-
-        self.labels[0] = UI.costruttore.scene["main"].label["title"]
-        self.labels[1] = UI.costruttore.scene["main"].label["label_x"]
-        self.labels[2] = UI.costruttore.scene["main"].label["label_y"]
-        self.labels[3] = UI.costruttore.scene["main"].label["label_2y"]
-        self.labels[4] = UI.costruttore.scene["main"].label["legend"]
-
-        self.x_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["x_plot_area"]
-        self.y_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["y_plot_area"]
-        self.w_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["w_plot_area"]
-        self.h_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["h_plot_area"]
-        self.plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["plot_area_bg"]
-        self.canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["canvas_area_bg"]
+        # NEEDED, GENERATED HERE, NOT IMPORTED
+        #############################################################################
+        self.labels[0] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
+        self.labels[1] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
+        self.labels[2] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
+        self.labels[3] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
+        self.labels[4] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
         
-        self.norma_perc: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item1"].elements["norma_perc"]
-        self.overlap: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["overlap"]
+        # NEEDED, IMPORTED
+        self.screen = UI.costruttore.scene["main"].context_menu["main"].elements["viewport"]
+        self.screen_render = UI.costruttore.scene["main"].context_menu["main"].elements["renderer"]
+        #############################################################################
+
+
+        self.UI_tools: 'RadioButton' = UI.costruttore.scene["main"].context_menu["main"].elements["tools"]
+        self.UI_reset_tools: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["reset_zoom"]
+
+        self.UI_x_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["x_plot_area"]
+        self.UI_y_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["y_plot_area"]
+        self.UI_w_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["w_plot_area"]
+        self.UI_h_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["h_plot_area"]
+        self.UI_plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["plot_area_bg"]
+        self.UI_canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["canvas_area_bg"]
         
-        self.second_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["second_y_axis"]
-
-        self.scroll_plots: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots"]
-
-        self.plot_name: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["plot_name"]
-
-        self.scatter_size: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_size"]
-        self.scatter_border: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_border"]
-        self.function_size: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["function_size"]
-        self.dashed_density: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["dashed_density"]
+        self.UI_norma_perc: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item1"].elements["norma_perc"]
+        self.UI_overlap: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["overlap"]
         
-        self.scatter_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_toggle"]
-        self.function_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["function_toggle"]
-        self.dashed_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["dashed"]
-        self.error_bar: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["errorbar"]
+        self.UI_second_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["second_y_axis"]
 
-        self.colore_function: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item2"].elements["colore_function"]
-        self.colore_scatter: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item2"].elements["colore_scatter"]
+        self.UI_scroll_plots: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots"]
+
+        self.UI_plot_name: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["plot_name"]
+
+        self.UI_scatter_size: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_size"]
+        self.UI_scatter_border: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_border"]
+        self.UI_function_size: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["function_size"]
+        self.UI_dashed_density: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["dashed_density"]
         
-        self.gradient: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["gradient"]
-        self.grad_mode: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item2"].elements["grad_mode"]
+        self.UI_scatter_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["scatter_toggle"]
+        self.UI_function_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["function_toggle"]
+        self.UI_dashed_toggle: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["dashed"]
+        self.UI_error_bar: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["errorbar"]
 
-        self.add_second_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["add_second_axis"]
+        self.UI_colore_function: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item2"].elements["colore_function"]
+        self.UI_colore_scatter: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item2"].elements["colore_scatter"]
         
-        self.font_size_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_title"]
-        self.font_size_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_x"]
-        self.font_size_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_y"]
-        self.font_size_label_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_2y"]
+        self.UI_gradient: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["gradient"]
+        self.UI_grad_mode: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item2"].elements["grad_mode"]
+
+        self.UI_add_second_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["add_second_axis"]
         
-        self.text_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_title"]
-        self.text_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_x"]
-        self.text_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_y"]
-        self.text_label_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_2y"]
-        self.label_title_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_title_color"]
-        self.label_x_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_x_color"]
-        self.label_y_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_y_color"]
-        self.label_2y_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_2y_color"]
-
-        self.show_coords_projection: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["show_coords_projection"]
-
-        self.round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_x"]
-        self.round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_y"]
-        self.round_ticks_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_2y"]
+        self.UI_font_size_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_title"]
+        self.UI_font_size_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_x"]
+        self.UI_font_size_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_y"]
+        self.UI_font_size_label_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_2y"]
         
-        self.ax_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_x"]
-        self.ax_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_y"]
-        self.ax_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_2y"]
-        self.tick_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_x"]
-        self.tick_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_y"]
-        self.tick_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_2y"]
+        self.UI_text_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_title"]
+        self.UI_text_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_x"]
+        self.UI_text_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_y"]
+        self.UI_text_label_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_2y"]
+        self.UI_label_title_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_title_color"]
+        self.UI_label_x_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_x_color"]
+        self.UI_label_y_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_y_color"]
+        self.UI_label_2y_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_2y_color"]
+
+        self.UI_show_coords_projection: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["show_coords_projection"]
+
+        self.UI_round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_x"]
+        self.UI_round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_y"]
+        self.UI_round_ticks_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_2y"]
         
-        self.formatting_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_x"]
-        self.formatting_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_y"]
+        self.UI_ax_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_x"]
+        self.UI_ax_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_y"]
+        self.UI_ax_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_2y"]
+        self.UI_tick_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_x"]
+        self.UI_tick_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_y"]
+        self.UI_tick_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_2y"]
         
-        self.show_grid_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_x"]
-        self.show_grid_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_y"]
-        self.show_grid_2y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_2y"]
+        self.UI_formatting_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_x"]
+        self.UI_formatting_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_y"]
         
-        self.show_legend: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend"]
-        self.x_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["x_legend"]
-        self.y_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["y_legend"]
-        self.font_size_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["font_size_legend"]
-        self.show_legend_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend_background"]
-        self.legend_bg_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["legend_color_background"]
-        self.transparent_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["transparent_background"]
-        self.blur_strenght: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["blur_strenght"]
-        self.show_icons: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_icons"]
-        self.match_color_text: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["match_color_text"]
-        self.color_text: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["color_text"]
+        self.UI_show_grid_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_x"]
+        self.UI_show_grid_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_y"]
+        self.UI_show_grid_2y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_2y"]
+        
+        self.UI_show_legend: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend"]
+        self.UI_x_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["x_legend"]
+        self.UI_y_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["y_legend"]
+        self.UI_font_size_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["font_size_legend"]
+        self.UI_show_legend_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend_background"]
+        self.UI_legend_bg_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["legend_color_background"]
+        self.UI_transparent_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["transparent_background"]
+        self.UI_blur_strenght: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["blur_strenght"]
+        self.UI_show_icons: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_icons"]
+        self.UI_match_color_text: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["match_color_text"]
+        self.UI_color_text: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["color_text"]
 
-        self.import_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item6"].elements["import_single_plot"]
-        self.import_multip_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item6"].elements["import_multip_plot"]
+        self.UI_import_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item6"].elements["import_single_plot"]
+        self.UI_import_multip_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item6"].elements["import_multip_plot"]
 
-        self.save_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item7"].elements["save_single_plot"]
+        self.UI_save_single_plot: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item7"].elements["save_single_plot"]
 
-        self.molecule_input: 'Entrata' = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_input"]
-        self.molecule_preview: 'Screen' = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_preview"]
+        self.UI_molecule_input: 'Entrata' = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_input"]
+        self.UI_molecule_preview: 'Screen' = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_preview"]
 
-        self.compute_interpolation: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["compute"]
-        self.min_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["min_x"]
-        self.max_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["max_x"]
-        self.output_interpolation: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["output"]
-        self.intersection_interpolation: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item9"].elements["intersection"]
+        self.UI_compute_interpolation: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["compute"]
+        self.UI_min_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["min_x"]
+        self.UI_max_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["max_x"]
+        self.UI_output_interpolation: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["output"]
+        self.UI_intersection_interpolation: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item9"].elements["intersection"]
+    
+    
+    def update_attributes(self):
+        """Richiesta UI pomoshnik, si puù modificare manualmente per adattarla alla propria UI. Serve per intereagire con il grafico"""
+
+        # NO CHANGES PERFORMED ----------------------------------------------------------
+        self.norma_perc = self.UI_norma_perc
+        self.scroll_plots = self.UI_scroll_plots
+        self.import_single_plot = self.UI_import_single_plot
+        self.import_multip_plot = self.UI_import_multip_plot
+        self.save_single_plot = self.UI_save_single_plot
+        self.tools = self.UI_tools
+        self.grad_mode = self.UI_grad_mode
+        self.reset_tools = self.UI_reset_tools                              
+        self.molecule_input = self.UI_molecule_input
+        self.molecule_preview = self.UI_molecule_preview
+        self.output_interpolation = self.UI_output_interpolation
+        self.compute_interpolation = self.UI_compute_interpolation
+        # NO CHANGES PERFORMED ----------------------------------------------------------
+
+        self.x_plot_area = self.UI_x_plot_area.get_text()
+        self.y_plot_area = self.UI_y_plot_area.get_text()
+        self.w_plot_area = self.UI_w_plot_area.get_text()
+        self.h_plot_area = self.UI_h_plot_area.get_text()
+        self.plot_area_color = self.UI_plot_area_color.get_color()
+        self.canvas_area_color = self.UI_canvas_area_color.get_color()
+        
+        self.overlap = self.UI_overlap.state_toggle
+        
+        self.second_y_axis = self.UI_second_y_axis.state_toggle
+
+        self.plot_name = self.UI_plot_name.get_text()
+
+        self.scatter_size = self.UI_scatter_size.get_text()
+        self.scatter_border = self.UI_scatter_border.get_text()
+        self.function_size = self.UI_function_size.get_text()
+        self.dashed_density = self.UI_dashed_density.get_text()
+        
+        self.scatter_toggle = self.UI_scatter_toggle.state_toggle
+        self.function_toggle = self.UI_function_toggle.state_toggle
+        self.dashed_toggle = self.UI_dashed_toggle.state_toggle
+        self.error_bar = self.UI_error_bar.state_toggle
+
+        self.colore_function = self.UI_colore_function.get_color()
+        self.colore_scatter = self.UI_colore_scatter.get_color()
+        
+        self.gradient = self.UI_gradient.state_toggle
+
+        self.add_second_axis = self.UI_add_second_axis.state_toggle
+        
+        self.font_size_title = self.UI_font_size_title.get_text()
+        self.font_size_label_x = self.UI_font_size_label_x.get_text()
+        self.font_size_label_y = self.UI_font_size_label_y.get_text()
+        self.font_size_label_2y = self.UI_font_size_label_2y.get_text()
+        
+        self.text_title = self.UI_text_title.get_text()
+        self.text_label_x = self.UI_text_label_x.get_text()
+        self.text_label_y = self.UI_text_label_y.get_text()
+        self.text_label_2y = self.UI_text_label_2y.get_text()
+        self.label_title_color = self.UI_label_title_color.get_color()
+        self.label_x_color = self.UI_label_x_color.get_color()
+        self.label_y_color = self.UI_label_y_color.get_color()
+        self.label_2y_color = self.UI_label_2y_color.get_color()
+
+        self.show_coords_projection = self.UI_show_coords_projection.state_toggle
+
+        self.round_ticks_x = self.UI_round_ticks_x.get_text()
+        self.round_ticks_y = self.UI_round_ticks_y.get_text()
+        self.round_ticks_2y = self.UI_round_ticks_2y.get_text()  
+        
+        self.ax_color_x = self.UI_ax_color_x.get_color()
+        self.ax_color_y = self.UI_ax_color_y.get_color()
+        self.ax_color_2y = self.UI_ax_color_2y.get_color()
+        self.tick_color_x = self.UI_tick_color_x.get_color()
+        self.tick_color_y = self.UI_tick_color_y.get_color()
+        self.tick_color_2y = self.UI_tick_color_2y.get_color()
+        
+        self.formatting_x = self.UI_formatting_x.state_toggle
+        self.formatting_y = self.UI_formatting_y.state_toggle
+        
+        self.show_grid_x = self.UI_show_grid_x.state_toggle
+        self.show_grid_y = self.UI_show_grid_y.state_toggle
+        self.show_grid_2y = self.UI_show_grid_2y.state_toggle
+        
+        self.show_legend = self.UI_show_legend.state_toggle
+        self.x_legend = self.UI_x_legend.get_text()
+        self.y_legend = self.UI_y_legend.get_text()
+        self.font_size_legend = self.UI_font_size_legend.get_text()
+        self.show_legend_background = self.UI_show_legend_background.state_toggle
+        self.legend_bg_color = self.UI_legend_bg_color.get_color()
+        self.transparent_background = self.UI_transparent_background.state_toggle
+        self.blur_strenght = self.UI_blur_strenght.get_text()
+        self.show_icons = self.UI_show_icons.state_toggle
+        self.match_color_text = self.UI_match_color_text.state_toggle
+        self.color_text = self.UI_color_text.get_color()
+
+        self.min_x_interpolation = self.UI_min_x_interpolation.get_text()
+        self.max_x_interpolation = self.UI_max_x_interpolation.get_text()
+        self.intersection_interpolation = self.UI_intersection_interpolation.state_toggle
 
 
     def update_plot_list(self, added_plot):
@@ -206,19 +312,19 @@ class PomoPlot:
 
             if self.active_plot != old_active:
 
-                self.scatter_size.change_text(f"{self.active_plot.scatter_width}")
-                self.scatter_border.change_text(f"{self.active_plot.scatter_border}")
-                self.function_size.change_text(f"{self.active_plot.function_width}")
-                self.plot_name.change_text(f"{self.active_plot.nome}")
-                self.scatter_toggle.state_toggle = self.active_plot.scatter
-                self.function_toggle.state_toggle = self.active_plot.function
-                self.dashed_toggle.state_toggle = self.active_plot.dashed
-                self.error_bar.state_toggle = self.active_plot.errorbar
-                self.dashed_density.change_text(f"{self.active_plot.dashed_traits}")
-                self.colore_scatter.set_color(self.active_plot.scatter_color)
-                self.colore_function.set_color(self.active_plot.function_color)
-                self.gradient.state_toggle = self.active_plot.gradiente
-                self.add_second_axis.state_toggle = self.active_plot.second_ax
+                self.UI_scatter_size.change_text(f"{self.active_plot.scatter_width}")
+                self.UI_scatter_border.change_text(f"{self.active_plot.scatter_border}")
+                self.UI_function_size.change_text(f"{self.active_plot.function_width}")
+                self.UI_plot_name.change_text(f"{self.active_plot.nome}")
+                self.UI_scatter_toggle.state_toggle = self.active_plot.scatter
+                self.UI_function_toggle.state_toggle = self.active_plot.function
+                self.UI_dashed_toggle.state_toggle = self.active_plot.dashed
+                self.UI_error_bar.state_toggle = self.active_plot.errorbar
+                self.UI_dashed_density.change_text(f"{self.active_plot.dashed_traits}")
+                self.UI_colore_scatter.set_color(self.active_plot.scatter_color)
+                self.UI_colore_function.set_color(self.active_plot.function_color)
+                self.UI_gradient.state_toggle = self.active_plot.gradiente
+                self.UI_add_second_axis.state_toggle = self.active_plot.second_ax
                 
                 grad_status = [0, 0]
                 if self.active_plot.grad_mode == "hori":
@@ -229,9 +335,9 @@ class PomoPlot:
                 self.grad_mode.set_state(grad_status)
 
                 if self.active_plot.data.shape[1] <= 2:
-                    self.error_bar.bg = np.array([70, 40, 40])
+                    self.UI_error_bar.bg = np.array([70, 40, 40])
                 else:
-                    self.error_bar.bg = np.array([40, 70, 40])
+                    self.UI_error_bar.bg = np.array([40, 70, 40])
 
 
         # import plots
@@ -396,7 +502,7 @@ class PomoPlot:
             except IndexError as e:
                 return f"\\#dc143c{{ATTENZIONE! Carica un grafico prima.}}\n\nRaised error:\n\\i{{{e}}}"
 
-            needed_indices = (base_data.data[:, 0] >= MateUtils.inp2flo(self.min_x_interpolation.get_text(), np.min(base_data.data[:, 0]))) & (base_data.data[:, 0] <= MateUtils.inp2flo(self.max_x_interpolation.get_text(), np.max(base_data.data[:, 0])))
+            needed_indices = (base_data.data[:, 0] >= MateUtils.inp2flo(self.min_x_interpolation, np.min(base_data.data[:, 0]))) & (base_data.data[:, 0] <= MateUtils.inp2flo(self.max_x_interpolation, np.max(base_data.data[:, 0])))
 
             x = base_data.data[:, 0]
             y = base_data.data[:, 1]
@@ -427,7 +533,7 @@ class PomoPlot:
                 m, q = coeff
                 m_e, q_e = np.sqrt(np.diag(covar))
             
-            params_str = f"Output interpolazione lineare.\n\\#aaffaa{{{base_data.nome}}}\n\nm: {m:.{self.round_ticks_y.get_text()}f} \\pm {m_e:.{self.round_ticks_y.get_text()}f}\nq: {q:.{self.round_ticks_y.get_text()}f} \\pm {q_e:.{self.round_ticks_y.get_text()}f}\n"
+            params_str = f"Output interpolazione lineare.\n\\#aaffaa{{{base_data.nome}}}\n\nm: {m:.{self.round_ticks_y}f} \\pm {m_e:.{self.round_ticks_y}f}\nq: {q:.{self.round_ticks_y}f} \\pm {q_e:.{self.round_ticks_y}f}\n"
 
             # compute interpolation plot
             y_i = np.zeros(len(x))
@@ -439,14 +545,14 @@ class PomoPlot:
             if ey is None:        
                 correlation = 1 - np.sum( ( y - y_i )**2 ) /np.sum( ( y - (np.sum(y)/len(y)) )**2 )
                 correlation_type = f"R\\^{{2}}"
-                params_str += f"\n{correlation_type}: {correlation:.{self.round_ticks_y.get_text()}f}"
+                params_str += f"\n{correlation_type}: {correlation:.{self.round_ticks_y}f}"
             else:
                 correlation_intera = np.sum(((y - y_i)/ey)**2)
                 correlation_ridotta = np.sum(((y - y_i)/ey)**2) / (len(x)-2)
                 correlation_type = fr"\chi\^{{2}}"
-                params_str += f"\n{correlation_type}: {correlation_intera:.{self.round_ticks_y.get_text()}f}\n{correlation_type} ridotto: {correlation_ridotta:.{self.round_ticks_y.get_text()}f}"
+                params_str += f"\n{correlation_type}: {correlation_intera:.{self.round_ticks_y}f}\n{correlation_type} ridotto: {correlation_ridotta:.{self.round_ticks_y}f}"
             
-            if self.intersection_interpolation.state_toggle:
+            if self.intersection_interpolation:
                 # Y = MX + Q -> X = - Q / M
                 data_interpolazione = np.array([[x[0], y_i[0]], [-q / m, 0]])
             else:
@@ -542,6 +648,8 @@ class PomoPlot:
 
     def plot(self, logica: 'Logica', screenshot=0):
         """Richiesta UI pomoshnik, si può utilizzare con altri metodi di disegno. coordinate, colori e dimensioni sono forniti per poter essere usati in qualunque formato."""
+
+        self.update_attributes()
 
         if not screenshot:
             self.update(logica)
@@ -658,7 +766,7 @@ class PomoPlot:
                             
                             colore = (self.max_plot_square[1] + self.max_plot_square[3] - y_interpolated) / (self.max_plot_square[1] + self.max_plot_square[3])
                             
-                            colore_finale = np.array(self.plot_area_color.get_color()) + (np.array(plot.function_color) - np.array(self.plot_area_color.get_color())) * colore
+                            colore_finale = np.array(self.plot_area_color) + (np.array(plot.function_color) - np.array(self.plot_area_color)) * colore
                             
                             self.screen._add_line([[x1 + i, self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_x + 0.005)], [x1 + i, y_interpolated]], colore_finale, 1)
                 
@@ -673,7 +781,7 @@ class PomoPlot:
                     
                     gradient = np.zeros((int(end_x - start_x), int(start_y - end_y), 3), dtype=np.uint8)
                     
-                    bg_color = self.plot_area_color.get_color()
+                    bg_color = self.plot_area_color
 
                     # CASO 1 -> 0 In mezzo al range
                     if self.zero_y > end_y and self.zero_y < start_y:
@@ -783,7 +891,7 @@ class PomoPlot:
                 posizione[0] -= self.screen.x
                 posizione[1] -= self.screen.y
 
-                self.screen._add_text(f"({float(value[0]):.{int(self.round_ticks_x.get_text())}f}, {float(value[1]):.{int(self.round_ticks_y.get_text())}f})", size=1.2, pos=posizione, anchor="cd", color=[150, 160, 150])
+                self.screen._add_text(f"({float(value[0]):.{int(self.round_ticks_x)}f}, {float(value[1]):.{int(self.round_ticks_y)}f})", size=1.2, pos=posizione, anchor="cd", color=[150, 160, 150])
 
             except Exception as e:
                 print(e)
@@ -821,17 +929,17 @@ class PomoPlot:
 
     def _disegna_legend(self, logica: 'Logica'):
 
-        if len([1 for status in self.scroll_plots.ele_mask if status]) > 0 and self.show_legend.state_toggle:
+        if len([1 for status in self.scroll_plots.ele_mask if status]) > 0 and self.show_legend:
 
-            self.legend_position = [float(self.x_legend.get_text()), float(self.y_legend.get_text())]               # done
-            self.legend_draw_icogram = self.show_icons.state_toggle                                                 # NO                           
-            self.legend_match_color_title = self.match_color_text.state_toggle                                      # NO               
-            self.legend_color_title = self.color_text.get_color()                                                   # NO   
-            self.legend_show_background = self.show_legend_background.state_toggle                                  # done                   
-            self.legend_color_background = self.legend_bg_color.get_color()                                         # done           
+            self.legend_position = [float(self.x_legend), float(self.y_legend)]               # done
+            self.legend_draw_icogram = self.show_icons                                                 # NO                           
+            self.legend_match_color_title = self.match_color_text                                      # NO               
+            self.legend_color_title = self.color_text                                                   # NO   
+            self.legend_show_background = self.show_legend_background                                  # done                   
+            self.legend_color_background = self.legend_bg_color                                         # done           
 
-            self.legend_transparent = self.transparent_background.state_toggle
-            self.legend_blur_strenght = float(self.blur_strenght.get_text()) * self.scale_factor_viewport
+            self.legend_transparent = self.transparent_background
+            self.legend_blur_strenght = float(self.blur_strenght) * self.scale_factor_viewport
 
             if self.legend_draw_icogram:
                 self.icon_size_pixel = 150 * self.scale_factor_viewport
@@ -849,7 +957,7 @@ class PomoPlot:
 
             self.labels[4].anchor = "cc"
 
-            new_dim_legend = self.font_size_legend.get_text()
+            new_dim_legend = self.font_size_legend
             
             self.labels[4].change_font_size(float(new_dim_legend) * self.scale_factor_viewport)
 
@@ -894,7 +1002,7 @@ class PomoPlot:
                             if plot.function:
                                 if plot.dashed:
                                     for i in range(5):
-                                        colore_tratteggiato = plot.function_color if i % 2 == 0 else self.plot_area_color.get_color()
+                                        colore_tratteggiato = plot.function_color if i % 2 == 0 else self.plot_area_color
                                         self.screen._add_line_static(superficie_alpha, [
                                             [self.icon_size_pixel * 3 / 4 - self.icon_size_pixel * 0.125 * (i + 1), inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato], 
                                             [self.icon_size_pixel * 3 / 4 - self.icon_size_pixel * 0.125 * i , inizio_legenda + offset_icona / 2 + offset_icona * plot_attivo_analizzato]
@@ -987,19 +1095,19 @@ class PomoPlot:
     def _disegna_labels(self, logica: 'Logica'):
 
         if not self.active_plot is None:
-            self.active_plot.scatter_width = int(self.scatter_size.get_text())
-            self.active_plot.scatter_border = int(self.scatter_border.get_text())
-            self.active_plot.function_width = int(self.function_size.get_text())
-            self.active_plot.dashed_traits = int(self.dashed_density.get_text())
-            self.active_plot.scatter = self.scatter_toggle.state_toggle
-            self.active_plot.dashed = self.dashed_toggle.state_toggle
-            self.active_plot.errorbar = self.error_bar.state_toggle
-            self.active_plot.function = self.function_toggle.state_toggle
-            self.active_plot.function_color = self.colore_function.get_color()
-            self.active_plot.scatter_color = self.colore_scatter.get_color()
-            self.active_plot.nome = self.plot_name.get_text()
-            self.active_plot.gradiente = self.gradient.state_toggle
-            self.active_plot.second_ax = self.add_second_axis.state_toggle
+            self.active_plot.scatter_width = int(self.scatter_size)
+            self.active_plot.scatter_border = int(self.scatter_border)
+            self.active_plot.function_width = int(self.function_size)
+            self.active_plot.dashed_traits = int(self.dashed_density)
+            self.active_plot.scatter = self.scatter_toggle
+            self.active_plot.dashed = self.dashed_toggle
+            self.active_plot.errorbar = self.error_bar
+            self.active_plot.function = self.function_toggle
+            self.active_plot.function_color = self.colore_function
+            self.active_plot.scatter_color = self.colore_scatter
+            self.active_plot.nome = self.plot_name
+            self.active_plot.gradiente = self.gradient
+            self.active_plot.second_ax = self.add_second_axis
             
             try:
                 mode_grad = [i for i, ele in enumerate(self.grad_mode.cb_s) if ele][0]
@@ -1011,10 +1119,10 @@ class PomoPlot:
                 case 1: self.active_plot.grad_mode = "vert"
 
 
-        new_dim_title = self.font_size_title.get_text()
-        new_dim_x = self.font_size_label_x.get_text()
-        new_dim_y = self.font_size_label_y.get_text()
-        new_dim_2y = self.font_size_label_2y.get_text()
+        new_dim_title = self.font_size_title
+        new_dim_x = self.font_size_label_x
+        new_dim_y = self.font_size_label_y
+        new_dim_2y = self.font_size_label_2y
         
         if self.labels[0].font_size_update != float(new_dim_title) * self.scale_factor_viewport:
             self.labels[0].change_font_size(float(new_dim_title) * self.scale_factor_viewport)
@@ -1025,35 +1133,35 @@ class PomoPlot:
         if self.labels[2].font_size_update != float(new_dim_y) * self.scale_factor_viewport:
             self.labels[2].change_font_size(float(new_dim_y) * self.scale_factor_viewport)
         
-        if self.second_y_axis.state_toggle:
+        if self.second_y_axis:
             if self.labels[3].font_size_update != float(new_dim_2y) * self.scale_factor_viewport:
                 self.labels[3].change_font_size(float(new_dim_2y) * self.scale_factor_viewport)
 
         # titolo
-        self.labels[0].change_text(f"{self.text_title.get_text()}")
+        self.labels[0].change_text(f"{self.text_title}")
         self.labels[0].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}px", f"{self.screen.y + self.max_plot_square[1] / 2}px", new_w="-*w", new_h="-*h", anchor_point="cc")
-        self.labels[0].color_text = self.label_title_color.get_color()
+        self.labels[0].color_text = self.label_title_color
         self.labels[0].disegnami(logica, 0, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
         # X label
-        self.labels[1].change_text(f"{self.text_label_x.get_text()}")
+        self.labels[1].change_text(f"{self.text_label_x}")
         self.labels[1].recalc_geometry(f"{self.screen.x + self.max_plot_square[0] + self.max_plot_square[2] / 2}px", f"{self.screen.y + self.max_plot_square[3] + 2 * self.max_plot_square[1] - 5}px", new_w="-*w", new_h="-*h", anchor_point="cd")
-        self.labels[1].color_text = self.label_x_color.get_color()
+        self.labels[1].color_text = self.label_x_color
         self.labels[1].disegnami(logica, 0, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
         # Y label
-        self.labels[2].change_text(f"{self.text_label_y.get_text()}")
+        self.labels[2].change_text(f"{self.text_label_y}")
         self.labels[2].recalc_geometry(f"{self.screen.x}px", f"{self.screen.y + self.max_plot_square[1] + self.max_plot_square[3] / 2 - self.labels[2].font.font_pyg_r.size(self.labels[2].testo_diplayed[0])[0] / 2}px", new_w="-*w", new_h="-*h", anchor_point="lu")
-        self.labels[2].color_text = self.label_y_color.get_color()
+        self.labels[2].color_text = self.label_y_color
         self.labels[2].disegnami(logica, 90, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
         # 2Y label
-        if self.second_y_axis.state_toggle:
-            self.labels[3].change_text(f"{self.text_label_2y.get_text()}")
-            self.labels[3].recalc_geometry(f"{self.screen.x + self.max_canvas_square[2]}px", f"{self.screen.y + self.max_plot_square[1] + self.max_plot_square[3] / 2 - self.labels[3].font.font_pyg_r.size(self.labels[3].testo_diplayed[0])[0] / 2}px", new_w="-*w", new_h="-*h", anchor_point="lu")
-            self.labels[3].color_text = self.label_2y_color.get_color()
-            self.labels[3].disegnami(logica, 90, self.screen.tavolozza, DANG_offset_x=self.labels[3].font.font_pyg_r.size(self.labels[3].testo_diplayed[0])[1] / 2, DANG_offset_y=-self.screen.y)
-
+        if self.second_y_axis:
+            self.labels[3].change_text(f"{self.text_label_2y}")
+            self.labels[3].recalc_geometry(f"{self.screen.w}px n-*h", f"{self.screen.y + self.max_plot_square[1] + self.max_plot_square[3] / 2 - self.labels[3].font.font_pyg_r.size(self.labels[3].testo_diplayed[0])[0] / 2}px", new_w="-*w", new_h="-*h", anchor_point="lu")
+            self.labels[3].color_text = self.label_2y_color
+            self.labels[3].disegnami(logica, 90, self.screen.tavolozza, DANG_offset_y=-self.screen.y)
+            
 
     def _get_nice_ticks(self):
 
@@ -1069,9 +1177,9 @@ class PomoPlot:
 
         coords = self._get_plot_area_coord()
 
-        formattatore_x = "e" if self.formatting_x.state_toggle else "f"
-        formattatore_y = "e" if self.formatting_y.state_toggle else "f"
-        formattatore_2y = "e" if self.formatting_y.state_toggle else "f"
+        formattatore_x = "e" if self.formatting_x else "f"
+        formattatore_y = "e" if self.formatting_y else "f"
+        formattatore_2y = "e" if self.formatting_y else "f"
 
         self.offset_x_tick_value: int = (self.pixel_len_subdivisions + 7) * self.scale_factor_viewport
         self.offset_y_tick_value: int = (self.pixel_len_subdivisions + 25) * self.scale_factor_viewport
@@ -1084,39 +1192,39 @@ class PomoPlot:
         labels_info_rotation = []
 
         for index, coord in enumerate(self.coords_of_ticks[0]):
-            if self.show_grid_x.state_toggle:
-                self.screen._add_line([[coord, coords[3]], [coord, coords[1]]], self.ax_color_x.get_color(), self.scale_factor_viewport)
-            self.screen._add_line([[coord, coords[3]], [coord, coords[3] + self.pixel_len_subdivisions * self.scale_factor_viewport]], self.ax_color_x.get_color(), 4 * self.scale_factor_viewport)
+            if self.show_grid_x:
+                self.screen._add_line([[coord, coords[3]], [coord, coords[1]]], self.ax_color_x, self.scale_factor_viewport)
+            self.screen._add_line([[coord, coords[3]], [coord, coords[3] + self.pixel_len_subdivisions * self.scale_factor_viewport]], self.ax_color_x, 4 * self.scale_factor_viewport)
 
-            labels_info_text.append(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x.get_text()}{formattatore_x}}")
+            labels_info_text.append(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x}{formattatore_x}}")
             labels_info_pos.append([coord, coords[3] + self.offset_y_label + self.offset_y_tick_value])
             labels_info_anchor.append("cc")
-            labels_info_color.append(self.tick_color_x.get_color())
+            labels_info_color.append(self.tick_color_x)
             labels_info_rotation.append(0)
 
 
         for index, coord in enumerate(self.coords_of_ticks[1]):
-            if self.show_grid_y.state_toggle:
-                self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_y.get_color(), self.scale_factor_viewport)
-            self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_y.get_color(), 4 * self.scale_factor_viewport)
+            if self.show_grid_y:
+                self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_y, self.scale_factor_viewport)
+            self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_y, 4 * self.scale_factor_viewport)
 
-            labels_info_text.append(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y.get_text()}{formattatore_y}}")
+            labels_info_text.append(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y}{formattatore_y}}")
             labels_info_pos.append([coords[0] - self.offset_x_label - self.offset_x_tick_value, coord])
             labels_info_anchor.append("rc")
-            labels_info_color.append(self.tick_color_y.get_color())
+            labels_info_color.append(self.tick_color_y)
             labels_info_rotation.append(0)
         
 
-        if self.second_y_axis.state_toggle:
+        if self.second_y_axis:
             for index, coord in enumerate(self.coords_of_ticks[2]):
-                if self.show_grid_2y.state_toggle:
-                    self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_2y.get_color(), self.scale_factor_viewport)
-                self.screen._add_line([[coords[2], coord], [coords[2] + self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_2y.get_color(), 4 * self.scale_factor_viewport)
+                if self.show_grid_2y:
+                    self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_2y, self.scale_factor_viewport)
+                self.screen._add_line([[coords[2], coord], [coords[2] + self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_2y, 4 * self.scale_factor_viewport)
 
-                labels_info_text.append(f"{self.value_of_ticks[2][index]:.{self.round_ticks_2y.get_text()}{formattatore_2y}}")
+                labels_info_text.append(f"{self.value_of_ticks[2][index]:.{self.round_ticks_2y}{formattatore_2y}}")
                 labels_info_pos.append([coords[0] + self.max_plot_square[2] + self.offset_x_label + self.offset_x_tick_value, coord])
                 labels_info_anchor.append("lc")
-                labels_info_color.append(self.tick_color_2y.get_color())
+                labels_info_color.append(self.tick_color_2y)
                 labels_info_rotation.append(0)
 
         # disegno il valore corrispondente
@@ -1128,16 +1236,16 @@ class PomoPlot:
         coords = self._get_plot_area_coord()
 
         if self.draw_bounding_box:
-            self.screen._add_line([[self.max_plot_square[0], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]]], self.ax_color_x.get_color(), 4 * self.scale_factor_viewport)
-            self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1] + self.max_plot_square[3]]], self.ax_color_x.get_color(), 4 * self.scale_factor_viewport)
+            self.screen._add_line([[self.max_plot_square[0], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]]], self.ax_color_x, 4 * self.scale_factor_viewport)
+            self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1] + self.max_plot_square[3]]], self.ax_color_x, 4 * self.scale_factor_viewport)
         
-        if self.second_y_axis.state_toggle:
-            self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1] + self.max_plot_square[3]]], self.ax_color_2y.get_color(), 4 * self.scale_factor_viewport)
+        if self.second_y_axis:
+            self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1] + self.max_plot_square[3]]], self.ax_color_2y, 4 * self.scale_factor_viewport)
 
 
         # si posizione sull'area del plot e setta un offset pari a self.offset_x_label o self.offset_y_label
-        self.screen._add_line([[coords[0] - self.offset_x_label, coords[1]], [coords[0] - self.offset_x_label, coords[3]]], self.ax_color_y.get_color(), 4 * self.scale_factor_viewport)
-        self.screen._add_line([[coords[0], coords[3] + self.offset_y_label], [coords[2], coords[3] + self.offset_y_label]], self.ax_color_x.get_color(), 4 * self.scale_factor_viewport)
+        self.screen._add_line([[coords[0] - self.offset_x_label, coords[1]], [coords[0] - self.offset_x_label, coords[3]]], self.ax_color_y, 4 * self.scale_factor_viewport)
+        self.screen._add_line([[coords[0], coords[3] + self.offset_y_label], [coords[2], coords[3] + self.offset_y_label]], self.ax_color_x, 4 * self.scale_factor_viewport)
     
                     
     def _disegna_dati(self):
@@ -1148,7 +1256,7 @@ class PomoPlot:
             # disegno i dati se plot acceso
             if status:
 
-                if plot.second_ax and not self.second_y_axis.state_toggle:
+                if plot.second_ax and not self.second_y_axis:
                     continue
 
                 cond1 = plot.data2plot[:, :2][:, 0] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
@@ -1183,17 +1291,17 @@ class PomoPlot:
                 # Add the logic to transform the index into value and coordinate
                 if len(plot.display_coords) > 0:
                     coords = [[plot.data2plot[index, 0], plot.data2plot[index, 1] - (13 * self.scale_factor_viewport + plot.scatter_width)] for index in plot.display_coords]
-                    text = [f"({plot.data[index, 0]:.{self.round_ticks_x.get_text()}f}, {plot.data[index, 1]:.{self.round_ticks_y.get_text()}f})" for index in plot.display_coords]
-                    self.screen._add_text(text, coords, anchor=["cd" for i in plot.display_coords], size=1 * self.scale_factor_viewport, color=[self.label_title_color.get_color() for i in plot.display_coords], rotation=[0 for i in plot.display_coords])
+                    text = [f"({plot.data[index, 0]:.{self.round_ticks_x}f}, {plot.data[index, 1]:.{self.round_ticks_y}f})" for index in plot.display_coords]
+                    self.screen._add_text(text, coords, anchor=["cd" for i in plot.display_coords], size=1 * self.scale_factor_viewport, color=[self.label_title_color for i in plot.display_coords], rotation=[0 for i in plot.display_coords])
                     
-                    if self.show_coords_projection.state_toggle:
+                    if self.show_coords_projection:
                         if plot.gradiente:
                             destinazione_proiezione = self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005) + self.max_plot_square[1]
                         else:
                             destinazione_proiezione = self.max_plot_square[3] + self.max_plot_square[1]
 
                         for index, coord in enumerate(coords):
-                            self.screen._add_line([[coord[0], coord[1] + (13 * self.scale_factor_viewport + plot.scatter_width)], [coord[0], destinazione_proiezione]], width=1 * self.scale_factor_viewport, color=self.label_title_color.get_color())
+                            self.screen._add_line([[coord[0], coord[1] + (13 * self.scale_factor_viewport + plot.scatter_width)], [coord[0], destinazione_proiezione]], width=1 * self.scale_factor_viewport, color=self.label_title_color)
 
 
     def _disegna_spezzata_tratteggiata(self, plot:'_Single1DPlot'):
@@ -1254,7 +1362,7 @@ class PomoPlot:
                     percorso += new_module
 
                 if (iters + starting_color) % 2 == 0:
-                    colore = self.plot_area_color.get_color()
+                    colore = self.plot_area_color
 
                 else:
                     colore = plot.function_color
@@ -1268,8 +1376,8 @@ class PomoPlot:
         # setu-up canvas
         self.screen._clear_canvas(self.unused_area_color)
         # disegno area di plot BG
-        self.screen.tavolozza.fill(self.canvas_area_color.get_color())
-        self.screen._add_rectangle(self.max_plot_square, self.plot_area_color.get_color())
+        self.screen.tavolozza.fill(self.canvas_area_color)
+        self.screen._add_rectangle(self.max_plot_square, self.plot_area_color)
         
 
     def _normalize_data2screen(self, invert_y_coord=True):
@@ -1291,7 +1399,7 @@ class PomoPlot:
                     plot.data2plot[:, 1] -= np.min(plot.data2plot[:, 1])
                     plot.data2plot[:, 1] /= np.max(plot.data2plot[:, 1])
 
-                    if self.norma_perc.buttons_state[1] and self.overlap.state_toggle:
+                    if self.norma_perc.buttons_state[1] and self.overlap:
                         plot.data2plot[:, 1] *= 100
 
 
@@ -1302,7 +1410,7 @@ class PomoPlot:
                 # adatto alla dimensione dell'area del plot
                 plot.data2plot[:, 0] *= (self.max_plot_square[2])
                 # traslo in base all'offset all'interno dell'area del plot
-                plot.data2plot[:, 0] += (self.max_canvas_square[2] * float(self.x_plot_area.get_text()))
+                plot.data2plot[:, 0] += (self.max_canvas_square[2] * float(self.x_plot_area))
                 # traslo in base all'offset dell'area del plot nello schermo
                 plot.data2plot[:, 0] += self.max_canvas_square[0]
                 
@@ -1312,16 +1420,16 @@ class PomoPlot:
                     plot.data2plot[:, 1] -= self.spazio_coordinate_native[1]
                     plot.data2plot[:, 1] /= self.spazio_coordinate_native[3]
                     
-                    if not self.overlap.state_toggle:
+                    if not self.overlap:
                         plot.data2plot[:, 1] += (1 - self.minimal_offset_data_y * 2) * plot_attivi_analizzati / numero_plot_attivi
                         
                     plot.data2plot[:, 1] *= (self.max_plot_square[3])
                     
                     # inverto i dati per avere le Y che aumentano salendo sullo schermo
                     if invert_y_coord:
-                        plot.data2plot[:, 1] = self.max_canvas_square[3] * float(self.h_plot_area.get_text()) - plot.data2plot[:, 1]
+                        plot.data2plot[:, 1] = self.max_canvas_square[3] * float(self.h_plot_area) - plot.data2plot[:, 1]
                     
-                    plot.data2plot[:, 1] += (self.max_canvas_square[3] * float(self.y_plot_area.get_text()))
+                    plot.data2plot[:, 1] += (self.max_canvas_square[3] * float(self.y_plot_area))
                     plot.data2plot[:, 1] += self.max_canvas_square[1]
                     
                     # stessa cosa ma per errori y
@@ -1335,16 +1443,16 @@ class PomoPlot:
                     plot.data2plot[:, 1] -= self.spazio_coordinate_native[4]
                     plot.data2plot[:, 1] /= self.spazio_coordinate_native[5]
                     
-                    if not self.overlap.state_toggle:
+                    if not self.overlap:
                         plot.data2plot[:, 1] += (1 - self.minimal_offset_data_y * 2) * plot_attivi_analizzati / numero_plot_attivi
                         
                     plot.data2plot[:, 1] *= (self.max_plot_square[3])
                     
                     # inverto i dati per avere le Y che aumentano salendo sullo schermo
                     if invert_y_coord:
-                        plot.data2plot[:, 1] = self.max_canvas_square[3] * float(self.h_plot_area.get_text()) - plot.data2plot[:, 1]
+                        plot.data2plot[:, 1] = self.max_canvas_square[3] * float(self.h_plot_area) - plot.data2plot[:, 1]
                     
-                    plot.data2plot[:, 1] += (self.max_canvas_square[3] * float(self.y_plot_area.get_text()))
+                    plot.data2plot[:, 1] += (self.max_canvas_square[3] * float(self.y_plot_area))
                     plot.data2plot[:, 1] += self.max_canvas_square[1]
                     
                     # stessa cosa ma per errori y
@@ -1360,7 +1468,7 @@ class PomoPlot:
         self.coords_of_ticks[0] -= self.spazio_coordinate_native[0]
         self.coords_of_ticks[0] /= (self.spazio_coordinate_native[2] + 1e-6)
         self.coords_of_ticks[0] *= (self.max_plot_square[2])
-        self.coords_of_ticks[0] += (self.max_canvas_square[2] * float(self.x_plot_area.get_text()))
+        self.coords_of_ticks[0] += (self.max_canvas_square[2] * float(self.x_plot_area))
         self.coords_of_ticks[0] += self.max_canvas_square[0]
 
         # ticks y
@@ -1368,18 +1476,18 @@ class PomoPlot:
         self.coords_of_ticks[1] /= (self.spazio_coordinate_native[3] + 1e-6)
         self.coords_of_ticks[1] *= (self.max_plot_square[3])        
         if invert_y_coord:
-            self.coords_of_ticks[1] = self.max_canvas_square[3] * float(self.h_plot_area.get_text()) - self.coords_of_ticks[1]
-        self.coords_of_ticks[1] += (self.max_canvas_square[3] * float(self.y_plot_area.get_text()))
+            self.coords_of_ticks[1] = self.max_canvas_square[3] * float(self.h_plot_area) - self.coords_of_ticks[1]
+        self.coords_of_ticks[1] += (self.max_canvas_square[3] * float(self.y_plot_area))
         self.coords_of_ticks[1] += self.max_canvas_square[1]
         
         # ticks 2y
-        if self.second_y_axis.state_toggle:
+        if self.second_y_axis:
             self.coords_of_ticks[2] -= self.spazio_coordinate_native[4]
             self.coords_of_ticks[2] /= (self.spazio_coordinate_native[5] + 1e-6)
             self.coords_of_ticks[2] *= (self.max_plot_square[3])        
             if invert_y_coord:
-                self.coords_of_ticks[2] = self.max_canvas_square[3] * float(self.h_plot_area.get_text()) - self.coords_of_ticks[2]
-            self.coords_of_ticks[2] += (self.max_canvas_square[3] * float(self.y_plot_area.get_text()))
+                self.coords_of_ticks[2] = self.max_canvas_square[3] * float(self.h_plot_area) - self.coords_of_ticks[2]
+            self.coords_of_ticks[2] += (self.max_canvas_square[3] * float(self.y_plot_area))
             self.coords_of_ticks[2] += self.max_canvas_square[1]
         
 
@@ -1392,9 +1500,9 @@ class PomoPlot:
         
         # inverto i dati per avere le Y che aumentano salendo sullo schermo
         if invert_y_coord:
-            self.zero_y = self.max_canvas_square[3] * float(self.h_plot_area.get_text()) - self.zero_y
+            self.zero_y = self.max_canvas_square[3] * float(self.h_plot_area) - self.zero_y
         
-        self.zero_y += (self.max_canvas_square[3] * float(self.y_plot_area.get_text()))
+        self.zero_y += (self.max_canvas_square[3] * float(self.y_plot_area))
         self.zero_y += self.max_canvas_square[1]
 
 
@@ -1533,10 +1641,10 @@ class PomoPlot:
             
                 self.max_canvas_square = np.array([offset_x, offset_y, dimension, dimension])
                 self.max_plot_square = np.array([
-                    self.max_canvas_square[0] + self.max_canvas_square[2] * float(self.x_plot_area.get_text()),
-                    self.max_canvas_square[1] + self.max_canvas_square[3] * float(self.y_plot_area.get_text()),
-                    self.max_canvas_square[2] * float(self.w_plot_area.get_text()),
-                    self.max_canvas_square[3] * float(self.h_plot_area.get_text()),
+                    self.max_canvas_square[0] + self.max_canvas_square[2] * float(self.x_plot_area),
+                    self.max_canvas_square[1] + self.max_canvas_square[3] * float(self.y_plot_area),
+                    self.max_canvas_square[2] * float(self.w_plot_area),
+                    self.max_canvas_square[3] * float(self.h_plot_area),
                 ])
 
 
@@ -1544,19 +1652,19 @@ class PomoPlot:
                 # area del plot coincide con lo schermo
                 self.max_canvas_square = np.array([0, 0, self.screen.w, self.screen.h])
                 self.max_plot_square = np.array([
-                    self.max_canvas_square[2] * float(self.x_plot_area.get_text()),
-                    self.max_canvas_square[3] * float(self.y_plot_area.get_text()),
-                    self.max_canvas_square[2] * float(self.w_plot_area.get_text()),
-                    self.max_canvas_square[3] * float(self.h_plot_area.get_text()),
+                    self.max_canvas_square[2] * float(self.x_plot_area),
+                    self.max_canvas_square[3] * float(self.y_plot_area),
+                    self.max_canvas_square[2] * float(self.w_plot_area),
+                    self.max_canvas_square[3] * float(self.h_plot_area),
                 ])
 
 
     def _get_plot_area_coord(self):
         return (
-            self.max_canvas_square[0] + self.max_canvas_square[2] * float(self.x_plot_area.get_text()),
-            self.max_canvas_square[1] + self.max_canvas_square[3] * float(self.y_plot_area.get_text()),
-            self.max_canvas_square[0] + self.max_canvas_square[2] * (float(self.x_plot_area.get_text()) + float(self.w_plot_area.get_text())),
-            self.max_canvas_square[1] + self.max_canvas_square[3] * (float(self.y_plot_area.get_text()) + float(self.h_plot_area.get_text())),
+            self.max_canvas_square[0] + self.max_canvas_square[2] * float(self.x_plot_area),
+            self.max_canvas_square[1] + self.max_canvas_square[3] * float(self.y_plot_area),
+            self.max_canvas_square[0] + self.max_canvas_square[2] * (float(self.x_plot_area) + float(self.w_plot_area)),
+            self.max_canvas_square[1] + self.max_canvas_square[3] * (float(self.y_plot_area) + float(self.h_plot_area)),
         )
 
 
@@ -1612,7 +1720,7 @@ class PomoPlot:
             self.spazio_coordinate_native[3] = 1.0
             self.spazio_coordinate_native[5] = 1.0
         
-        if not self.overlap.state_toggle:
+        if not self.overlap:
             self.spazio_coordinate_native[3] = 1.0 * len([active for plot, active in zip(self.plots, self.scroll_plots.ele_mask) if active and not plot.second_ax])
             self.spazio_coordinate_native[5] = 1.0 * len([active for plot, active in zip(self.plots, self.scroll_plots.ele_mask) if active and plot.second_ax])
 
@@ -1627,7 +1735,7 @@ class PomoPlot:
             self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(self.coords_of_ticks[1]))
             
             # secondo asse
-            if self.second_y_axis.state_toggle:
+            if self.second_y_axis:
                 self.spazio_coordinate_native[4] = np.minimum(self.spazio_coordinate_native[4], np.min(self.coords_of_ticks[2]))
                 self.spazio_coordinate_native[5] = np.maximum(self.spazio_coordinate_native[5], np.max(self.coords_of_ticks[2]))
 
@@ -1637,7 +1745,7 @@ class PomoPlot:
         swap_2 = self.spazio_coordinate_native[0] + (self.spazio_coordinate_native[2] - self.spazio_coordinate_native[0]) * self.zoom_boundaries[2]
         swap_3 = self.spazio_coordinate_native[1] + (self.spazio_coordinate_native[3] - self.spazio_coordinate_native[1]) * self.zoom_boundaries[3]
 
-        if self.second_y_axis.state_toggle:    
+        if self.second_y_axis:    
             swap_4 = self.spazio_coordinate_native[4] + (self.spazio_coordinate_native[5] - self.spazio_coordinate_native[4]) * self.zoom_boundaries[1] 
             swap_5 = self.spazio_coordinate_native[4] + (self.spazio_coordinate_native[5] - self.spazio_coordinate_native[4]) * self.zoom_boundaries[3]
 
@@ -1646,7 +1754,7 @@ class PomoPlot:
         self.spazio_coordinate_native[1] = swap_1
         self.spazio_coordinate_native[2] = swap_2
         self.spazio_coordinate_native[3] = swap_3
-        if self.second_y_axis.state_toggle:    
+        if self.second_y_axis:    
             self.spazio_coordinate_native[4] = swap_4
             self.spazio_coordinate_native[5] = swap_5
 
@@ -1707,7 +1815,7 @@ class PomoPlot:
         self.spazio_coordinate_native[2] += (self.spazio_coordinate_native[2] - self.spazio_coordinate_native[0]) * self.minimal_offset_data_x
         self.spazio_coordinate_native[3] += (self.spazio_coordinate_native[3] - self.spazio_coordinate_native[1]) * self.minimal_offset_data_y
 
-        if self.second_y_axis.state_toggle:    
+        if self.second_y_axis:    
             self.spazio_coordinate_native[4] -= (self.spazio_coordinate_native[5] - self.spazio_coordinate_native[4]) * self.minimal_offset_data_y
             self.spazio_coordinate_native[5] += (self.spazio_coordinate_native[5] - self.spazio_coordinate_native[4]) * self.minimal_offset_data_y
     

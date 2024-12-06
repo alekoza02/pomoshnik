@@ -53,10 +53,10 @@ class BaseElement:
         self.hide: bool = hide
 
         self.testo: str = text
-        self.testo_diplayed = (f"{self.testo}", 1)
+        self.testo_diplayed = (f"{self.testo}", 1) # (text, number of lines)
         
-        self.font_size_update = 24
-        self.font: Font = Font(24, self.latex_font)
+        self.font_size_update = BaseElement.pappardella["font_size"]
+        self.font: Font = Font(self.font_size_update, self.latex_font)
 
         self.ori_coords = (x, y, w, h, anchor)
 
@@ -163,9 +163,18 @@ class BaseElement:
                 elif "%h" in sub_coord:
                     posizione_finale += float(sub_coord[:-2]) * self.one_percent_y
                 elif "-*w" in sub_coord:
-                    posizione_finale += self.font.font_pyg_r.size(self.testo_diplayed[0])[0]
+                    
+                    molt = 1
+                    if "n" in sub_coord:
+                        molt = -1
+                    posizione_finale += molt * (self.font.font_pyg_r.size(self.testo_diplayed[0])[0])
+                        
                 elif "-*h" in sub_coord:
-                    posizione_finale += self.font.font_pyg_r.size(self.testo_diplayed[0])[1] * self.testo_diplayed[1] # prendo l'altezza del carattere e la moltiplico per il numero di righe
+                    
+                    molt = 1
+                    if "n" in sub_coord:
+                        molt = -1
+                    posizione_finale += molt * (self.font.font_pyg_r.size(self.testo_diplayed[0])[1] * self.testo_diplayed[1]) # prendo l'altezza del carattere e la moltiplico per il numero di righe
 
 
             return posizione_finale

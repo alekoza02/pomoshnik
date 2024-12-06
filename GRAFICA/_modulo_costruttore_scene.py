@@ -11,7 +11,7 @@ if NON_ESEGUIRE:
     from GRAFICA._modulo_UI import Logica
 
 class Costruttore:
-    def __init__(self, screen, width, height) -> None:
+    def __init__(self, screen, width, height, font_size) -> None:
 
         self.screen: pygame.Surface = screen
         self.bg_def = (40, 40, 40)
@@ -23,6 +23,7 @@ class Costruttore:
             "bg_def": self.bg_def,
             "x_screen": width,
             "y_screen": height,
+            "font_size": font_size
         }
 
         BaseElement._init_scene(self.pappardella)
@@ -71,10 +72,10 @@ class Costruttore:
         s.context_menu["main"] = ContextMenu(x="0px", y="0px", w="100%w", h="100%h", anchor="lu", bg=[30, 30, 30], scrollable=False)
 
         s.context_menu["main"].add_element("clock", Label_Text(x="100%w", y="100%h", w="-*w", h="-*h", anchor="rd", text="." * 22))
-        s.context_menu["main"].add_element("memory", Label_Text(anchor=("rd ld (-20px) (0px)", s.context_menu["main"].elements["clock"]), w="-*w", h="-*h", text="." * 22))
-        s.context_menu["main"].add_element("battery", Label_Text(anchor=("rd ld (-20px) (0px)", s.context_menu["main"].elements["memory"]), w="-*w", h="-*h", text="." * 8))
-        s.context_menu["main"].add_element("fps", Label_Text(anchor=("rd ld (-20px) (0px)", s.context_menu["main"].elements["battery"]), w="-*w", h="-*h", text="." * 13))
-        s.context_menu["main"].add_element("cpu", Label_Text(anchor=("rd ld (-20px) (0px)", s.context_menu["main"].elements["fps"]), w="-*w", h="-*h", text="." * 13))
+        s.context_menu["main"].add_element("memory", Label_Text(anchor=("rd ld (-0.7%w) (0px)", s.context_menu["main"].elements["clock"]), w="-*w", h="-*h", text="." * 22))
+        s.context_menu["main"].add_element("battery", Label_Text(anchor=("rd ld (-0.7%w) (0px)", s.context_menu["main"].elements["memory"]), w="-*w", h="-*h", text="." * 8))
+        s.context_menu["main"].add_element("fps", Label_Text(anchor=("rd ld (-0.7%w) (0px)", s.context_menu["main"].elements["battery"]), w="-*w", h="-*h", text="." * 13))
+        s.context_menu["main"].add_element("cpu", Label_Text(anchor=("rd ld (-0.7%w) (0px)", s.context_menu["main"].elements["fps"]), w="-*w", h="-*h", text="." * 13))
 
 
         s.context_menu["main"].add_element("exit", Bottone_Push(x="100%w", y="0px", w="50px", h="50px", anchor="ru", text="X", function=self.bott_calls.exit))
@@ -254,20 +255,15 @@ class Costruttore:
         starting = 1
         stato_iniziale_tab = [False for _ in range(11)]
         stato_iniziale_tab[starting] = True        
-        s.context_menu["main"].add_element("modes", RadioButton(x="73.5%w", y="40%h", anchor="ru", w="70px", h="900px", bg=array([30, 30, 30]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="70px", h_button="70px"))
+        s.context_menu["main"].add_element("modes", RadioButton(x="73.5%w", y="40%h", anchor="ru", w="2.4%w", h="55%h", bg=array([30, 30, 30]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="2.4%w", h_button="2.4%w"))
         [bottone.load_texture(f"item{index + 1}") for index, bottone in enumerate(s.context_menu["main"].elements["modes"].toggles)]
         
-        s.context_menu["main"].add_element("tools", RadioButton(x="0px", y="5%h", anchor="lu", w="70px", h="225px", bg=array([30, 30, 30]), axis="y", cb_n=3, cb_s=[0, 0, 0], cb_t=["" for _ in range(3)], type_checkbox=False, w_button="70px", h_button="70px"))
+        s.context_menu["main"].add_element("tools", RadioButton(x="0px", y="5%h", anchor="lu", w="2.4%w", h=f"{2.5*3}%w", bg=array([30, 30, 30]), axis="y", cb_n=3, cb_s=[0, 0, 0], cb_t=["" for _ in range(3)], type_checkbox=False, w_button="2.4%w", h_button="2.4%w"))
         [bottone.load_texture(f"tool{index + 1}") for index, bottone in enumerate(s.context_menu["main"].elements["tools"].toggles)]
 
-        s.context_menu["main"].add_element("reset_zoom", Bottone_Push(anchor=("cu cd (0px) (10px)", s.context_menu["main"].elements["tools"]), w="70px", h="70px", function=BottoniCallbacks.change_state))
+        s.context_menu["main"].add_element("reset_zoom", Bottone_Push(anchor=("cu cd (0px) (10px)", s.context_menu["main"].elements["tools"]), w="2.4%w", h="2.4%w", function=BottoniCallbacks.change_state))
         s.context_menu["main"].elements["reset_zoom"].load_texture(f"tool4")
 
-        s.label["label_x"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
-        s.label["label_y"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
-        s.label["label_2y"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
-        s.label["title"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
-        s.label["legend"] = Label_Text(x="50%w", y="50%", anchor="cc", w="-*w", h="-*h", latex_font=True, no_parent=True)
 
         def set_active_tab():
             for index, state in enumerate(self.scene["main"].context_menu["main"].elements["modes"].cb_s):
