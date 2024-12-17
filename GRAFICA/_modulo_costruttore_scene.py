@@ -3,12 +3,21 @@ import os
 from numpy import array
 from time import perf_counter
 
-from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, ContextMenu, BaseElement, Screen, Palette
+from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, ContextMenu, BaseElement, Screen, Palette, Collapsable_Window
 from GRAFICA._modulo_bottoni_callbacks import BottoniCallbacks
 
 NON_ESEGUIRE = False
 if NON_ESEGUIRE:
     from GRAFICA._modulo_UI import Logica
+
+
+
+class Colors:
+    def __init__(self):
+        self.perano = [148, 177, 255]   #94b1ff 
+        self.cremisi = [220, 20, 60]    #dc143c 
+
+
 
 class Costruttore:
     def __init__(self, screen, width, height, font_size) -> None:
@@ -30,7 +39,8 @@ class Costruttore:
 
         self.bott_calls = BottoniCallbacks()
 
-        self.costruisci_main()
+        # self.costruisci_main()
+        self.costruisci_main_plot()
 
 
     def recalc(self, new_w, new_h):
@@ -62,6 +72,33 @@ class Costruttore:
 
 
     def costruisci_main(self):
+        self.scene["main"] = Scena()
+
+        s = self.scene["main"]
+        
+        s.palette_popup = Palette(x="50%w", y="50%h", anchor="cc", w="40%w", h="40%h")
+
+        s.context_menu["main"] = ContextMenu(x="0px", y="0px", w="100%w", h="100%h", anchor="lu", bg=[30, 30, 30], scrollable=False)
+
+        s.context_menu["main"].add_element("clock", Label_Text(x="100%w", y="100%h", w="-*w", h="-*h", anchor="rd", text="." * 22))
+        s.context_menu["main"].add_element("memory", Label_Text(anchor=("rd ld (-0.7%w) (0px)", s.context_menu["main"].elements["clock"]), w="-*w", h="-*h", text="." * 22))
+        s.context_menu["main"].add_element("battery", Label_Text(anchor=("rd ld (-0.7%w) (0px)", s.context_menu["main"].elements["memory"]), w="-*w", h="-*h", text="." * 8))
+        s.context_menu["main"].add_element("fps", Label_Text(anchor=("rd ld (-0.7%w) (0px)", s.context_menu["main"].elements["battery"]), w="-*w", h="-*h", text="." * 13))
+        s.context_menu["main"].add_element("cpu", Label_Text(anchor=("rd ld (-0.7%w) (0px)", s.context_menu["main"].elements["fps"]), w="-*w", h="-*h", text="." * 13))
+
+        s.context_menu["main"].add_element("exit", Bottone_Push(x="100%w", y="0px", w="50px", h="50px", anchor="ru", text="X", function=self.bott_calls.exit))
+        
+        s.context_menu["main"].add_element("settings", ContextMenu(x="50%w", y="50%h", w="30%w", h="80%h", anchor="cc"))
+        
+        s.context_menu["main"].elements["settings"].add_element("scatter_info", Collapsable_Window(x="1%w", y="1%h", w="98%w", h="20%h", anchor="lu", bg=[148, 177, 255]))
+        s.context_menu["main"].elements["settings"].add_element("line_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].elements["scatter_info"]), bg=[148, 177, 255]))
+        s.context_menu["main"].elements["settings"].add_element("gradient_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].elements["line_info"]), bg=[148, 177, 255]))
+        s.context_menu["main"].elements["settings"].add_element("metadata_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].elements["gradient_info"]), bg=[148, 177, 255]))
+
+
+
+    
+    def costruisci_main_plot(self):
         
         self.scene["main"] = Scena()
 
@@ -88,7 +125,8 @@ class Costruttore:
 
         s.context_menu["main"].add_element("renderer", Screen(f"{s.context_menu["main"].elements["viewport"].x}px", f"{s.context_menu["main"].elements["viewport"].y}px", anchor="lu", w="4000px", h=f"{4000 * moltiplier}px", latex_font=True, screenshot_type=True))
 
-        s.context_menu["main"].add_element("elenco_plots", Scroll(x="73.5%w", y="5%h", anchor="lu", w="26%w", h="33%h", text="Grafici caricati"))
+        s.context_menu["main"].add_element("elenco_plots1D", Scroll(x="73.5%w", y="5%h", anchor="lu", w="26%w", h="33%h", text="Grafici 1D caricati"))
+        s.context_menu["main"].add_element("elenco_plots2D", Scroll(x="73.5%w", y="5%h", anchor="lu", w="26%w", h="33%h", text="Grafici 2D caricati"))
 
         s.context_menu["item1"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
         s.context_menu["item2"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
@@ -104,21 +142,27 @@ class Costruttore:
 
         # # ITEM 1 GEOMETRY ------------------------------------------------
         s.context_menu["item1"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Geometria}"))
-        s.context_menu["item1"].add_element("w_plot_area", Entrata("75%w", "120px", "lu", "20%w", "30px", text="0.8", title="larghezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
-        s.context_menu["item1"].add_element("h_plot_area", Entrata("75%w", "155px", "lu", "20%w", "30px", text="0.8", title="altezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
-        s.context_menu["item1"].add_element("x_plot_area", Entrata("75%w", "205px", "lu", "20%w", "30px", text="0.15", title="X plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
-        s.context_menu["item1"].add_element("y_plot_area", Entrata("75%w", "240px", "lu", "20%w", "30px", text="0.1", title="Y plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
-        s.context_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", "30%w", "400px", "cc", "30%w", "40px", [50, 50, 50], bg=[50, 50, 50], text="Color plot area"))
-        s.context_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", "30%w", "450px", "cc", "30%w", "40px", [40, 40, 40], bg=[50, 50, 50], text="Color background"))
+        s.context_menu["item1"].add_element("plot_mode", RadioButton("50%w", "120px", "cd", "35%w", "50px", "x", cb_n=2, cb_s=[0, 1], cb_t=["1D", "2D"], w_button="17.5%w", h_button="50px", type_checkbox=False, always_one_active=True))
         
-        s.context_menu["item1"].add_element("norma_perc", RadioButton("50%w", "525px", "cc", "70%w", "50px", "x", cb_n=2, cb_s=[0, 0], cb_t=["[0..1]", "[%]"], type_checkbox=0, w_button="35%w", h_button="50px"))
-        s.context_menu["item1"].add_element("overlap", Bottone_Toggle("50%w", "600px", "cc", "35%w", "50px", True, False, "Plots Overlap"))
-        s.context_menu["item1"].add_element("second_y_axis", Bottone_Toggle("50%w", "700px", "cc", "35%w", "50px", False, False, "Toggle 2° Y axis"))
+        s.context_menu["item1"].add_element("w_plot_area", Entrata("75%w", "170px", "lu", "20%w", "30px", text="0.8", title="larghezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        s.context_menu["item1"].add_element("h_plot_area", Entrata("75%w", "205px", "lu", "20%w", "30px", text="0.8", title="altezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        s.context_menu["item1"].add_element("size_plot_area", Entrata("75%w", "170px", "lu", "20%w", "30px", text="0.8", title="dimensione plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        s.context_menu["item1"].add_element("x_plot_area", Entrata("75%w", "255px", "lu", "20%w", "30px", text="0.15", title="X plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        s.context_menu["item1"].add_element("y_plot_area", Entrata("75%w", "290px", "lu", "20%w", "30px", text="0.1", title="Y plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        
+        s.context_menu["item1"].add_element("mantain_prop", Bottone_Toggle("25%w", "365px", "cc", "30px", "30px", True, True, "Mantain axis proportions"))
+        
+        s.context_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", "30%w", "450px", "cc", "30%w", "40px", [50, 50, 50], bg=[50, 50, 50], text="Color plot area"))
+        s.context_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", "30%w", "500px", "cc", "30%w", "40px", [40, 40, 40], bg=[50, 50, 50], text="Color background"))
+        
+        s.context_menu["item1"].add_element("norma_perc", RadioButton("50%w", "575px", "cc", "70%w", "50px", "x", cb_n=2, cb_s=[0, 0], cb_t=["[0..1]", "[%]"], type_checkbox=0, w_button="35%w", h_button="50px"))
+        s.context_menu["item1"].add_element("overlap", Bottone_Toggle("50%w", "650px", "cc", "35%w", "50px", True, False, "Plots Overlap"))
+        
         # # ITEM 1 GEOMETRY ------------------------------------------------
         
         
         # # ITEM 2 PLOTS ---------------------------------------------------
-        s.context_menu["item2"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Grafici}"))
+        s.context_menu["item2"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Grafici 1D}"))
         
         s.context_menu["item2"].add_element("plot_name", Entrata("20%w", "90px", "lu", "75%w", "30px", text="", title="Name: "))
     
@@ -139,6 +183,25 @@ class Costruttore:
         s.context_menu["item2"].add_element("grad_mode", RadioButton("90%w", "600px", "ru", "35%w", "80px", axis="y", cb_n=2, cb_s=[0, 1], cb_t=["Horizontal", "Vertical"], type_checkbox=False, w_button="35%w", h_button="40px"))
         
         s.context_menu["item2"].add_element("add_second_axis", Bottone_Toggle("40%w", "750px", "ru", "30px", "30px", 0, text="Add to the second Y axis"))
+        
+        s.context_menu["item2"].add_element("column_x", Entrata("25%w", "820px", "cu", "5.5%w", "30px", text="0", title="X column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101))
+        s.context_menu["item2"].add_element("column_y", Entrata("60%w", "820px", "cu", "5.5%w", "30px", text="0", title="Y column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101))
+        s.context_menu["item2"].add_element("column_ey", Entrata("95%w", "820px", "cu", "5.5%w", "30px", text="0", title="Ey column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101))
+
+        ################
+
+        s.context_menu["item2"].add_element("_title_drop_menu_base2D", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Grafici 2D}"))
+        
+        s.context_menu["item2"].add_element("plot_name2D", Entrata("20%w", "90px", "lu", "75%w", "30px", text="", title="Name: "))
+        
+        s.context_menu["item2"].add_element("colore_base1", ColorPicker(s.palette_popup, "2", "30%w", "350px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore estremo LOW"))
+        s.context_menu["item2"].add_element("colore_base2", ColorPicker(s.palette_popup, "3", "30%w", "405px", "cc", "30%w", "40px", [220, 20, 60], bg=[50, 50, 50], text="Colore estremo HIGH"))
+        
+        s.context_menu["item2"].add_element("flip_y", Bottone_Toggle("80%w", "600px", "ru", "30px", "30px", 0, text="Flip Y axis", text_on_right=0))
+        s.context_menu["item2"].add_element("flip_x", Bottone_Toggle("40%w", "600px", "ru", "30px", "30px", 0, text="Flip X axis", text_on_right=0))
+        
+        s.context_menu["item2"].add_element("spacing_x", Entrata("75%w", "165px", "ru", "30%w", "30px", text="1", title="Spacing X", lunghezza_max=13, solo_numeri=True, num_valore_minimo=1e-10, num_valore_massimo=1e10))
+        s.context_menu["item2"].add_element("spacing_y", Entrata("75%w", "200px", "ru", "30%w", "30px", text="1", title="Spacing Y", lunghezza_max=13, solo_numeri=True, num_valore_minimo=1e-10, num_valore_massimo=1e10))
         # # ITEM 2 PLOTS ---------------------------------------------------
 
 
@@ -160,30 +223,33 @@ class Costruttore:
         s.context_menu["item3"].add_element("label_2y_color", ColorPicker(s.palette_popup, "7", "30%w", "670px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label 2Y"))
         
         s.context_menu["item3"].add_element("show_coords_projection", Bottone_Toggle("95%w", "750px", "ru", "30px", "30px", text="Mostra proiezione coords", type_checkbox=True, text_on_right=False))
+        s.context_menu["item3"].add_element("show_coords_value", Bottone_Toggle("95%w", "790px", "ru", "30px", "30px", text="Mostra valore coords", type_checkbox=True, text_on_right=False))
         # # ITEM 3 AX LABELS -----------------------------------------------
         
 
         # # ITEM 4 AXES ----------------------------------------------------
         s.context_menu["item4"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Assi}"))
         
-        s.context_menu["item4"].add_element("round_x", Entrata("75%w", "120px", "lu", "20%w", "30px", text="2", title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
-        s.context_menu["item4"].add_element("round_y", Entrata("75%w", "155px", "lu", "20%w", "30px", text="2", title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
-        s.context_menu["item4"].add_element("round_2y", Entrata("75%w", "190px", "lu", "20%w", "30px", text="2", title="2°Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
+        s.context_menu["item4"].add_element("second_y_axis", Bottone_Toggle("50%w", "140px", "cd", "35%w", "50px", False, False, "Toggle 2° Y axis"))
+
+        s.context_menu["item4"].add_element("round_x", Entrata("75%w", "180px", "lu", "20%w", "30px", text="2", title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
+        s.context_menu["item4"].add_element("round_y", Entrata("75%w", "215px", "lu", "20%w", "30px", text="2", title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
+        s.context_menu["item4"].add_element("round_2y", Entrata("75%w", "250px", "lu", "20%w", "30px", text="2", title="2°Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
         
-        s.context_menu["item4"].add_element("show_grid_x", Bottone_Toggle("95%w", "255px", "ru", "30px", "30px", text="Mostra griglia X", state=True, type_checkbox=True, text_on_right=False))
-        s.context_menu["item4"].add_element("show_grid_y", Bottone_Toggle("95%w", "290px", "ru", "30px", "30px", text="Mostra griglia Y", state=True, type_checkbox=True, text_on_right=False))
-        s.context_menu["item4"].add_element("show_grid_2y", Bottone_Toggle("95%w", "325px", "ru", "30px", "30px", text="Mostra griglia 2°Y", state=True, type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("show_grid_x", Bottone_Toggle("95%w", "315px", "ru", "30px", "30px", text="Mostra griglia X", state=True, type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("show_grid_y", Bottone_Toggle("95%w", "350px", "ru", "30px", "30px", text="Mostra griglia Y", state=True, type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("show_grid_2y", Bottone_Toggle("95%w", "385px", "ru", "30px", "30px", text="Mostra griglia 2°Y", state=True, type_checkbox=True, text_on_right=False))
         
-        s.context_menu["item4"].add_element("formatting_x", Bottone_Toggle("95%w", "385px", "ru", "30px", "30px", text="Usa notazione scientifica asse X", type_checkbox=True, text_on_right=False))
-        s.context_menu["item4"].add_element("formatting_y", Bottone_Toggle("95%w", "420px", "ru", "30px", "30px", text="Usa notazione scientifica asse Y", type_checkbox=True, text_on_right=False))
-        s.context_menu["item4"].add_element("formatting_2y", Bottone_Toggle("95%w", "455px", "ru", "30px", "30px", text="Usa notazione scientifica asse 2°Y", type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("formatting_x", Bottone_Toggle("95%w", "445px", "ru", "30px", "30px", text="Usa notazione scientifica asse X", type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("formatting_y", Bottone_Toggle("95%w", "480px", "ru", "30px", "30px", text="Usa notazione scientifica asse Y", type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("formatting_2y", Bottone_Toggle("95%w", "515px", "ru", "30px", "30px", text="Usa notazione scientifica asse 2°Y", type_checkbox=True, text_on_right=False))
         
-        s.context_menu["item4"].add_element("ax_color_x", ColorPicker(s.palette_popup, "8", "30%w", "565px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse X"))
-        s.context_menu["item4"].add_element("ax_color_y", ColorPicker(s.palette_popup, "9", "30%w", "615px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse Y"))
-        s.context_menu["item4"].add_element("ax_color_2y", ColorPicker(s.palette_popup, "10", "30%w", "670px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse 2°Y"))
-        s.context_menu["item4"].add_element("tick_color_x", ColorPicker(s.palette_popup, "11", "30%w", "760px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values X"))
-        s.context_menu["item4"].add_element("tick_color_y", ColorPicker(s.palette_popup, "12", "30%w", "810px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y"))
-        s.context_menu["item4"].add_element("tick_color_2y", ColorPicker(s.palette_popup, "13", "30%w", "860px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values 2°Y"))
+        s.context_menu["item4"].add_element("ax_color_x", ColorPicker(s.palette_popup, "8", "30%w", "625px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse X"))
+        s.context_menu["item4"].add_element("ax_color_y", ColorPicker(s.palette_popup, "9", "30%w", "675px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse Y"))
+        s.context_menu["item4"].add_element("ax_color_2y", ColorPicker(s.palette_popup, "10", "30%w", "730px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse 2°Y"))
+        s.context_menu["item4"].add_element("tick_color_x", ColorPicker(s.palette_popup, "11", "30%w", "820px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values X"))
+        s.context_menu["item4"].add_element("tick_color_y", ColorPicker(s.palette_popup, "12", "30%w", "870px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y"))
+        s.context_menu["item4"].add_element("tick_color_2y", ColorPicker(s.palette_popup, "13", "30%w", "920px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values 2°Y"))
         # # ITEM 4 AXES ----------------------------------------------------
 
 
@@ -205,16 +271,21 @@ class Costruttore:
         s.context_menu["item5"].add_element("show_icons", Bottone_Toggle("95%w", "620px", "ru", "30px", "30px", text="Mostra icone", state=True, type_checkbox=True, text_on_right=False))
         s.context_menu["item5"].add_element("match_color_text", Bottone_Toggle("95%w", "660px", "ru", "30px", "30px", text="Match text color", state=True, type_checkbox=True, text_on_right=False))
         s.context_menu["item5"].add_element("color_text", ColorPicker(s.palette_popup, "15", "30%w", "720px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Color legend text"))
+        
+        s.context_menu["item5"].add_element("text_2D_plot", Entrata("75%w", "770px", "lu", "20%w", "30px", text=r"1\mum", title="Testo marker scala"))
+        s.context_menu["item5"].add_element("size_scale_marker2D", Entrata("75%w", "810px", "lu", "20%w", "30px", text="1000", title="Valore marker scala", solo_numeri=True))
         # # ITEM 5 LEGEND --------------------------------------------------
 
 
         # # ITEM 6 IMPORT --------------------------------------------------
         s.context_menu["item6"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Import}"))
         
-        s.context_menu["item6"].add_element("import_single_plot", Bottone_Push("50%w", "80px", "cu", "70%w", "40px", function=self.bott_calls.load_file, text="Carica singolo file"))
-        s.context_menu["item6"].add_element("import_multip_plot", Bottone_Push("50%w", "130px", "cu", "70%w", "40px", function=self.bott_calls.load_files, text="Carica file multipli"))
+        s.context_menu["item6"].add_element("import_single_plot1D", Bottone_Push("50%w", "80px", "cu", "70%w", "40px", function=self.bott_calls.load_file, text="Carica singolo file 1D"))
+        s.context_menu["item6"].add_element("import_multip_plot1D", Bottone_Push("50%w", "130px", "cu", "70%w", "40px", function=self.bott_calls.load_files, text="Carica file multipli 1D"))
+        s.context_menu["item6"].add_element("import_single_plot2D", Bottone_Push("50%w", "200px", "cu", "70%w", "40px", function=self.bott_calls.load_file, text="Carica singolo file 2D", bg=[200, 150, 50]))
+        s.context_menu["item6"].add_element("import_multip_plot2D", Bottone_Push("50%w", "250px", "cu", "70%w", "40px", function=self.bott_calls.load_files, text="Carica file multipli 2D", bg=[200, 150, 50]))
     
-        s.context_menu["item6"].add_element("remove_element_selected", Bottone_Push("50%w", "200px", "cu", "70%w", "40px", function=self.bott_calls.change_state, text=r"\#dc143c{Elimina elemento selezionato}"))
+        s.context_menu["item6"].add_element("remove_element_selected", Bottone_Push("50%w", "320px", "cu", "70%w", "40px", function=self.bott_calls.change_state, text=r"\#dc143c{Elimina elemento selezionato}"))
         
         # # ITEM 6 IMPORT --------------------------------------------------
 
@@ -252,7 +323,7 @@ class Costruttore:
         s.context_menu["item11"].add_element("molecule_preview", Screen("50%w", "180px", "cu", "95%w", "95%w"))
         # # ITEM 11 METADATA -----------------------------------------------
 
-        starting = 1
+        starting = 5
         stato_iniziale_tab = [False for _ in range(11)]
         stato_iniziale_tab[starting] = True        
         s.context_menu["main"].add_element("modes", RadioButton(x="73.5%w", y="40%h", anchor="ru", w="2.4%w", h="55%h", bg=array([30, 30, 30]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=["" for _ in range(11)], type_checkbox=False, w_button="2.4%w", h_button="2.4%w"))
@@ -263,6 +334,63 @@ class Costruttore:
 
         s.context_menu["main"].add_element("reset_zoom", Bottone_Push(anchor=("cu cd (0px) (10px)", s.context_menu["main"].elements["tools"]), w="2.4%w", h="2.4%w", function=BottoniCallbacks.change_state))
         s.context_menu["main"].elements["reset_zoom"].load_texture(f"tool4")
+
+
+        def hide_plot_attributes_based_on_plot_mode():
+            state_1D = self.scene["main"].context_menu["item1"].elements["plot_mode"].cb_s[0]
+            state_2D = self.scene["main"].context_menu["item1"].elements["plot_mode"].cb_s[1]
+
+            self.scene["main"].context_menu["item2"].elements["_title_drop_menu_base"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["plot_name"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["scatter_size"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["scatter_border"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["function_size"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["dashed_density"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["scatter_toggle"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["function_toggle"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["errorbar"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["dashed"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["colore_function"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["colore_scatter"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["gradient"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["grad_mode"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["add_second_axis"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["column_x"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["column_y"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].elements["column_ey"].hide_plus_children(state_2D)
+
+            self.scene["main"].context_menu["item2"].elements["_title_drop_menu_base2D"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].elements["plot_name2D"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].elements["colore_base1"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].elements["colore_base2"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].elements["flip_y"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].elements["flip_x"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].elements["spacing_x"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].elements["spacing_y"].hide_plus_children(state_1D)
+        
+        
+        def hide_legend_attributes_based_on_plot_mode():
+            state_1D = self.scene["main"].context_menu["item1"].elements["plot_mode"].cb_s[0]
+            state_2D = self.scene["main"].context_menu["item1"].elements["plot_mode"].cb_s[1]
+
+            self.scene["main"].context_menu["item5"].elements["show_icons"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item5"].elements["match_color_text"].hide_plus_children(state_2D)
+
+            self.scene["main"].context_menu["item5"].elements["text_2D_plot"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item5"].elements["size_scale_marker2D"].hide_plus_children(state_1D)
+
+            # flag or not this toggle (in 2D always OFF)
+            if state_2D:
+                self.scene["main"].context_menu["item5"].elements["match_color_text"].state_toggle = False
+            
+
+
+        def hide_UI_plot_area_size_based_on_proportions():
+            state = self.scene["main"].context_menu["item1"].elements["mantain_prop"].state_toggle
+            self.scene["main"].context_menu["item1"].elements["w_plot_area"].hide_plus_children(state)
+            self.scene["main"].context_menu["item1"].elements["h_plot_area"].hide_plus_children(state)
+            self.scene["main"].context_menu["item1"].elements["size_plot_area"].hide_plus_children(not state)
+
 
 
         def set_active_tab():
@@ -291,6 +419,9 @@ class Costruttore:
                 self.scene["main"].context_menu["item5"].elements["font_size_legend"].hide_plus_children(stato)
                 self.scene["main"].context_menu["item5"].elements["show_legend_background"].hide_plus_children(stato)
                 self.scene["main"].context_menu["item5"].elements["show_icons"].hide_plus_children(stato)
+                
+                self.scene["main"].context_menu["item5"].elements["text_2D_plot"].hide_plus_children(stato)
+                self.scene["main"].context_menu["item5"].elements["size_scale_marker2D"].hide_plus_children(stato)
 
                 self.scene["main"].context_menu["item5"].elements["match_color_text"].hide_plus_children(stato)
                 
@@ -302,7 +433,7 @@ class Costruttore:
 
         def hide_UI_element_with_toggle_plot_section():
 
-            if self.scene["main"].context_menu["main"].elements["modes"].cb_s[1]:
+            if self.scene["main"].context_menu["main"].elements["modes"].cb_s[1] and self.scene["main"].context_menu["item1"].elements["plot_mode"].cb_s[0]:
 
                 if not self.scene["main"].context_menu["item2"].elements["scatter_toggle"].state_toggle:
                     self.scene["main"].context_menu["item2"].elements["scatter_size"].hide_plus_children(True)
@@ -325,7 +456,10 @@ class Costruttore:
 
             if self.scene["main"].context_menu["item6"].elements["remove_element_selected"].flag_foo:
                 self.scene["main"].context_menu["item6"].elements["remove_element_selected"].flag_foo = False
-                self.scene["main"].context_menu["main"].elements["elenco_plots"].remove_selected_item()
+                if self.scene["main"].context_menu["main"].elements["elenco_plots1D"].hide:
+                    self.scene["main"].context_menu["main"].elements["elenco_plots2D"].remove_selected_item()
+                if self.scene["main"].context_menu["main"].elements["elenco_plots2D"].hide:
+                    self.scene["main"].context_menu["main"].elements["elenco_plots1D"].remove_selected_item()
 
 
         def hide_overlap_normalization():
@@ -339,10 +473,13 @@ class Costruttore:
 
 
         s.functions.append(set_active_tab)
+        s.functions.append(hide_plot_attributes_based_on_plot_mode)
+        s.functions.append(hide_legend_attributes_based_on_plot_mode)
         s.functions.append(hide_UI_element_with_toggle_plot_section)
         s.functions.append(hide_UI_element_with_toggle_legend_section)
         s.functions.append(hide_overlap_normalization)
         s.functions.append(remove_selected_element)
+        s.functions.append(hide_UI_plot_area_size_based_on_proportions)
 
 
 class Scena:

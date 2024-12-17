@@ -48,7 +48,7 @@ class BaseElement:
         if bg is None:
             self.bg = array(BaseElement.pappardella["bg_def"])
         else:
-            self.bg = bg
+            self.bg = array(bg)
 
         self.hide: bool = hide
 
@@ -294,7 +294,7 @@ class Label_Text(BaseElement):
         self.w_Context = 1e6
 
 
-    def disegnami(self, logica, rotation=0, DANG_surface=None, DANG_offset_x=0, DANG_offset_y=0):
+    def disegnami(self, logica, vertical=False, DANG_surface=None, DANG_offset_x=0, DANG_offset_y=0):
 
         surface_to_use = self.schermo if DANG_surface is None else DANG_surface
 
@@ -328,6 +328,10 @@ class Label_Text(BaseElement):
                 iteration_lenght = 0
 
                 testo_diplayed_iteration = ""
+
+                if vertical:
+                    elenco_substringhe = elenco_substringhe[::-1]
+
                 for substringa_analizzata in elenco_substringhe:
 
                     if substringa_analizzata.pedice or substringa_analizzata.apice:
@@ -359,25 +363,34 @@ class Label_Text(BaseElement):
 
                     if substringa_analizzata.highlight and not self.latex_font:
                         pre_rotation = self.font.font_pyg_r.render("" + "█" * (len(substringa_analizzata.testo)) + "", True, [100, 100, 100])
-                        if rotation != 0:
-                            pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        surface_to_use.blit(pre_rotation, (self.x + original_spacing_x * offset_highlight + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
+                        if vertical:
+                            pre_rotation = pygame.transform.rotate(pre_rotation, 90)
+                        else:
+                            surface_to_use.blit(pre_rotation, (self.x + original_spacing_x * offset_highlight + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
 
                     if substringa_analizzata.bold:
                         pre_rotation = self.font.font_pyg_b.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
-                        if rotation != 0:
-                            pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
+                        if vertical:
+                            pre_rotation = pygame.transform.rotate(pre_rotation, 90)
+                            surface_to_use.blit(pre_rotation, (self.x + offset_frase + offset_pedice_apice + DANG_offset_x, self.y + offset_usato + DANG_offset_y))
+                        else:
+                            surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
+                    
                     elif substringa_analizzata.italic:
                         pre_rotation = self.font.font_pyg_i.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
-                        if rotation != 0:
-                            pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
+                        if vertical:
+                            pre_rotation = pygame.transform.rotate(pre_rotation, 90)
+                            surface_to_use.blit(pre_rotation, (self.x + offset_frase + offset_pedice_apice + DANG_offset_x, self.y + offset_usato + DANG_offset_y))
+                        else:
+                            surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
+                    
                     else:
                         pre_rotation = self.font.font_pyg_r.render(substringa_analizzata.testo, True, substringa_analizzata.colore)
-                        if rotation != 0:
-                            pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-                        surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
+                        if vertical:
+                            pre_rotation = pygame.transform.rotate(pre_rotation, 90)
+                            surface_to_use.blit(pre_rotation, (self.x + offset_frase + offset_pedice_apice + DANG_offset_x, self.y + offset_usato + DANG_offset_y))
+                        else:
+                            surface_to_use.blit(pre_rotation, (self.x + offset_usato + DANG_offset_x, self.y + offset_frase + offset_pedice_apice + DANG_offset_y))
                     
 
                     font_usato = self.font.font_pyg_i if substringa_analizzata.italic else (self.font.font_pyg_b if substringa_analizzata.bold else self.font.font_pyg_r)
@@ -414,8 +427,8 @@ class Label_Text(BaseElement):
 
 class Bottone_Push(BaseElement):
 
-    def __init__(self, x="", y="", anchor="lu", w="", h="", function=None, text="", hide=False, disable=False) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", function=None, text="", hide=False, disable=False, bg=None) -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, bg=bg)
 
         self.contorno = 2
 
@@ -694,13 +707,16 @@ class Bottone_Toggle(BaseElement):
 
 
 class RadioButton(BaseElement):
-    def __init__(self, x="", y="", anchor="lu", w="", h="", axis="x", bg=None, cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, hide=False, type_checkbox=True, w_button="30px", h_button="30px") -> None:
+    def __init__(self, x="", y="", anchor="lu", w="", h="", axis="x", bg=None, cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, hide=False, type_checkbox=True, w_button="30px", h_button="30px", always_one_active=False, default_active=0) -> None:
         super().__init__(x, y, anchor, w, h, title, hide)
 
         if not bg is None:
             self.bg = bg
 
         self.main_ax = axis
+
+        self.always_one_active = always_one_active
+        self.default_active = default_active
         
         self.title = title
         self.multiple_choice = multiple_choice
@@ -777,6 +793,10 @@ class RadioButton(BaseElement):
                     self.toggles[ele_vecchio].state_toggle = False
 
             self.cb_s = [b.state_toggle for b in self.toggles]
+
+            if self.always_one_active and sum(self.cb_s) == 0:
+                self.cb_s[self.default_active] = 1
+                self.toggles[self.default_active].state_toggle = 1
 
 
     @property
@@ -1696,7 +1716,7 @@ class ColorPicker(BaseElement):
 
     
     def get_color(self):
-        return self.picked_color
+        return array(self.picked_color)
 
 
     def update_context_menu(self, *args):
@@ -1921,7 +1941,7 @@ class SubStringa:
 
     def end(self, font:pygame.font.Font):
         lung = font.size(self.testo)
-        return lung[0] 
+        return lung[0]
 
 
     @staticmethod
@@ -2287,9 +2307,9 @@ class ContextMenu(BaseElement):
                     split = new_values[1].split()
                     for index_2, coord in enumerate(split):
                         if "px" in coord:  
-                            split[index_2] = f"{float(coord[:-2]) + pm}px"
+                            split[index_2] = f"{int(coord[:-2]) + pm}px"
 
-                    new_values[1] = "".join(split)
+                    new_values[1] = " ".join(split)
 
                 else:
                     new_values[1] += f" {pm}px"
@@ -2302,6 +2322,15 @@ class ContextMenu(BaseElement):
     def add_separator(self, y):
         self.separators.append(y)
 
+
+
+class Collapsable_Window(BaseElement):
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, bg=None):
+        super().__init__(x, y, anchor, w, h, text, hide, color_text, latex_font, bg)
+
+
+    def disegnami(self, logica):
+        pygame.draw.rect(self.schermo, self.bg, self.bounding_box)
 
 
 class Screen(BaseElement):
@@ -2476,7 +2505,9 @@ class Screen(BaseElement):
         return pygame.surfarray.make_surface(array)
 
     
-    def _blit_surface(self, surface, position):
+    def _blit_surface(self, surface, position, scale=[1, 1]):
+        if scale != [1, 1]:
+            surface = pygame.transform.scale(surface, scale)
         self.tavolozza.blit(surface, (position[0],position[1]))
 
 
@@ -2498,7 +2529,7 @@ class Screen(BaseElement):
             img = Image.open(path)
             img.save(path, dpi=(300, 300))
 
-        except FileNotFoundError:
+        except Exception:
             pass
     
 

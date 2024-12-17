@@ -3,6 +3,7 @@
 - General geometry
     - Zoom (DO mantain proportions)
     - Zoom (DO NOT mantain proportions)
+    - Support 2° ax
     - Force square plot shape
     - Custom dimension
     - Set percentage of plot area cover
@@ -29,6 +30,7 @@
     - Report errors
         - Size of the bars
     - Show the coordinates
+    - Normalize (2 axes 2 plots same height) (x-y, x2-y2)
     - Normalize (1 ax 2 plots same height) (0-1) and (0-100)
     - Disable plot overlap
     - Interpolation (linear)
@@ -70,7 +72,6 @@
 - General geometry
     - Multiple plots grid
     - alpha
-    - Support 2° ax
     - Select plots from clicking
     - Force mantain proportion in XY data
     - Type of axis:
@@ -95,7 +96,6 @@
     - Setting color
         - Setting progressive change
         - Setting zone change
-    - Normalize (2 axes 2 plots same height) (x-y, x2-y2)
     - Interpolation (custom curve)
     - Choose the column to plot (0 = x, 1 = y, 2 = ey)
 ---
