@@ -35,18 +35,18 @@ class BaseElement:
 
     '''
 
-    pappardella = None
+    FULL_coord_window = None
 
     def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, bg=None) -> None:
         
         self.latex_font = latex_font
-
-        self.schermo = BaseElement.pappardella["screen"]
+        self.is_child = False
+        self.schermo = BaseElement.FULL_coord_window["screen"]
 
         self.color_text = color_text
 
         if bg is None:
-            self.bg = array(BaseElement.pappardella["bg_def"])
+            self.bg = array(BaseElement.FULL_coord_window["bg_def"])
         else:
             self.bg = array(bg)
 
@@ -55,7 +55,7 @@ class BaseElement:
         self.testo: str = text
         self.testo_diplayed = (f"{self.testo}", 1) # (text, number of lines)
         
-        self.font_size_update = BaseElement.pappardella["font_size"]
+        self.font_size_update = BaseElement.FULL_coord_window["font_size"]
         self.font: Font = Font(self.font_size_update, self.latex_font)
 
         self.ori_coords = (x, y, w, h, anchor)
@@ -64,16 +64,16 @@ class BaseElement:
 
         self.x_Context = 0
         self.y_Context = 0
-        self.w_Context = self.pappardella["x_screen"]
-        self.h_Context = self.pappardella["y_screen"]
+        self.w_Context = self.FULL_coord_window["x_screen"]
+        self.h_Context = self.FULL_coord_window["y_screen"]
 
         self.recalc_geometry(x, y, w, h, anchor)
 
 
 
     @classmethod
-    def _init_scene(cls, pappardella) -> None:
-        cls.pappardella = pappardella 
+    def _init_scene(cls, FULL_coord_window) -> None:
+        cls.FULL_coord_window = FULL_coord_window 
 
 
     def disegnami(self, logica):
@@ -81,6 +81,10 @@ class BaseElement:
 
     
     def eventami(self, events, logica):
+        ...
+
+
+    def check_for_lost_focus(self, events, logica):
         ...
 
     
@@ -272,7 +276,8 @@ class BaseElement:
         self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
 
         # hides the element if it's outside the margins of the contextmenù
-        self.hide_plus_children(self.y < self.y_Context or self.y > self.y_Context + self.h_Context)
+        if not self.is_child:
+            self.hide_plus_children(self.y < self.y_Context or self.y > self.y_Context + self.h_Context)
 
 
     def hide_plus_children(self, booleano):
@@ -755,6 +760,7 @@ class RadioButton(BaseElement):
                 case _: raise TypeError(f"Invalid mode {self.main_ax}, accepted types: 'x', 'y'.")
         
         for bottone in self.toggles:
+            bottone.is_child = True
             if bottone.state_toggle:
                 bottone.bg = array([80, 100, 80])
             else:
@@ -862,12 +868,16 @@ class RadioButton(BaseElement):
             self.toggles[index].update_window_change()
 
 
+    def update_context_menu(self, *args):
+        super().update_context_menu(*args)
+        
+
     def hide_plus_children(self, booleano):
         if self.y < self.y_Context:
             booleano = 1
         super().hide_plus_children(booleano)
         try: [ele.hide_plus_children(booleano) for ele in self.toggles]
-        except Exception as e: ...
+        except Exception as e: ... # Happens that the RadioButton is told to hide elements, when they still have not been created 
 
 
 class Entrata(BaseElement):
@@ -941,48 +951,47 @@ class Entrata(BaseElement):
                         self.color_text = array([255, 0, 0])
                     else:
                         self.color_text = array([200, 200, 200])
-
-
             else:
                 self.return_previous_text = False
                 self.previous_text = self.testo
 
-            for event in events:
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        if self.bounding_box.collidepoint(event.pos):
-                            
-                            if self.selezionato:
-                                self.highlight_region = [0, 0]
-                                self.update_puntatore_pos(event.pos)
-                            else:    
-                                self.selezionato = True
-                                self.highlight_region = [len(self.testo), 0]
-                                self.puntatore_pos = len(self.testo)
 
-                            self.animazione_puntatore.riavvia()
+            if logica.dragging and self.selezionato:
 
-                        else:
-                            self.selezionato = False
-                            self.highlight_region = [0, 0]
-                            
-
-                if event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:
-                        if self.bounding_box.collidepoint(event.pos):
-                            if self.selezionato:
-                                self.animazione_puntatore.riavvia()
-                            
-
-                # selected
-                if logica.dragging and self.selezionato:
-
-                    self.highlight_region[0] = self.get_puntatore_pos(logica.mouse_pos[0])
-                    self.highlight_region[1] = self.get_puntatore_pos(logica.original_start_pos[0])
-                    self.update_puntatore_pos(logica.mouse_pos)
-                    self.animazione_puntatore.riavvia()
+                self.highlight_region[0] = self.get_puntatore_pos(logica.mouse_pos[0])
+                self.highlight_region[1] = self.get_puntatore_pos(logica.original_start_pos[0])
+                self.update_puntatore_pos(logica.mouse_pos)
+                self.animazione_puntatore.riavvia()
 
             self.hover = True if self.bounding_box.collidepoint(logica.mouse_pos) else False
+
+
+    def check_for_lost_focus(self, events, logica):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if self.bounding_box.collidepoint(event.pos):
+                        
+                        if self.selezionato:
+                            self.highlight_region = [0, 0]
+                            self.update_puntatore_pos(event.pos)
+                        else:    
+                            self.selezionato = True
+                            self.highlight_region = [len(self.testo), 0]
+                            self.puntatore_pos = len(self.testo)
+
+                        self.animazione_puntatore.riavvia()
+
+                    else:
+                        self.selezionato = False
+                        self.highlight_region = [0, 0]
+                        
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    if self.bounding_box.collidepoint(event.pos):
+                        if self.selezionato:
+                            self.animazione_puntatore.riavvia()
 
 
     def eventami_scrittura(self, events: list['Event'], logica: 'Logica'):
@@ -1429,6 +1438,7 @@ class Scroll(BaseElement):
     def add_element_scroll(self, element: str, stato: bool):
         self.elementi.append(element)
         self.ele_mask.append(stato)
+        self.ele_toggle[len(self.elementi) - 1].state_toggle = stato
 
 
     def remove_selected_item(self):
@@ -1560,7 +1570,6 @@ class Scroll(BaseElement):
 
                                 for bottone, status in zip(self.ele_toggle, self.ele_mask[self.ele_first : self.ele_first + self.ele_max]):
                                     bottone.state_toggle = status
-
 
                     if event.type == pygame.MOUSEBUTTONUP:
 
@@ -2220,6 +2229,7 @@ class ContextMenu(BaseElement):
                 self.update_scroll(0)
 
 
+            [ele.check_for_lost_focus(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
             [ele.eventami(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
 
             for indice, ele in self.elements.items():
@@ -2236,6 +2246,8 @@ class ContextMenu(BaseElement):
         
         if self.previous_hide != self.hide:
 
+            # If there's an external reason to hide an element (outside the ContextMenù)
+            # it shouldn't be constantly being updated from this function, only when the ContextMenù visibility changes.
             for index, element in self.elements.items():
 
                 if element.y > self.y:
@@ -2260,10 +2272,10 @@ class ContextMenu(BaseElement):
 
     def update_window_change(self):
 
-        self.x = float(self.ori_coords[0][:-2]) * self.pappardella["x_screen"] / 100
-        self.y = float(self.ori_coords[1][:-2]) * self.pappardella["y_screen"] / 100
-        self.w = float(self.ori_coords[2][:-2]) * self.pappardella["x_screen"] / 100
-        self.h = float(self.ori_coords[3][:-2]) * self.pappardella["y_screen"] / 100
+        self.x = float(self.ori_coords[0][:-2]) * self.FULL_coord_window["x_screen"] / 100
+        self.y = float(self.ori_coords[1][:-2]) * self.FULL_coord_window["y_screen"] / 100
+        self.w = float(self.ori_coords[2][:-2]) * self.FULL_coord_window["x_screen"] / 100
+        self.h = float(self.ori_coords[3][:-2]) * self.FULL_coord_window["y_screen"] / 100
 
         self.bounding_box = pygame.Rect(self.x, self.y, self.w, self.h)
 
@@ -2535,3 +2547,7 @@ class Screen(BaseElement):
 
     def load_image(self, path:str):
         self.loaded_image = pygame.image.load(path)
+    
+    
+    def scale_image(self, scale:tuple):
+        self.loaded_image = pygame.transform.scale(self.loaded_image, scale)

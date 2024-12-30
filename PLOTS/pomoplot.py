@@ -7,6 +7,7 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 from rdkit.Chem import rdChemReactions as Reactions
 from rdkit import RDLogger
+import os
 
 RDLogger.DisableLog('rdApp.*') 
 
@@ -36,6 +37,10 @@ class PomoPlot:
         
         self.plots2D: list[_Single2DPlot] = []
         self.active_plot2D: _Single2DPlot = None
+
+        self.molecules: list[Molecule] = []
+        self.storico_molecole: int = 0
+        self.active_molecule: Molecule = None
 
         # ricerca il quadrato più grande disponibile all'interno dello schermo
         self.force_screen: bool = True
@@ -88,6 +93,10 @@ class PomoPlot:
         self.zero_y = 0
         self.old_SMILE: str = ""
 
+        self.old_pos_x_molecola = None
+        self.old_pos_y_molecola = None
+        self.old_dimensione_molecola = None
+
         self.spessore_scala_2Dplot = 5
 
 
@@ -108,6 +117,7 @@ class PomoPlot:
         self.screen_render = UI.costruttore.scene["main"].context_menu["main"].elements["renderer"]
         #############################################################################
 
+        self.UI_active_tab: 'RadioButton' = UI.costruttore.scene["main"].context_menu["main"].elements["modes"]
 
         self.UI_tools: 'RadioButton' = UI.costruttore.scene["main"].context_menu["main"].elements["tools"]
         self.UI_reset_tools: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["reset_zoom"]
@@ -129,6 +139,7 @@ class PomoPlot:
 
         self.UI_scroll_plots1D: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots1D"]
         self.UI_scroll_plots2D: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots2D"]
+        self.UI_elenco_metadata: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_metadata"]
 
         self.UI_plot_name: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["plot_name"]
         self.UI_plot_name2D: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["plot_name2D"]
@@ -180,6 +191,7 @@ class PomoPlot:
         self.UI_show_coords_value: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["show_coords_value"]
 
         self.UI_second_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["second_y_axis"]
+        self.UI_invert_x_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["invert_x_axis"]
         self.UI_round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_x"]
         self.UI_round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_y"]
         self.UI_round_ticks_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_2y"]
@@ -223,6 +235,12 @@ class PomoPlot:
         self.UI_molecule_input: 'Entrata' = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_input"]
         self.UI_molecule_preview: 'Screen' = UI.costruttore.scene["main"].context_menu["item11"].elements["molecule_preview"]
 
+        self.UI_add_molecola: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item11"].elements["add_molecola"]
+        self.UI_pos_x_molecola: 'Entrata' = UI.costruttore.scene["main"].context_menu["item11"].elements["pos_x_molecola"]
+        self.UI_pos_y_molecola: 'Entrata' = UI.costruttore.scene["main"].context_menu["item11"].elements["pos_y_molecola"]
+        self.UI_dimensione_molecola: 'Entrata' = UI.costruttore.scene["main"].context_menu["item11"].elements["dimensione_molecola"]
+
+
         self.UI_compute_interpolation: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["compute"]
         self.UI_min_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["min_x"]
         self.UI_max_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["max_x"]
@@ -237,6 +255,7 @@ class PomoPlot:
         self.norma_perc = self.UI_norma_perc
         self.scroll_plots1D = self.UI_scroll_plots1D
         self.scroll_plots2D = self.UI_scroll_plots2D
+        self.elenco_metadata = self.UI_elenco_metadata
         self.import_single_plot1D = self.UI_import_single_plot1D
         self.import_single_plot2D = self.UI_import_single_plot2D
         self.import_multip_plot1D = self.UI_import_multip_plot1D
@@ -247,9 +266,15 @@ class PomoPlot:
         self.reset_tools = self.UI_reset_tools                              
         self.molecule_input = self.UI_molecule_input
         self.molecule_preview = self.UI_molecule_preview
+        self.add_molecola = self.UI_add_molecola
         self.output_interpolation = self.UI_output_interpolation
         self.compute_interpolation = self.UI_compute_interpolation
         # NO CHANGES PERFORMED ----------------------------------------------------------
+
+        try:
+            self.active_tab = [index for index, status in enumerate(self.UI_active_tab.toggles) if status.state_toggle][0]
+        except IndexError:
+            self.active_tab = -1
 
         self.x_plot_area = self.UI_x_plot_area.get_text()
         self.y_plot_area = self.UI_y_plot_area.get_text()
@@ -264,6 +289,7 @@ class PomoPlot:
         self.overlap = self.UI_overlap.state_toggle
         
         self.second_y_axis = self.UI_second_y_axis.state_toggle
+        self.invert_x_axis = self.UI_invert_x_axis.state_toggle
 
         self.plot_name = self.UI_plot_name.get_text()
         self.plot_name2D = self.UI_plot_name2D.get_text()
@@ -275,8 +301,8 @@ class PomoPlot:
         self.spacing_x = self.UI_spacing_x.get_text()
         self.spacing_y = self.UI_spacing_y.get_text()
         
-        self.colore_base1 = self.UI_colore_base1.get_color()
-        self.colore_base2 = self.UI_colore_base2.get_color()
+        self.colore_base1 = self.UI_colore_base1.get_color().astype(np.float64)
+        self.colore_base2 = self.UI_colore_base2.get_color().astype(np.float64)
         self.flip_y = self.UI_flip_y.state_toggle
         self.flip_x = self.UI_flip_x.state_toggle
 
@@ -302,10 +328,10 @@ class PomoPlot:
         self.font_size_label_y = self.UI_font_size_label_y.get_text()
         self.font_size_label_2y = self.UI_font_size_label_2y.get_text()
         
-        self.text_title = self.UI_text_title.get_text()
-        self.text_label_x = self.UI_text_label_x.get_text()
-        self.text_label_y = self.UI_text_label_y.get_text()
-        self.text_label_2y = self.UI_text_label_2y.get_text()
+        self.text_title = self.UI_text_title.testo
+        self.text_label_x = self.UI_text_label_x.testo
+        self.text_label_y = self.UI_text_label_y.testo
+        self.text_label_2y = self.UI_text_label_2y.testo
         self.label_title_color = self.UI_label_title_color.get_color()
         self.label_x_color = self.UI_label_x_color.get_color()
         self.label_y_color = self.UI_label_y_color.get_color()
@@ -349,6 +375,10 @@ class PomoPlot:
         self.min_x_interpolation = self.UI_min_x_interpolation.get_text()
         self.max_x_interpolation = self.UI_max_x_interpolation.get_text()
         self.intersection_interpolation = self.UI_intersection_interpolation.state_toggle
+
+        self.pos_x_molecola = self.UI_pos_x_molecola.get_text()
+        self.pos_y_molecola = self.UI_pos_y_molecola.get_text()        
+        self.dimensione_molecola = self.UI_dimensione_molecola.get_text()        
 
 
     def update_plot_list(self, added_plot):
@@ -485,11 +515,15 @@ class PomoPlot:
         [self.import_plot_data(path, image=False) for path in self.import_multip_plot1D.paths]
         [self.import_plot_data(path, image=True) for path in self.import_multip_plot2D.paths]
             
+        [self.import_plot_data(path, image=self.plot_mode) for path in logica.dropped_paths] # plot_mode == 0 -> False plot 1D, plot_mode == 1 -> True plot 2D 
+
+
         self.import_single_plot1D.paths = []            
         self.import_single_plot2D.paths = []            
         self.import_multip_plot1D.paths = []
         self.import_multip_plot2D.paths = []
 
+        logica.dropped_paths = []
 
         # salvataggio screenshot
         if len(self.save_single_plot.paths) > 0:
@@ -508,9 +542,6 @@ class PomoPlot:
             self.plot(logica, screenshot=1)
             self.plot(logica, screenshot=1)
 
-            # self.screen.load_image("./TEXTURES/sfondo_molecola.svg")
-            # self.screen.tavolozza.blit(self.screen.loaded_image, (self.screen.x, self.screen.y))
-            
             self.screen._save_screenshot(self.save_single_plot.paths[-1])
             self.save_single_plot.paths.pop()
             
@@ -635,8 +666,14 @@ class PomoPlot:
 
 
         # choose mode and hide unecessary UI
-        self.scroll_plots1D.hide_plus_children(self.plot_mode == 1)
-        self.scroll_plots2D.hide_plus_children(self.plot_mode == 0)
+        if self.active_tab == 10:
+            self.elenco_metadata.hide_plus_children(False)
+            self.scroll_plots1D.hide_plus_children(True)
+            self.scroll_plots1D.hide_plus_children(True)
+        else:
+            self.elenco_metadata.hide_plus_children(True)
+            self.scroll_plots1D.hide_plus_children(self.plot_mode == 1)
+            self.scroll_plots2D.hide_plus_children(self.plot_mode == 0)
 
 
         # change attributs due to different plot mode
@@ -828,7 +865,7 @@ class PomoPlot:
         if self.plot_mode == 0: self._disegna_dati1D()
         
         self._disegna_legend(logica)
-        self._disegna_molecola(logica)
+        self._disegna_molecola(logica, screenshot)
 
         if not screenshot:
             self._disegna_mouse_coordinate(logica) # aggiungi secondo asse
@@ -858,39 +895,51 @@ class PomoPlot:
                 indice_fine_y = dimensioni[1] * (1 - self.zoom_boundaries[1])
 
                 fa = plot.data[int(indice_inizio_x) : int(indice_fine_x), int(indice_inizio_y) : int(indice_fine_y), 2]
-                
-                if plot.flip_y:
-                    fa = fa[:, ::-1]
-                if plot.flip_x:
-                    fa = fa[::-1, :]
 
-                array_finale = colora_array(fa, plot.colore_base1, plot.colore_base2)
+                color_changed = False
+                if np.sum(plot.prev_colore_base2 != plot.colore_base2) != 0 or np.sum(plot.prev_colore_base1 != plot.colore_base1) != 0:
+                    color_changed = True
+                    plot.prev_colore_base2 = plot.colore_base2
+                    plot.prev_colore_base1 = plot.colore_base1
+
+
+                if np.shape(fa) != plot.previous_final_shape or color_changed:   
+                    plot.previous_final_shape = np.shape(fa)
+                    plot.previous_max_z = np.max(fa)
+                    plot.previous_min_z = np.min(fa)
+
+                    if plot.flip_y:
+                        fa = fa[:, ::-1]
+                    if plot.flip_x:
+                        fa = fa[::-1, :]
+                    
+                    plot.final_array = colora_array(fa, plot.colore_base1, plot.colore_base2, plot.previous_max_z, plot.previous_min_z)
 
                 self.screen._blit_surface(
-                    self.screen._generate_surface(array_finale), 
+                    self.screen._generate_surface(plot.final_array), 
                     (self.max_plot_square[0], self.max_plot_square[1]), 
                     scale=(self.max_plot_square[2], self.max_plot_square[3])
                 )
-        
 
-    def _disegna_molecola(self, logica: 'Logica'):
+
+    def _disegna_molecola(self, logica: 'Logica', screenshot: bool = 0):
         
         colore_generico = "A8A8A8"
 
-        def molecola(stringa_SMILE,d):
+        def molecola(stringa_SMILE, d, id):
             try:
                 molecola = Chem.MolFromSmiles(stringa_SMILE)
                 AllChem.Compute2DCoords(molecola)
-                Draw.MolToFile(molecola, "./TEXTURES/" + ('sfondo_molecola.svg'),(int(d),int(d)))
+                Draw.MolToFile(molecola, "./TEXTURES/" + (f'molecola_save{id}.svg'),(int(d),int(d)))
                 return 1
             except:
                 return 0
 
-        def reazione(stringa_SMILE,d):
+        def reazione(stringa_SMILE, d, id):
             try:
                 rxn = Reactions.ReactionFromSmarts(stringa_SMILE, useSmiles=True)
                 Draw.ReactionToImage(rxn, useSVG=True)
-                nome = "./TEXTURES/" + ('sfondo_molecola.svg')
+                nome = "./TEXTURES/" + (f'molecola_save{id}.svg')
                 with open(nome, "w") as file:
                     file.write(Draw.ReactionToImage(rxn, useSVG=True, subImgSize=(int(d/(3+stringa_SMILE.count("."))),int(d))))
 
@@ -898,9 +947,9 @@ class PomoPlot:
             except:
                 return 0
 
-        def alpha():
+        def alpha(id):
             try:
-                nome = "./TEXTURES/" + ('sfondo_molecola.svg')
+                nome = "./TEXTURES/" + (f'molecola_save{id}.svg')
                 with open(nome, "r") as file:
                     data = file.read()
                     data = data.replace(r"<rect style='opacity:1.0", r"<rect style='opacity:0")
@@ -908,23 +957,86 @@ class PomoPlot:
                     data = data.replace("#191919", "#" + colore_generico)
                 with open(nome, "w") as file:
                     file.write(data)
-            except:
-                pass
+            except Exception as e:
+                print(e)
 
+        #############################################################################################################################
+        #############################################################################################################################
+        #############################################################################################################################
+
+        try:
+            for molecola_ele, status in zip(self.elenco_metadata.elementi, self.elenco_metadata.ele_mask): 
+                if status:
+                    path = f"./TEXTURES/molecola_save{molecola_ele.nome}.svg"
+
+                    new_w, new_h = int(float(molecola_ele.size) * self.scale_factor_viewport), int(float(molecola_ele.size) * self.scale_factor_viewport)
+
+                    # ----------------------------------------------------------------------
+                    self.screen.load_image(path)
+                    self.screen.scale_image((new_w, new_h))
+                    self.screen.tavolozza.blit(self.screen.loaded_image, (molecola_ele.x * self.screen.w / 100 - new_w / 2, molecola_ele.y * self.screen.h / 100 - new_h / 2))
+                    # ----------------------------------------------------------------------
+                                        
+
+        except FileNotFoundError:
+            ...
+
+
+        # Controlla se creare una nuova molecola o no
+        if self.add_molecola.flag_foo:
+            self.add_molecola.flag_foo = 0
+            self.storico_molecole += 1
+            self.elenco_metadata.add_element_scroll(Molecule(self.storico_molecole, "", 50, 50, 1000), True)
+            self.elenco_metadata.ele_selected_index = len(self.elenco_metadata.elementi) - 1
+
+
+        # aggiorna i valori della molecola attiva con i dati forniti dall'UI
+        if not self.active_molecule is None:
+            try:
+                self.active_molecule.code = self.molecule_input.get_text()
+                self.active_molecule.x = int(float(self.pos_x_molecola))
+                self.active_molecule.y = int(float(self.pos_y_molecola))
+                self.active_molecule.size = int(float(self.dimensione_molecola))
+
+            except Exception as e:
+                print(e)
+
+
+        # controlla se è il caso di aggiornare l'UI con i dati della nuova molecola
+        self.molecules = self.elenco_metadata.elementi
+        old_active = self.active_molecule
+        force_update = False
+        if len(self.molecules) > 0:
+
+            self.active_molecule: Molecule = self.molecules[self.elenco_metadata.ele_selected_index]
+
+            if self.active_molecule != old_active:
+                self.UI_pos_x_molecola.change_text(f"{self.active_molecule.x}")
+                self.UI_pos_y_molecola.change_text(f"{self.active_molecule.y}")
+                self.UI_dimensione_molecola.change_text(f"{self.active_molecule.size}") 
+                self.UI_molecule_input.change_text(f"{self.active_molecule.code}")
+                force_update = True
+
+
+        # controlla se il codice SMILE è stato cambiato -> aggiorna il disegno basato sul codice SMILE fornito
         new_SMILE = self.molecule_input.testo
-        
-        if new_SMILE != self.old_SMILE:
+        if new_SMILE != self.old_SMILE or force_update:
 
+            id_image = self.active_molecule.nome
             self.old_SMILE = new_SMILE
 
-            esito = molecola(self.molecule_input.testo, self.molecule_preview.w)
-            alpha()
+            esito = molecola(self.molecule_input.testo, self.molecule_preview.w, id_image)
+            alpha(id_image)
 
             self.molecule_input.color_text = [200, 200, 200] if esito else [220, 20, 60]
         
-            self.molecule_preview.tavolozza.fill([25, 25, 25])
-            self.molecule_preview.load_image("./TEXTURES/sfondo_molecola.svg")
-            self.molecule_preview._blit_surface(self.molecule_preview.loaded_image, (0, 0))
+            try:
+                self.molecule_preview.tavolozza.fill([25, 25, 25])
+                self.molecule_preview.load_image(f"./TEXTURES/molecola_save{id_image}.svg")
+                self.molecule_preview._blit_surface(self.molecule_preview.loaded_image, (0, 0))
+            except FileNotFoundError:
+                ...
+
 
         # SMILE istruzioni: 
         # ATOMS:          C, O, N      [Na+], [13C], [O-]
@@ -932,7 +1044,7 @@ class PomoPlot:
         # BRANCHING:      CC(C)O
         # STEREO:         "C[C@H](O)C" @ means centro tetraedrico, "C/C=C/C" / means E isomero, "C/C=C\C" \ means Z isomero 
         # CHARGE:         [NH4+], [O-]
-        # ISOTOPI:        [13C]
+        # ISOTOPI:        [13C]     
         # JOLLY:          *, [#6] 6->Carbon
         # DISCONNECT:     .
         # EXPL. H:        [CH4] (not shown in image)
@@ -944,15 +1056,18 @@ class PomoPlot:
             # disegno i dati se plot acceso
             if status:
 
-                cond1 = plot.data2plot[:, :2][:, 0] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
-                cond2 = plot.data2plot[:, :2][:, 1] >= self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
-                cond3 = plot.data2plot[:, :2][:, 0] <=  self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
-                cond4 = plot.data2plot[:, :2][:, 1] <=  self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
 
+                cond1 = plot.data2plot[:, plot.column_x] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
+                cond2 = plot.data2plot[:, plot.column_y] >= self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
+                cond3 = plot.data2plot[:, plot.column_x] <= self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
+                cond4 = plot.data2plot[:, plot.column_y] <= self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
+                
                 # Combine all conditions with logical AND
                 combined_condition = cond1 & cond2 & cond3 & cond4
 
                 extracted = plot.data2plot[combined_condition]
+                extracted = np.vstack((extracted[:, plot.column_x], extracted[:, plot.column_y]))
+                extracted = np.transpose(extracted, (1, 0))
 
                 if len(extracted) < 2:
                     # exit the function if too few points
@@ -961,6 +1076,9 @@ class PomoPlot:
                 if plot.gradiente and plot.grad_mode == "vert":
                     # VERTICAL
                     for x1, y1, x2, y2 in zip(extracted[:, 0].astype(int)[:-1], extracted[:, 1].astype(int)[:-1], extracted[:, 0].astype(int)[1:], extracted[:, 1].astype(int)[1:]):
+                        if x1 > x2:
+                            x1, x2 = x2, x1 
+                        
                         m = (y2 - y1) / (x2 - x1)
                         for i in range(0, x2 - x1):
                             y_interpolated = int(y1 + m * i)
@@ -1005,6 +1123,10 @@ class PomoPlot:
                         
                         # lancio della maschera (zero fuori dagli estremi) UPPER  
                         for x1, y1, x2, y2 in zip(extracted[:, 0].astype(int)[:-1], extracted[:, 1].astype(int)[:-1], extracted[:, 0].astype(int)[1:], extracted[:, 1].astype(int)[1:]):
+
+                            if x1 > x2:
+                                x1, x2 = x2, x1 
+
                             m = (y2 - y1) / (x2 - x1)
                             
                             for i in range(0, x2 - x1):
@@ -1014,6 +1136,10 @@ class PomoPlot:
 
                         # lancio della maschera (zero fuori dagli estremi) LOWER
                         for x1, y1, x2, y2 in zip(extracted[:, 0].astype(int)[:-1], extracted[:, 1].astype(int)[:-1], extracted[:, 0].astype(int)[1:], extracted[:, 1].astype(int)[1:]):
+                            
+                            if x1 > x2:
+                                x1, x2 = x2, x1 
+
                             m = (y2 - y1) / (x2 - x1)
                             
                             for i in range(0, x2 - x1):
@@ -1046,6 +1172,10 @@ class PomoPlot:
                         
                         # lancio della maschera (zero fuori dagli estremi)    
                         for x1, y1, x2, y2 in zip(extracted[:, 0].astype(int)[:-1], extracted[:, 1].astype(int)[:-1], extracted[:, 0].astype(int)[1:], extracted[:, 1].astype(int)[1:]):
+                            
+                            if x1 > x2:
+                                x1, x2 = x2, x1 
+                            
                             m = (y2 - y1) / (x2 - x1)
                             
                             for i in range(0, x2 - x1):
@@ -1415,7 +1545,11 @@ class PomoPlot:
 
     def _get_nice_ticks(self):
 
-        ticks_x = self._find_optimal_ticks([self.spazio_coordinate_native[0], self.spazio_coordinate_native[2]])
+        if self.invert_x_axis and self.plot_mode == 0:
+            ticks_x = self._find_optimal_ticks([self.spazio_coordinate_native[2], self.spazio_coordinate_native[0]])
+        else:
+            ticks_x = self._find_optimal_ticks([self.spazio_coordinate_native[0], self.spazio_coordinate_native[2]])
+
         ticks_y = self._find_optimal_ticks([self.spazio_coordinate_native[1], self.spazio_coordinate_native[3]])
         ticks_2y = self._find_optimal_ticks([self.spazio_coordinate_native[4], self.spazio_coordinate_native[5]])
 
@@ -1509,15 +1643,22 @@ class PomoPlot:
                 if plot.second_ax and not self.second_y_axis:
                     continue
 
-                cond1 = plot.data2plot[:, :2][:, 0] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
-                cond2 = plot.data2plot[:, :2][:, 1] >= self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
-                cond3 = plot.data2plot[:, :2][:, 0] <=  self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
-                cond4 = plot.data2plot[:, :2][:, 1] <=  self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
+                cond1 = plot.data2plot[:, plot.column_x] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
+                cond2 = plot.data2plot[:, plot.column_y] >= self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
+                cond3 = plot.data2plot[:, plot.column_x] <=  self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
+                cond4 = plot.data2plot[:, plot.column_y] <=  self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
 
                 # Combine all conditions with logical AND
                 combined_condition = cond1 & cond2 & cond3 & cond4
 
                 extracted = plot.data2plot[combined_condition]
+
+                if plot.data.shape[1] > 2:
+                    extracted = np.vstack((extracted[:, plot.column_x], extracted[:, plot.column_y], extracted[:, plot.column_ey]))
+                else:
+                    extracted = np.vstack((extracted[:, plot.column_x], extracted[:, plot.column_y]))
+    
+                extracted = np.transpose(extracted, (1, 0))
 
                 if plot.function:
     
@@ -1558,15 +1699,18 @@ class PomoPlot:
 
     def _disegna_spezzata_tratteggiata(self, plot:'_Single1DPlot'):
 
-        cond1 = plot.data2plot[:, :2][:, 0] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
-        cond2 = plot.data2plot[:, :2][:, 1] >= self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
-        cond3 = plot.data2plot[:, :2][:, 0] <=  self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
-        cond4 = plot.data2plot[:, :2][:, 1] <=  self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
+        cond1 = plot.data2plot[:, plot.column_x] >= self.max_plot_square[0] + self.max_plot_square[2] * (self.minimal_offset_data_x - 0.005)
+        cond2 = plot.data2plot[:, plot.column_y] >= self.max_plot_square[1] + self.max_plot_square[3] * (self.minimal_offset_data_y - 0.005)
+        cond3 = plot.data2plot[:, plot.column_x] <= self.max_plot_square[0] + self.max_plot_square[2] * (1 - self.minimal_offset_data_x + 0.005)
+        cond4 = plot.data2plot[:, plot.column_y] <= self.max_plot_square[1] + self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005)
 
         # Combine all conditions with logical AND
         combined_condition = cond1 & cond2 & cond3 & cond4
 
         extracted = plot.data2plot[combined_condition]
+
+        if self.invert_x_axis:
+            extracted = extracted[::-1, :]
 
         lunghezze_parziali = extracted[:-1, :2] - extracted[1:, :2]
         lunghezze_parziali = np.linalg.norm(lunghezze_parziali, axis=1)
@@ -1973,14 +2117,18 @@ class PomoPlot:
                     at_least_one = True
 
                     # trova le coordinate minime tra tutti i grafici
-                    self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.data[:, :, 0])) * plot.spacing_x
-                    self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(plot.data[:, :, 1])) * plot.spacing_y
-                    self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, :, 0])) * plot.spacing_x
-                    self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.data[:, :, 1])) * plot.spacing_y
+                    self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], plot.min_x) * plot.spacing_x
+                    self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], plot.min_y) * plot.spacing_y
+                    self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], plot.max_x) * plot.spacing_x
+                    self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], plot.max_y) * plot.spacing_y
 
             except IndexError:
                 ...
-                
+
+
+        if self.invert_x_axis and self.plot_mode == 0:                    
+            self.spazio_coordinate_native = [self.spazio_coordinate_native[2], self.spazio_coordinate_native[1], self.spazio_coordinate_native[0], self.spazio_coordinate_native[3], self.spazio_coordinate_native[4], self.spazio_coordinate_native[5]]
+        
 
         if sum(self.norma_perc.buttons_state) > 0:
             self.spazio_coordinate_native[1] = 0.0
@@ -2001,12 +2149,22 @@ class PomoPlot:
             self._get_nice_ticks()
 
             if self.plot_mode == 0:
-                # trova le coordinate minime tra tutti i grafici + ticks
-                self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(self.coords_of_ticks[0]))
-                self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(self.coords_of_ticks[1]))
-                self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(self.coords_of_ticks[0]))
-                self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(self.coords_of_ticks[1]))
                 
+                if self.invert_x_axis:                    
+                    # trova le coordinate minime tra tutti i grafici + ticks
+                    self.spazio_coordinate_native[0] = np.maximum(self.spazio_coordinate_native[0], np.max(self.coords_of_ticks[0]))
+                    self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(self.coords_of_ticks[1]))
+                    self.spazio_coordinate_native[2] = np.minimum(self.spazio_coordinate_native[2], np.min(self.coords_of_ticks[0]))
+                    self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(self.coords_of_ticks[1]))
+                else:                    
+                    # trova le coordinate minime tra tutti i grafici + ticks
+                    self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(self.coords_of_ticks[0]))
+                    self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(self.coords_of_ticks[1]))
+                    self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(self.coords_of_ticks[0]))
+                    self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(self.coords_of_ticks[1]))
+                    
+
+
                 # secondo asse
                 if self.second_y_axis:
                     self.spazio_coordinate_native[4] = np.minimum(self.spazio_coordinate_native[4], np.min(self.coords_of_ticks[2]))
@@ -2080,19 +2238,38 @@ class PomoPlot:
 
             try:
 
-                fix = 1
-                while fix:
-                    if self.coords_of_ticks[0][0] < self.spazio_coordinate_native[0]:
-                        _ = self.coords_of_ticks[0].pop(0)
-                    else:
-                        fix = 0
-            
-                fix = 1
-                while fix:
-                    if self.coords_of_ticks[0][-1] > self.spazio_coordinate_native[2]:
-                        _ = self.coords_of_ticks[0].pop()
-                    else:
-                        fix = 0
+                if self.invert_x_axis and self.plot_mode == 0:
+
+                    fix = 1
+                    while fix:
+                        if self.coords_of_ticks[0][-1] > self.spazio_coordinate_native[0]:
+                            _ = self.coords_of_ticks[0].pop()
+                        else:
+                            fix = 0
+                
+                    fix = 1
+                    while fix:
+                        if self.coords_of_ticks[0][0] < self.spazio_coordinate_native[2]:
+                            _ = self.coords_of_ticks[0].pop(0)
+                        else:
+                            fix = 0
+                    
+                else:
+                    fix = 1
+                    while fix:
+                        if self.coords_of_ticks[0][0] < self.spazio_coordinate_native[0]:
+                            _ = self.coords_of_ticks[0].pop(0)
+                        else:
+                            fix = 0
+                
+                    fix = 1
+                    while fix:
+                        if self.coords_of_ticks[0][-1] > self.spazio_coordinate_native[2]:
+                            _ = self.coords_of_ticks[0].pop()
+                        else:
+                            fix = 0
+
+
 
                 fix = 1
                 while fix:
@@ -2157,6 +2334,11 @@ class PomoPlot:
         """
         self.data_path = path
         self.divisore = divisore
+        
+        if os.path.isdir(path):
+            for new_path in [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]:
+                self.import_plot_data(new_path, divisore, image)
+            return
         
 
         # strange format types (.tif)
@@ -2354,8 +2536,8 @@ class _Single1DPlot:
 
         self.display_coords = []
 
-        self.scatter_color = [100, 100, 255]
-        self.function_color = [80, 80, 200]
+        self.function_color = np.array([np.random.randint(50, 180), np.random.randint(50, 200), np.random.randint(50, 200)])
+        self.scatter_color = self.function_color + 55
 
 
     def __str__(self):
@@ -2378,6 +2560,8 @@ class _Single2DPlot:
 
         self.colore_base2 = np.array([68, 1, 84], dtype=(np.float64))
         self.colore_base1 = np.array([253, 231, 37], dtype=(np.float64))
+        self.prev_colore_base2 = np.array([68, 1, 84], dtype=(np.float64))
+        self.prev_colore_base1 = np.array([253, 231, 37], dtype=(np.float64))
         self.flip_y = False
         self.flip_x = False
 
@@ -2399,12 +2583,6 @@ class _Single2DPlot:
         self.data = self.data.transpose(1, 0, 2)
         self.data = self.data[:, ::-1, :]
 
-        # lim_min = 22
-        # lim_max = 30
-        # self.data = self.data[lim_min:-lim_max, :, :]
-        # self.data = self.data[:, lim_min:-lim_max, :]
-
-        # self.data[:, :, :2] *= .628712 -> info dai .tif
         
         self.spacing_x = abs(self.data[0, 0, 0] - self.data[1, 0, 0])
         self.spacing_y = abs(self.data[0, 0, 1] - self.data[0, 1, 1])
@@ -2412,6 +2590,14 @@ class _Single2DPlot:
         self.dim_x = self.data.shape[0]
         self.dim_y = self.data.shape[1]
         self.w_div_h = self.dim_x / self.dim_y
+
+        self.previous_final_shape = None
+        self.max_x = np.max(self.data[:, :, 0])
+        self.min_x = np.min(self.data[:, :, 0])
+        self.max_y = np.max(self.data[:, :, 1])
+        self.min_y = np.min(self.data[:, :, 1])
+        self.previous_max_z = np.max(self.data[:, :, 2])
+        self.previous_min_z = np.min(self.data[:, :, 2])
 
 
     def __str__(self):
@@ -2422,17 +2608,35 @@ class _Single2DPlot:
         return f"{self.nome}"
     
 
+class Molecule:
+    def __init__(self, id, code, x, y, size):
+        self.nome = id
+        self.code = code
+        self.x = x
+        self.y = y
+        self.size = size
+
+
+    def __str__(self):
+        return f"Molecola {self.nome}: {self.code[:30]}"
+
+
+    def __repr__(self):
+        return f"Molecola {self.nome}: {self.code[:30]}"
+
 
 # COMPILED FUNCTIONS
-@njit()
-def colora_array(data, color1, color2):
+def colora_array(data, color1, color2, max_z, min_z):
     # disegna la mappa a colori
-    min_data, max_data = data.min(), data.max()
-
-    fa_norm = (data - min_data) / (max_data - min_data)
+    fa_norm = (data - min_z) / (max_z - min_z)
 
     color_delta = color2 - color1
 
-    array_finale = color1 + fa_norm[..., None] * color_delta
+    array_finale = heavy_calc(fa_norm, color1, color_delta)
 
     return array_finale.astype(np.uint8)
+
+
+@njit()
+def heavy_calc(fa_norm, color1, color_delta):
+    return np.add(color1, np.multiply(fa_norm[..., None], color_delta))

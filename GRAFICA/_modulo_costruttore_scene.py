@@ -27,7 +27,7 @@ class Costruttore:
 
         self.scene: dict[str, Scena] = {}
         
-        self.pappardella = {
+        self.pappardella_Costruttore = {
             "screen": self.screen,
             "bg_def": self.bg_def,
             "x_screen": width,
@@ -35,7 +35,7 @@ class Costruttore:
             "font_size": font_size
         }
 
-        BaseElement._init_scene(self.pappardella)
+        BaseElement._init_scene(self.pappardella_Costruttore)
 
         self.bott_calls = BottoniCallbacks()
 
@@ -45,11 +45,11 @@ class Costruttore:
 
     def recalc(self, new_w, new_h):
 
-        self.pappardella["x_screen"] = new_w
-        self.pappardella["y_screen"] = new_h
+        self.pappardella_Costruttore["x_screen"] = new_w
+        self.pappardella_Costruttore["y_screen"] = new_h
 
-        BaseElement._init_scene(self.pappardella)
-
+        BaseElement._init_scene(self.pappardella_Costruttore)
+        
         for nome_scena, scena in self.scene.items():
             for index, ele in scena.screens.items():
                 ele.update_window_change()
@@ -94,6 +94,9 @@ class Costruttore:
         s.context_menu["main"].elements["settings"].add_element("line_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].elements["scatter_info"]), bg=[148, 177, 255]))
         s.context_menu["main"].elements["settings"].add_element("gradient_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].elements["line_info"]), bg=[148, 177, 255]))
         s.context_menu["main"].elements["settings"].add_element("metadata_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].elements["gradient_info"]), bg=[148, 177, 255]))
+        
+        s.context_menu["main"].elements["settings"].add_element("bottone1", Bottone_Toggle(w="95%w", h="10%h", anchor="cc", x="50%w", y="10%h"))
+        s.context_menu["main"].elements["settings"].add_element("bottone2", Bottone_Toggle(w="95%w", h="10%h", anchor="cc", x="50%w", y="30%h"))
 
 
 
@@ -127,6 +130,7 @@ class Costruttore:
 
         s.context_menu["main"].add_element("elenco_plots1D", Scroll(x="73.5%w", y="5%h", anchor="lu", w="26%w", h="33%h", text="Grafici 1D caricati"))
         s.context_menu["main"].add_element("elenco_plots2D", Scroll(x="73.5%w", y="5%h", anchor="lu", w="26%w", h="33%h", text="Grafici 2D caricati"))
+        s.context_menu["main"].add_element("elenco_metadata", Scroll(x="73.5%w", y="5%h", anchor="lu", w="26%w", h="33%h", text="Elenco metadata"))
 
         s.context_menu["item1"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
         s.context_menu["item2"] = ContextMenu(x="73.5%w", y="40%h", anchor="lu", w="26%w", h="55%h")
@@ -142,7 +146,7 @@ class Costruttore:
 
         # # ITEM 1 GEOMETRY ------------------------------------------------
         s.context_menu["item1"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Geometria}"))
-        s.context_menu["item1"].add_element("plot_mode", RadioButton("50%w", "120px", "cd", "35%w", "50px", "x", cb_n=2, cb_s=[0, 1], cb_t=["1D", "2D"], w_button="17.5%w", h_button="50px", type_checkbox=False, always_one_active=True))
+        s.context_menu["item1"].add_element("plot_mode", RadioButton("50%w", "120px", "cd", "35%w", "50px", "x", cb_n=2, cb_s=[1, 0], cb_t=["1D", "2D"], w_button="17.5%w", h_button="50px", type_checkbox=False, always_one_active=True))
         
         s.context_menu["item1"].add_element("w_plot_area", Entrata("75%w", "170px", "lu", "20%w", "30px", text="0.8", title="larghezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
         s.context_menu["item1"].add_element("h_plot_area", Entrata("75%w", "205px", "lu", "20%w", "30px", text="0.8", title="altezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
@@ -230,7 +234,8 @@ class Costruttore:
         # # ITEM 4 AXES ----------------------------------------------------
         s.context_menu["item4"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Assi}"))
         
-        s.context_menu["item4"].add_element("second_y_axis", Bottone_Toggle("50%w", "140px", "cd", "35%w", "50px", False, False, "Toggle 2° Y axis"))
+        s.context_menu["item4"].add_element("second_y_axis", Bottone_Toggle("70%w", "140px", "cd", "35%w", "50px", False, False, "Toggle 2° Y axis"))
+        s.context_menu["item4"].add_element("invert_x_axis", Bottone_Toggle("30%w", "140px", "cd", "35%w", "50px", False, False, "Invert X axis"))
 
         s.context_menu["item4"].add_element("round_x", Entrata("75%w", "180px", "lu", "20%w", "30px", text="2", title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
         s.context_menu["item4"].add_element("round_y", Entrata("75%w", "215px", "lu", "20%w", "30px", text="2", title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
@@ -282,8 +287,8 @@ class Costruttore:
         
         s.context_menu["item6"].add_element("import_single_plot1D", Bottone_Push("50%w", "80px", "cu", "70%w", "40px", function=self.bott_calls.load_file, text="Carica singolo file 1D"))
         s.context_menu["item6"].add_element("import_multip_plot1D", Bottone_Push("50%w", "130px", "cu", "70%w", "40px", function=self.bott_calls.load_files, text="Carica file multipli 1D"))
-        s.context_menu["item6"].add_element("import_single_plot2D", Bottone_Push("50%w", "200px", "cu", "70%w", "40px", function=self.bott_calls.load_file, text="Carica singolo file 2D", bg=[200, 150, 50]))
-        s.context_menu["item6"].add_element("import_multip_plot2D", Bottone_Push("50%w", "250px", "cu", "70%w", "40px", function=self.bott_calls.load_files, text="Carica file multipli 2D", bg=[200, 150, 50]))
+        s.context_menu["item6"].add_element("import_single_plot2D", Bottone_Push("50%w", "200px", "cu", "70%w", "40px", function=self.bott_calls.load_file, text="Carica singolo file 2D"))
+        s.context_menu["item6"].add_element("import_multip_plot2D", Bottone_Push("50%w", "250px", "cu", "70%w", "40px", function=self.bott_calls.load_files, text="Carica file multipli 2D"))
     
         s.context_menu["item6"].add_element("remove_element_selected", Bottone_Push("50%w", "320px", "cu", "70%w", "40px", function=self.bott_calls.change_state, text=r"\#dc143c{Elimina elemento selezionato}"))
         
@@ -320,7 +325,13 @@ class Costruttore:
         # # ITEM 11 METADATA -----------------------------------------------
         s.context_menu["item11"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Metadata}"))
         s.context_menu["item11"].add_element("molecule_input", Entrata("30%w", "100px", "lu", "67.5%w", "40px", "", "SMILE code"))
-        s.context_menu["item11"].add_element("molecule_preview", Screen("50%w", "180px", "cu", "95%w", "95%w"))
+        s.context_menu["item11"].add_element("molecule_preview", Screen("50%w", "280px", "cu", "90%w", "90%w"))
+        s.context_menu["item11"].elements["molecule_preview"].tavolozza.fill([25, 25, 25])
+
+        s.context_menu["item11"].add_element("add_molecola", Bottone_Push("72.5%w", "220px", "cu", "50%w", "40px", text="Add empty mol.", function=self.bott_calls.change_state))
+        s.context_menu["item11"].add_element("pos_x_molecola", Entrata("30%w", "170px", "lu", "10%w", "40px", "50", "Pos. X [%]"))
+        s.context_menu["item11"].add_element("pos_y_molecola", Entrata("30%w", "220px", "lu", "10%w", "40px", "50", "Pos. Y [%]"))
+        s.context_menu["item11"].add_element("dimensione_molecola", Entrata("82.5%w", "170px", "lu", "15%w", "40px", "1000", "Dimensione"))
         # # ITEM 11 METADATA -----------------------------------------------
 
         starting = 5
@@ -368,6 +379,14 @@ class Costruttore:
             self.scene["main"].context_menu["item2"].elements["spacing_x"].hide_plus_children(state_1D)
             self.scene["main"].context_menu["item2"].elements["spacing_y"].hide_plus_children(state_1D)
         
+
+        def hide_metadata_based_on_metadata_lenght():
+            hide = not len(self.scene["main"].context_menu["main"].elements["elenco_metadata"].elementi) > 0
+            self.scene["main"].context_menu["item11"].elements["molecule_input"].hide_plus_children(hide)
+            self.scene["main"].context_menu["item11"].elements["pos_x_molecola"].hide_plus_children(hide)
+            self.scene["main"].context_menu["item11"].elements["pos_y_molecola"].hide_plus_children(hide)
+            self.scene["main"].context_menu["item11"].elements["dimensione_molecola"].hide_plus_children(hide)
+
         
         def hide_legend_attributes_based_on_plot_mode():
             state_1D = self.scene["main"].context_menu["item1"].elements["plot_mode"].cb_s[0]
@@ -480,6 +499,7 @@ class Costruttore:
         s.functions.append(hide_overlap_normalization)
         s.functions.append(remove_selected_element)
         s.functions.append(hide_UI_plot_area_size_based_on_proportions)
+        s.functions.append(hide_metadata_based_on_metadata_lenght)
 
 
 class Scena:

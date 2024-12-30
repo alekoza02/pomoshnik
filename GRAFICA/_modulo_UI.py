@@ -56,6 +56,8 @@ class Logica:
         self.scroll_up = 0
         self.scroll_down = 0
 
+        self.dropped_paths = []
+
 
 
 class UI:
@@ -208,9 +210,23 @@ class UI:
         key_combo = [pygame.K_ESCAPE, pygame.K_SPACE]
         if all(keys[key] for key in key_combo):
             self.running = 0
+            self.clear_cache()
         
         
         pygame.display.flip()
+
+
+    def clear_cache(self):
+        try:
+            for filename in os.listdir("TEXTURES"):
+                # Construct the full path to the file
+                filepath = os.path.join("TEXTURES", filename)
+
+                # Check if it's a file and contains the name
+                if os.path.isfile(filepath) and "molecola" in filename:
+                    os.remove(filepath)
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 
     def pc_attributes(self):

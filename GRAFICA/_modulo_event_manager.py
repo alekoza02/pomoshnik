@@ -37,6 +37,10 @@ class EventManager:
         # scena main UI
         for event in eventi:
 
+            # DROP FILE
+            if event.type == pygame.DROPFILE:
+                logica.dropped_paths.append(event.file)
+
             # MOUSE
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
