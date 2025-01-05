@@ -51,6 +51,8 @@ class BaseElement:
             self.bg = array(bg)
 
         self.hide: bool = hide
+        self.hide_from_window: bool = False
+        self.hide_from_menu: bool = False
 
         self.testo: str = text
         self.testo_diplayed = (f"{self.testo}", 1) # (text, number of lines)
@@ -66,6 +68,9 @@ class BaseElement:
         self.y_Context = 0
         self.w_Context = self.FULL_coord_window["x_screen"]
         self.h_Context = self.FULL_coord_window["y_screen"]
+
+        self.move_x = 0
+        self.move_y = 0
 
         self.recalc_geometry(x, y, w, h, anchor)
 
@@ -109,7 +114,7 @@ class BaseElement:
         self.h_Context = args[3]
 
 
-    def recalc_geometry(self, new_x="", new_y="", new_w="", new_h="", anchor_point=""):
+    def recalc_geometry(self, new_x="", new_y="", new_w="", new_h="", anchor_point="", update_ori_coords=True):
         
         '''
         Come fornire le coordinate:
@@ -256,7 +261,8 @@ class BaseElement:
         self.h = analyze_string_coordinate(new_h)
 
         self.coords = [self.x, self.y, self.w, self.h]
-        self.ori_coords = (new_x, new_y, new_w, new_h, anchor_point)
+        if update_ori_coords:
+            self.ori_coords = (new_x, new_y, new_w, new_h, anchor_point)
         
         # aggiusto la posizione in base all'ancoraggio se diverso dal default
         if anchor_point != "lu":
@@ -277,14 +283,31 @@ class BaseElement:
 
         # hides the element if it's outside the margins of the contextmenù
         if not self.is_child:
-            self.hide_plus_children(self.y < self.y_Context or self.y > self.y_Context + self.h_Context)
+            self.hide_plus_children(self.y < self.y_Context or self.y > self.y_Context + self.h_Context, 0)
 
 
-    def hide_plus_children(self, booleano):
-        if self.y < self.y_Context:
-            booleano = 1
+    def hide_plus_children(self, booleano, gerarchia=2):
+        
+        match gerarchia:
+            case 0: self.hide_from_menu = booleano
+            case 1: self.hide_from_window = booleano
+            case 2: self.hide = booleano
 
-        self.hide = booleano
+
+    @property
+    def do_stuff(self):
+        return not self.hide and not self.hide_from_menu and not self.hide_from_window
+
+
+
+    def move_update(self, debug=False):
+        
+        coord_x = f"{self.ori_coords[0]} {self.move_x}px"
+        coord_y = f"{self.ori_coords[1]} {self.move_y}px"
+    
+        self.move_x, self.move_y = 0, 0
+
+        self.recalc_geometry(coord_x, coord_y, *self.ori_coords[2:], update_ori_coords=debug)
 
 
 
@@ -306,7 +329,7 @@ class Label_Text(BaseElement):
         if self.need_update:
             self.recalc_geometry(*self.ori_coords)
 
-        if not self.hide:
+        if self.do_stuff:
 
             # sostituzione caratteri speciali
             testo_analisi = SubStringa.analisi_caratteri_speciali(self.testo)
@@ -479,7 +502,7 @@ class Bottone_Push(BaseElement):
     def disegnami(self, logica: 'Logica'):
 
 
-        if not self.hide:
+        if self.do_stuff:
 
             colore = self.bg.copy()
             
@@ -554,29 +577,37 @@ class Bottone_Push(BaseElement):
 
     
     def update_context_menu(self, *args):
-        super().update_context_menu(*args)
         self.label_title.update_context_menu(*args)
+        super().update_context_menu(*args)
 
 
     def update_window_change(self):
+        self.label_title.update_window_change()
         super().update_window_change()
         try:
             self.load_texture()
         except FileNotFoundError:
             ...
-        self.label_title.update_window_change()
 
 
-    def hide_plus_children(self, booleano):
-        if self.y < self.y_Context:
-            booleano = 1
+    def move_update(self):
+        self.label_title.move_update()
+        super().move_update()
+
+
+    def hide_plus_children(self, booleano, gerarchia=2):
         
-        super().hide_plus_children(booleano)
+        match gerarchia:
+            case 0: self.hide_from_menu = booleano
+            case 1: self.hide_from_window = booleano
+            case 2: self.hide = booleano
+
+        super().hide_plus_children(booleano, gerarchia)
         try: self.label_title.hide = booleano
         except: ...
         self.disable = booleano
-
-
+    
+        
         
 class Bottone_Toggle(BaseElement):
     def __init__(self, x="", y="", anchor="lu", w="", h="", state=False, type_checkbox=True, text="", hide=False, disable=False, text_on_right=True) -> None:
@@ -624,7 +655,7 @@ class Bottone_Toggle(BaseElement):
 
     def disegnami(self, logica):
 
-        if not self.hide:
+        if self.do_stuff:
 
             colore = self.bg.copy()
 
@@ -653,7 +684,7 @@ class Bottone_Toggle(BaseElement):
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
 
-        if not self.hide:
+        if self.do_stuff:
 
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -688,25 +719,33 @@ class Bottone_Toggle(BaseElement):
         return colore
 
 
+    def move_update(self, debug=False):
+        self.label_title.move_update()
+        super().move_update(debug=debug)
+
+
     def update_context_menu(self, *args):
-        super().update_context_menu(*args)
         self.label_title.update_context_menu(*args)
+        super().update_context_menu(*args)
 
 
     def update_window_change(self):
+        self.label_title.update_window_change()
         super().update_window_change()
         try:
             self.load_texture()
         except FileNotFoundError:
             ...
-        self.label_title.update_window_change()
 
 
-    def hide_plus_children(self, booleano):
-        if self.y < self.y_Context:
-            booleano = 1
-            
-        super().hide_plus_children(booleano)
+    def hide_plus_children(self, booleano, gerarchia=2):
+        
+        match gerarchia:
+            case 0: self.hide_from_menu = booleano
+            case 1: self.hide_from_window = booleano
+            case 2: self.hide = booleano
+                
+        super().hide_plus_children(booleano, gerarchia)
         try: self.label_title.hide_plus_children(booleano)
         except: ...
 
@@ -770,7 +809,7 @@ class RadioButton(BaseElement):
 
     def disegnami(self, logica):
 
-        if not self.hide:
+        if self.do_stuff:
             pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
 
             for bottone in self.toggles:
@@ -784,7 +823,7 @@ class RadioButton(BaseElement):
 
     def eventami(self, events, logica):
 
-        if not self.hide:
+        if self.do_stuff:
 
             old_state = self.buttons_state
 
@@ -872,12 +911,24 @@ class RadioButton(BaseElement):
         super().update_context_menu(*args)
         
 
-    def hide_plus_children(self, booleano):
-        if self.y < self.y_Context:
-            booleano = 1
-        super().hide_plus_children(booleano)
-        try: [ele.hide_plus_children(booleano) for ele in self.toggles]
+    def hide_plus_children(self, booleano, gerarchia=2):
+        
+        match gerarchia:
+            case 0: self.hide_from_menu = booleano
+            case 1: self.hide_from_window = booleano
+            case 2: self.hide = booleano
+
+        super().hide_plus_children(booleano, gerarchia)
+        try: [ele.hide_plus_children(booleano, gerarchia) for ele in self.toggles]
         except Exception as e: ... # Happens that the RadioButton is told to hide elements, when they still have not been created 
+
+
+    def move_update(self):
+        for ele in self.toggles:
+            ele.move_y = self.move_y
+            ele.move_update()
+        
+        super().move_update()
 
 
 class Entrata(BaseElement):
@@ -912,7 +963,7 @@ class Entrata(BaseElement):
 
     def disegnami(self, logica: 'Logica'):
 
-        if not self.hide:
+        if self.do_stuff:
 
             colore = self.bg.copy()
 
@@ -938,7 +989,7 @@ class Entrata(BaseElement):
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
         
-        if not self.hide:
+        if self.do_stuff:
 
             if self.selezionato:
                 self.return_previous_text = True
@@ -996,7 +1047,7 @@ class Entrata(BaseElement):
 
     def eventami_scrittura(self, events: list['Event'], logica: 'Logica'):
         
-        if not self.hide:
+        if self.do_stuff:
 
             def move_selected(dir: bool, amount: int = 1):
                 if dir:
@@ -1377,12 +1428,21 @@ class Entrata(BaseElement):
             return restituisco
 
 
-    def hide_plus_children(self, booleano):
-        if self.y < self.y_Context:
-            booleano = 1
-        super().hide_plus_children(booleano)
+    def hide_plus_children(self, booleano, gerarchia=2):
+        
+        match gerarchia:
+            case 0: self.hide_from_menu = booleano
+            case 1: self.hide_from_window = booleano
+            case 2: self.hide = booleano
+
+        super().hide_plus_children(booleano, gerarchia)
         try: self.label_title.hide = booleano
         except: ...
+
+
+    def move_update(self):
+        self.label_title.move_update()
+        super().move_update()
 
 
     def update_context_menu(self, *args):
@@ -1460,7 +1520,7 @@ class Scroll(BaseElement):
 
     def disegnami(self, logica: 'Logica'):
 
-        if not self.hide:
+        if self.do_stuff:
 
             pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
             
@@ -1521,7 +1581,7 @@ class Scroll(BaseElement):
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
         
-        if not self.hide:
+        if self.do_stuff:
 
             # aggiorna tutto quello che succede alle toggle box
             [bottone.eventami(events, logica) for bottone in self.ele_toggle]
@@ -1639,11 +1699,15 @@ class Scroll(BaseElement):
             ele.bg += array([10, 10, 10])
 
 
-    def hide_plus_children(self, booleano):
-        if self.y < self.y_Context:
-            booleano = 1
-        super().hide_plus_children(booleano)
-        try: [ele.hide_plus_children(booleano) for ele in self.ele_toggle]
+    def hide_plus_children(self, booleano, gerarchia=2):
+        
+        match gerarchia:
+            case 0: self.hide_from_menu = booleano
+            case 1: self.hide_from_window = booleano
+            case 2: self.hide = booleano
+
+        super().hide_plus_children(booleano, gerarchia)
+        try: [ele.hide_plus_children(booleano, gerarchia) for ele in self.ele_toggle]
         except: ...
         
         try: self.label_title.hide = booleano
@@ -1684,7 +1748,7 @@ class ColorPicker(BaseElement):
 
     def eventami(self, events, logica: 'Logica'):
 
-        if not self.hide:
+        if self.do_stuff:
 
             self.opener.eventami(events, logica)
 
@@ -1711,19 +1775,30 @@ class ColorPicker(BaseElement):
         self.palette.chosen_id = self.id
 
 
-    def hide_plus_children(self, booleano):
-        if self.y < self.y_Context:
-            booleano = 1
-
-        super().hide_plus_children(booleano)
+    def hide_plus_children(self, booleano, gerarchia=2):
         
-        try: self.label_title.hide = booleano
+        match gerarchia:
+            case 0: self.hide_from_menu = booleano
+            case 1: self.hide_from_window = booleano
+            case 2: self.hide = booleano
+
+        super().hide_plus_children(booleano, gerarchia)
+        
+        try: self.label_title.hide_plus_children(booleano, gerarchia)
         except: ...
         
-        try: self.opener.hide = booleano
+        try: self.opener.hide_plus_children(booleano, gerarchia)
         except: ...
 
     
+    def move_update(self):
+        
+        self.label_title.move_update()
+        self.opener.move_update()
+
+        super().move_update()
+
+
     def get_color(self):
         return array(self.picked_color)
 
@@ -2168,6 +2243,83 @@ class Font:
         self.font_pixel_dim = self.font_pyg_r.size("a")
 
 
+
+
+class Collapsable_Window(BaseElement):
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, bg=None, closed=False, group=1):
+        super().__init__(x, y, anchor, w, h, text, hide, color_text, latex_font, bg)
+        self.expand_button: Bottone_Toggle = Bottone_Toggle(anchor=(f"lu lu (10px) (10px)", self), w=f"40px", h=f"40px", state=not closed, text=">")
+        self.h_chiuso = f"60px"
+        self.h_aperto = self.ori_coords[3]
+        self.delta_h = float(self.bounding_box[3]) - float(self.h_chiuso[:-2])
+        self.flag_OPEN = False
+        self.child_id: dict[str, BaseElement] = {}
+        self.group = group
+
+        self.initialize_window = True
+
+
+    def eventami(self, events, logica):
+        self.expand_button.eventami(events, logica)
+
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.expand_button.bounding_box.collidepoint(event.pos) or self.initialize_window:
+                self.initialize_window = False
+                if not self.expand_button.state_toggle:
+                    self.recalc_geometry(*self.ori_coords[:3], self.h_chiuso, self.ori_coords[-1])
+                    self.expand_button.update_window_change()
+                    self.expand_button.label_title.change_text(r"\#606060{\b{>}}" + f" {self.testo}")
+                    [ele.hide_plus_children(True, 1) for index, ele in self.child_id.items()]
+                    self.flag_OPEN = False
+
+                elif self.expand_button.state_toggle:
+                    self.delta_h = float(self.bounding_box[3]) - float(self.h_chiuso[:-2])
+                    self.recalc_geometry(*self.ori_coords[:3], self.h_aperto, self.ori_coords[-1])
+                    self.expand_button.update_window_change()
+                    self.expand_button.label_title.change_text(r"\#606060{\b{V}}" + f" {self.testo}")
+                    [ele.hide_plus_children(False, 1) for index, ele in self.child_id.items()]
+                    self.flag_OPEN = True
+
+
+    def disegnami(self, logica, max_height):
+        if self.do_stuff:
+            if self.bounding_box[1] + self.bounding_box[3] > max_height:
+                pygame.draw.rect(self.schermo, self.bg, [self.bounding_box[0], self.bounding_box[1], self.bounding_box[2], max_height - self.bounding_box[1]])
+            else:
+                pygame.draw.rect(self.schermo, self.bg, self.bounding_box)
+            self.expand_button.disegnami(logica)
+
+
+    def update_context_menu(self, *args):
+        super().update_context_menu(*args)
+        self.expand_button.update_context_menu(*args)
+
+
+    def update_window_change(self):
+        super().update_window_change()
+        self.expand_button.update_window_change()
+
+    
+    def move_update(self):
+        self.expand_button.move_y = self.move_y
+        self.expand_button.move_update(debug=True)
+        self.expand_button.update_window_change()
+        super().move_update()
+
+    
+    def hide_plus_children(self, booleano, gerarchia=2):
+        
+        match gerarchia:
+            case 0: self.hide_from_menu = booleano
+            case 1: self.hide_from_window = booleano
+            case 2: self.hide = booleano
+                
+        super().hide_plus_children(booleano, gerarchia)
+        try: self.expand_button.hide_plus_children(booleano)
+        except: ...
+
+
+
 class ContextMenu(BaseElement):
     def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, separator_size=2, bg=[25, 25, 25], scrollable=True) -> None:
         super().__init__(x, y, anchor, w, h, text, hide)
@@ -2183,15 +2335,19 @@ class ContextMenu(BaseElement):
 
         self.bg = bg
         self.debug = False
-        self.elements: dict[str, Label_Text | Bottone_Push | Bottone_Toggle | Entrata | Scroll | ContextMenu | ColorPicker] = {}
+        self.elements: dict[str, BaseElement] = {}
+        self.windows: dict[str, Collapsable_Window] = {}
+        self.windows_delta_h: dict[str, float] = {}
         self.separators = []
         self.separator_size = separator_size
+        self.max_window_group = 0
 
     
     def disegnami(self, logica):
 
         if not self.hide:
             pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
+            [ele.disegnami(logica, self.y + self.h) for index, ele in self.windows.items()]
 
             [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
             [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) == ColorPicker]
@@ -2216,28 +2372,57 @@ class ContextMenu(BaseElement):
         
         if not self.hide:
 
+            # Classic event
+            [ele.check_for_lost_focus(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
+            [ele.eventami(events, logica) for index, ele in self.windows.items()]
+            [ele.eventami(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
+
+
+            # Scroll update
             if self.bounding_box.collidepoint(logica.mouse_pos):
                 if logica.scroll_up:
                     if self.progression > 0:
                         self.progression -= 25            
-                        self.update_scroll(+25)
                 if logica.scroll_down:
                     if self.progression < self.max_progression:
                         self.progression += 25            
-                        self.update_scroll(-25)
-            else:
-                self.update_scroll(0)
+            
+            self.update_scroll(- self.progression)
+        
 
+            for i in range(0, self.max_window_group):
+                # calcolo degli offset vari storati in un dizionario
+                dizionario_altezze = {}
+                delta_rimuovere = 0
+                for index, ele in self.windows.items():
+                    if ele.group == i + 1:
+                        if ele.flag_OPEN:
+                            ele.delta_h = float(ele.bounding_box[3]) - float(ele.h_chiuso[:-2])
+            
+                        if not ele.flag_OPEN:
+                            delta_rimuovere -= ele.delta_h
+                        dizionario_altezze[index] = delta_rimuovere
 
-            [ele.check_for_lost_focus(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
-            [ele.eventami(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
-
-            for indice, ele in self.elements.items():
-                if type(ele) == ColorPicker:
-                    pop_up_domanda_color = ele.eventami(events, logica)
                 
-                    if pop_up_domanda_color:
-                        return ele
+                # muovo gli elementi in base alla finestra in cui si trovano
+                for index_window, window in self.windows.items():
+                    if window.group == i + 1:
+                        for index_elemento, elemento in window.child_id.items():
+                            elemento.move_y += dizionario_altezze[index_window]
+
+                
+                # gestione pop-up
+                for indice, ele in self.elements.items():
+                    if type(ele) == ColorPicker:
+                        pop_up_domanda_color = ele.eventami(events, logica)
+                    
+                        if pop_up_domanda_color:
+                            return ele
+                
+
+            # Bulk move di tutti gli elementi
+            [ele.move_update() for index, ele in self.elements.items()]
+            [ele.move_update() for index, ele in self.windows.items()]
         
         return 0
 
@@ -2251,23 +2436,53 @@ class ContextMenu(BaseElement):
             for index, element in self.elements.items():
 
                 if element.y > self.y:
-                    element.hide_plus_children(self.hide)
+                    element.hide_plus_children(self.hide, 0)
 
         self.previous_hide = self.hide
 
     
-    def add_element(self, id: str, element: Label_Text):
+    def add_element(self, id: str, element: Label_Text, window: str = None):
         element.update_context_menu(self.x, self.y, self.w, self.h)
         self.elements[id] = element
 
+        if not window is None:
+            self.windows[window].child_id[id] = element
+            element.is_in_window = True
+        else:
+            element.is_in_window = False
+
         # update max height of the context menù
-        pos_y = [ele.y for index, ele in self.elements.items()]
-        altezze = [ele.h for index, ele in self.elements.items()]
+        pos_y_ele = [ele.y for index, ele in self.elements.items()]
+        altezze_ele = [ele.h for index, ele in self.elements.items()]
+
+        pos_y_windows = [windows.y for index, windows in self.windows.items()]
+        altezze_windows = [windows.h for index, windows in self.windows.items()]
+
+        pos_y, altezze = max(pos_y_ele, pos_y_windows), max(altezze_ele, altezze_windows)
+
+        max_depth = max([i+j for i, j in zip(pos_y, altezze)])
+        
+        self.max_progression = max_depth
+
+    
+    def add_window(self, id: str, window: Collapsable_Window):
+        window.update_context_menu(self.x, self.y, self.w, self.h)
+        self.windows[id] = window
+        self.windows_delta_h[id] = float(window.h) - float(window.h_chiuso[:-2])
+        self.max_window_group = max(self.max_window_group, window.group)
+
+        # update max height of the context menù
+        pos_y_ele = [ele.y for index, ele in self.elements.items()]
+        altezze_ele = [ele.h for index, ele in self.elements.items()]
+
+        pos_y_windows = [windows.y for index, windows in self.windows.items()]
+        altezze_windows = [windows.h for index, windows in self.windows.items()]
+
+        pos_y, altezze = max(pos_y_ele, pos_y_windows), max(altezze_ele, altezze_windows)
 
         max_depth = max([i+j for i, j in zip(pos_y, altezze)])
 
         self.max_progression = max_depth
-
 
 
     def update_window_change(self):
@@ -2301,48 +2516,27 @@ class ContextMenu(BaseElement):
         
         for index, ele in self.elements.items():
             ele.update_context_menu(self.x, self.y, self.w, self.h)
+        for index, ele in self.windows.items():
+            ele.update_context_menu(self.x, self.y, self.w, self.h)
 
         [ele.update_window_change() for index, ele in self.elements.items()]
-        
+        [ele.update_window_change() for index, ele in self.windows.items()]
+
+        self.windows_delta_h = {key : float(window.h) - float(window.h_chiuso[:-2]) for key, window in self.windows.items()}
+
 
     def update_scroll(self, pm: int):
-        
         if self.scrollable:
-
-            self.separators = [sep + pm for sep in self.separators]
-
             for _, ele in self.elements.items():
+                ele.move_y += pm
                 
-                new_values = list(ele.ori_coords)
+            for _, window in self.windows.items():
+                window.move_y += pm
                 
-                if "px" in new_values[1]:
-                    split = new_values[1].split()
-                    for index_2, coord in enumerate(split):
-                        if "px" in coord:  
-                            split[index_2] = f"{int(coord[:-2]) + pm}px"
-
-                    new_values[1] = " ".join(split)
-
-                else:
-                    new_values[1] += f" {pm}px"
-
-                ele.ori_coords = tuple(new_values)
-
-                ele.update_window_change()
-
     
     def add_separator(self, y):
         self.separators.append(y)
 
-
-
-class Collapsable_Window(BaseElement):
-    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, bg=None):
-        super().__init__(x, y, anchor, w, h, text, hide, color_text, latex_font, bg)
-
-
-    def disegnami(self, logica):
-        pygame.draw.rect(self.schermo, self.bg, self.bounding_box)
 
 
 class Screen(BaseElement):
@@ -2373,7 +2567,7 @@ class Screen(BaseElement):
     
 
     def disegnami(self, logica):
-        if not self.hide and not self.screenshot_type:
+        if self.do_stuff and not self.screenshot_type:
             self.schermo.blit(self.tavolozza, (self.x, self.y))
 
 

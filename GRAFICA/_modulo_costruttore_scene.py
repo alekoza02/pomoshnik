@@ -39,7 +39,7 @@ class Costruttore:
 
         self.bott_calls = BottoniCallbacks()
 
-        # self.costruisci_main()
+        self.costruisci_main()
         self.costruisci_main_plot()
 
 
@@ -90,14 +90,13 @@ class Costruttore:
         
         s.context_menu["main"].add_element("settings", ContextMenu(x="50%w", y="50%h", w="30%w", h="80%h", anchor="cc"))
         
-        s.context_menu["main"].elements["settings"].add_element("scatter_info", Collapsable_Window(x="1%w", y="1%h", w="98%w", h="20%h", anchor="lu", bg=[148, 177, 255]))
-        s.context_menu["main"].elements["settings"].add_element("line_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].elements["scatter_info"]), bg=[148, 177, 255]))
-        s.context_menu["main"].elements["settings"].add_element("gradient_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].elements["line_info"]), bg=[148, 177, 255]))
-        s.context_menu["main"].elements["settings"].add_element("metadata_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].elements["gradient_info"]), bg=[148, 177, 255]))
+        s.context_menu["main"].elements["settings"].add_window("scatter_info", Collapsable_Window(x="1%w", y="1%h", w="98%w", h="20%h", anchor="lu", bg=[27, 27, 27], text="scatter info"))
+        s.context_menu["main"].elements["settings"].add_window("line_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].windows["scatter_info"]), bg=[27, 27, 27], text="line info"))
+        s.context_menu["main"].elements["settings"].add_window("gradient_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].windows["line_info"]), bg=[27, 27, 27], text="gradient info"))
+        s.context_menu["main"].elements["settings"].add_window("metadata_info", Collapsable_Window(w="98%w", h="20%h", anchor=("lu ld (0px) (1%h)", s.context_menu["main"].elements["settings"].windows["gradient_info"]), bg=[27, 27, 27], text="metadata info"))
         
-        s.context_menu["main"].elements["settings"].add_element("bottone1", Bottone_Toggle(w="95%w", h="10%h", anchor="cc", x="50%w", y="10%h"))
-        s.context_menu["main"].elements["settings"].add_element("bottone2", Bottone_Toggle(w="95%w", h="10%h", anchor="cc", x="50%w", y="30%h"))
-
+        s.context_menu["main"].elements["settings"].add_element("bottone1", Bottone_Toggle(w="10%w", h="10%h", anchor="cc", x="50%w", y="35%h"), window="line_info")
+        s.context_menu["main"].elements["settings"].add_element("bottone2", Bottone_Toggle(w="10%w", h="10%h", anchor="cc", x="50%w", y="55%h"), window="gradient_info")
 
 
     
@@ -146,139 +145,167 @@ class Costruttore:
 
         # # ITEM 1 GEOMETRY ------------------------------------------------
         s.context_menu["item1"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Geometria}"))
+        s.context_menu["item1"].add_window("wind1", Collapsable_Window(x="1%w", y="150px", w="98%w", h="310px", anchor="lu", bg=[20, 20, 20], text="Canvas proportions (size)", closed=1))
+        s.context_menu["item1"].add_window("wind2", Collapsable_Window(w="98%w", h="250px", anchor=("lu ld (0px) (10px)", s.context_menu["item1"].windows["wind1"]), bg=[20, 20, 20], text="Canvas colors", closed=1))
+        s.context_menu["item1"].add_window("wind3", Collapsable_Window(w="98%w", h="240px", anchor=("lu ld (0px) (10px)", s.context_menu["item1"].windows["wind2"]), bg=[20, 20, 20], text="Normalization and overlapping", closed=1))
+        
         s.context_menu["item1"].add_element("plot_mode", RadioButton("50%w", "120px", "cd", "35%w", "50px", "x", cb_n=2, cb_s=[1, 0], cb_t=["1D", "2D"], w_button="17.5%w", h_button="50px", type_checkbox=False, always_one_active=True))
         
-        s.context_menu["item1"].add_element("w_plot_area", Entrata("75%w", "170px", "lu", "20%w", "30px", text="0.8", title="larghezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
-        s.context_menu["item1"].add_element("h_plot_area", Entrata("75%w", "205px", "lu", "20%w", "30px", text="0.8", title="altezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
-        s.context_menu["item1"].add_element("size_plot_area", Entrata("75%w", "170px", "lu", "20%w", "30px", text="0.8", title="dimensione plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
-        s.context_menu["item1"].add_element("x_plot_area", Entrata("75%w", "255px", "lu", "20%w", "30px", text="0.15", title="X plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
-        s.context_menu["item1"].add_element("y_plot_area", Entrata("75%w", "290px", "lu", "20%w", "30px", text="0.1", title="Y plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999))
+        s.context_menu["item1"].add_element("w_plot_area", Entrata("75%w", "220px", "lu", "20%w", "30px", text="0.8", title="larghezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999), window="wind1")
+        s.context_menu["item1"].add_element("h_plot_area", Entrata("75%w", "255px", "lu", "20%w", "30px", text="0.8", title="altezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999), window="wind1")
+        s.context_menu["item1"].add_element("size_plot_area", Entrata("75%w", "220px", "lu", "20%w", "30px", text="0.8", title="dimensione plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999), window="wind1")
+        s.context_menu["item1"].add_element("x_plot_area", Entrata("75%w", "305px", "lu", "20%w", "30px", text="0.15", title="X plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999), window="wind1")
+        s.context_menu["item1"].add_element("y_plot_area", Entrata("75%w", "340px", "lu", "20%w", "30px", text="0.1", title="Y plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999), window="wind1")
         
-        s.context_menu["item1"].add_element("mantain_prop", Bottone_Toggle("25%w", "365px", "cc", "30px", "30px", True, True, "Mantain axis proportions"))
+        s.context_menu["item1"].add_element("mantain_prop", Bottone_Toggle("25%w", "415px", "cc", "30px", "30px", True, True, "Mantain axis proportions"), window="wind1")
         
-        s.context_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", "30%w", "450px", "cc", "30%w", "40px", [50, 50, 50], bg=[50, 50, 50], text="Color plot area"))
-        s.context_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", "30%w", "500px", "cc", "30%w", "40px", [40, 40, 40], bg=[50, 50, 50], text="Color background"))
+        s.context_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", "30%w", "600px", "cc", "30%w", "40px", [50, 50, 50], bg=[50, 50, 50], text="Color plot area"), window="wind2")
+        s.context_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", "30%w", "650px", "cc", "30%w", "40px", [40, 40, 40], bg=[50, 50, 50], text="Color background"), window="wind2")
         
-        s.context_menu["item1"].add_element("norma_perc", RadioButton("50%w", "575px", "cc", "70%w", "50px", "x", cb_n=2, cb_s=[0, 0], cb_t=["[0..1]", "[%]"], type_checkbox=0, w_button="35%w", h_button="50px"))
-        s.context_menu["item1"].add_element("overlap", Bottone_Toggle("50%w", "650px", "cc", "35%w", "50px", True, False, "Plots Overlap"))
+        s.context_menu["item1"].add_element("norma_perc", RadioButton("50%w", "845px", "cc", "70%w", "50px", "x", cb_n=2, cb_s=[0, 0], cb_t=["[0..1]", "[%]"], type_checkbox=0, w_button="35%w", h_button="50px"), window="wind3")
+        s.context_menu["item1"].add_element("overlap", Bottone_Toggle("50%w", "920px", "cc", "35%w", "50px", True, False, "Plots Overlap"), window="wind3")
         
         # # ITEM 1 GEOMETRY ------------------------------------------------
         
         
         # # ITEM 2 PLOTS ---------------------------------------------------
         s.context_menu["item2"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Grafici 1D}"))
-        
         s.context_menu["item2"].add_element("plot_name", Entrata("20%w", "90px", "lu", "75%w", "30px", text="", title="Name: "))
+        
+        s.context_menu["item2"].add_window("wind1", Collapsable_Window(x="1%w", y="150px", w="98%w", h="200px", anchor="lu", bg=[20, 20, 20], text="Scatter settings", closed=1))
+        s.context_menu["item2"].add_window("wind2", Collapsable_Window(w="98%w", h="320px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind1"]), bg=[20, 20, 20], text="Function settings", closed=1))
+        s.context_menu["item2"].add_window("wind3", Collapsable_Window(w="98%w", h="200px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind2"]), bg=[20, 20, 20], text="Gradient", closed=1))
+        s.context_menu["item2"].add_window("wind4", Collapsable_Window(w="98%w", h="150px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind3"]), bg=[20, 20, 20], text="Column selection", closed=1))
     
-        s.context_menu["item2"].add_element("scatter_size", Entrata("55%w", "165px", "lu", "10%w", "30px", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50))
-        s.context_menu["item2"].add_element("scatter_border", Entrata("95%w", "165px", "ru", "10%w", "30px", text="0", title="width", lunghezza_max=2, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=9))
-        s.context_menu["item2"].add_element("function_size", Entrata("55%w", "200px", "lu", "10%w", "30px", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32))
-        s.context_menu["item2"].add_element("dashed_density", Entrata("75%w", "495px", "lu", "10%w", "30px", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101))
 
-        s.context_menu["item2"].add_element("scatter_toggle", Bottone_Toggle("40%w", "165px", "ru", "30px", "30px", text="Toggle scatter", type_checkbox=True, text_on_right=False, state=True))
-        s.context_menu["item2"].add_element("function_toggle", Bottone_Toggle("40%w", "200px", "ru", "30px", "30px", text="Toggle function", type_checkbox=True, text_on_right=False, state=True))
-        s.context_menu["item2"].add_element("errorbar", Bottone_Toggle("40%w", "235px", "ru", "30px", "30px", text="Toggle errors", type_checkbox=True, text_on_right=False, state=True))
-        s.context_menu["item2"].add_element("dashed", Bottone_Toggle("40%w", "495px", "ru", "30px", "30px", text="Dashed line", type_checkbox=True, text_on_right=False, state=True))
+        s.context_menu["item2"].add_element("scatter_size", Entrata("55%w", "225px", "lu", "10%w", "30px", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50), window="wind1")
+        s.context_menu["item2"].add_element("scatter_border", Entrata("95%w", "225px", "ru", "10%w", "30px", text="0", title="width", lunghezza_max=2, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=9), window="wind1")
+        s.context_menu["item2"].add_element("function_size", Entrata("75%w", "450px", "lu", "10%w", "30px", text="1", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32), window="wind2")
+        s.context_menu["item2"].add_element("dashed_density", Entrata("75%w", "550px", "lu", "10%w", "30px", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101), window="wind2")
+
+        s.context_menu["item2"].add_element("scatter_toggle", Bottone_Toggle("40%w", "225px", "ru", "30px", "30px", text="Toggle scatter", type_checkbox=True, text_on_right=False, state=True), window="wind1")
+        s.context_menu["item2"].add_element("function_toggle", Bottone_Toggle("40%w", "450px", "ru", "30px", "30px", text="Toggle function", type_checkbox=True, text_on_right=False, state=True), window="wind2")
+        s.context_menu["item2"].add_element("errorbar", Bottone_Toggle("40%w", "500px", "ru", "30px", "30px", text="Toggle errors", type_checkbox=True, text_on_right=False, state=True), window="wind2")
+        s.context_menu["item2"].add_element("dashed", Bottone_Toggle("40%w", "550px", "ru", "30px", "30px", text="Dashed line", type_checkbox=True, text_on_right=False, state=True), window="wind2")
         
-        s.context_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", "30%w", "350px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore function"))
-        s.context_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", "30%w", "405px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"))
+        s.context_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", "30%w", "630px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore function"), window="wind2")
+        s.context_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", "30%w", "305px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter"), window="wind1")
     
-        s.context_menu["item2"].add_element("gradient", Bottone_Toggle("40%w", "600px", "ru", "30px", "30px", 0, text="Gradient", text_on_right=0))
-        s.context_menu["item2"].add_element("grad_mode", RadioButton("90%w", "600px", "ru", "35%w", "80px", axis="y", cb_n=2, cb_s=[0, 1], cb_t=["Horizontal", "Vertical"], type_checkbox=False, w_button="35%w", h_button="40px"))
+        s.context_menu["item2"].add_element("gradient", Bottone_Toggle("40%w", "770px", "ru", "30px", "30px", 0, text="Gradient", text_on_right=0), window="wind3")
+        s.context_menu["item2"].add_element("grad_mode", RadioButton("90%w", "770px", "ru", "35%w", "80px", axis="y", cb_n=2, cb_s=[0, 1], cb_t=["Horizontal", "Vertical"], type_checkbox=False, w_button="35%w", h_button="40px"), window="wind3")
         
-        s.context_menu["item2"].add_element("add_second_axis", Bottone_Toggle("40%w", "750px", "ru", "30px", "30px", 0, text="Add to the second Y axis"))
+        s.context_menu["item2"].add_element("add_second_axis", Bottone_Toggle(w="30px", h="30px", anchor=("lu ld (10px) (30px)", s.context_menu["item2"].windows["wind4"]), state=0, text="Add to the second Y axis"))
         
-        s.context_menu["item2"].add_element("column_x", Entrata("25%w", "820px", "cu", "5.5%w", "30px", text="0", title="X column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101))
-        s.context_menu["item2"].add_element("column_y", Entrata("60%w", "820px", "cu", "5.5%w", "30px", text="0", title="Y column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101))
-        s.context_menu["item2"].add_element("column_ey", Entrata("95%w", "820px", "cu", "5.5%w", "30px", text="0", title="Ey column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101))
+        s.context_menu["item2"].add_element("column_x", Entrata("25%w", "970px", "cu", "5.5%w", "30px", text="0", title="X column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101), window="wind4")
+        s.context_menu["item2"].add_element("column_y", Entrata("60%w", "970px", "cu", "5.5%w", "30px", text="0", title="Y column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101), window="wind4")
+        s.context_menu["item2"].add_element("column_ey", Entrata("95%w", "970px", "cu", "5.5%w", "30px", text="0", title="Ey column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101), window="wind4")
 
         ################
 
         s.context_menu["item2"].add_element("_title_drop_menu_base2D", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Grafici 2D}"))
-        
         s.context_menu["item2"].add_element("plot_name2D", Entrata("20%w", "90px", "lu", "75%w", "30px", text="", title="Name: "))
         
-        s.context_menu["item2"].add_element("colore_base1", ColorPicker(s.palette_popup, "2", "30%w", "350px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore estremo LOW"))
-        s.context_menu["item2"].add_element("colore_base2", ColorPicker(s.palette_popup, "3", "30%w", "405px", "cc", "30%w", "40px", [220, 20, 60], bg=[50, 50, 50], text="Colore estremo HIGH"))
+        s.context_menu["item2"].add_window("wind2D_1", Collapsable_Window(x="1%w", y="150px", w="98%w", h="150px", anchor="lu", bg=[20, 20, 20], text="Spacing", closed=1, group=2))
+        s.context_menu["item2"].add_window("wind2D_2", Collapsable_Window(w="98%w", h="200px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind2D_1"]), bg=[20, 20, 20], text="Color map", closed=1, group=2))
+        s.context_menu["item2"].add_window("wind2D_3", Collapsable_Window(w="98%w", h="150px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind2D_2"]), bg=[20, 20, 20], text="Axes Flip", closed=1, group=2))
         
-        s.context_menu["item2"].add_element("flip_y", Bottone_Toggle("80%w", "600px", "ru", "30px", "30px", 0, text="Flip Y axis", text_on_right=0))
-        s.context_menu["item2"].add_element("flip_x", Bottone_Toggle("40%w", "600px", "ru", "30px", "30px", 0, text="Flip X axis", text_on_right=0))
+        s.context_menu["item2"].add_element("spacing_x", Entrata("95%w", "215px", "ru", "30%w", "30px", text="1", title="Spacing X", lunghezza_max=13, solo_numeri=True, num_valore_minimo=1e-10, num_valore_massimo=1e10), window="wind2D_1")
+        s.context_menu["item2"].add_element("spacing_y", Entrata("95%w", "250px", "ru", "30%w", "30px", text="1", title="Spacing Y", lunghezza_max=13, solo_numeri=True, num_valore_minimo=1e-10, num_valore_massimo=1e10), window="wind2D_1")
         
-        s.context_menu["item2"].add_element("spacing_x", Entrata("75%w", "165px", "ru", "30%w", "30px", text="1", title="Spacing X", lunghezza_max=13, solo_numeri=True, num_valore_minimo=1e-10, num_valore_massimo=1e10))
-        s.context_menu["item2"].add_element("spacing_y", Entrata("75%w", "200px", "ru", "30%w", "30px", text="1", title="Spacing Y", lunghezza_max=13, solo_numeri=True, num_valore_minimo=1e-10, num_valore_massimo=1e10))
+        s.context_menu["item2"].add_element("colore_base1", ColorPicker(s.palette_popup, "2", "30%w", "400px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore estremo LOW"), window="wind2D_2")
+        s.context_menu["item2"].add_element("colore_base2", ColorPicker(s.palette_popup, "3", "30%w", "455px", "cc", "30%w", "40px", [220, 20, 60], bg=[50, 50, 50], text="Colore estremo HIGH"), window="wind2D_2")
+        
+        s.context_menu["item2"].add_element("flip_y", Bottone_Toggle("80%w", "600px", "ru", "30px", "30px", 0, text="Flip Y axis", text_on_right=0), window="wind2D_3")
+        s.context_menu["item2"].add_element("flip_x", Bottone_Toggle("40%w", "600px", "ru", "30px", "30px", 0, text="Flip X axis", text_on_right=0), window="wind2D_3")
         # # ITEM 2 PLOTS ---------------------------------------------------
 
 
         # # ITEM 3 AX LABELS -----------------------------------------------
-        s.context_menu["item3"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Label}"))
+        # s.context_menu["item3"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Label}"))
+        s.context_menu["item3"].add_window("wind1", Collapsable_Window(x="1%w", y="10px", w="98%w", h="270px", anchor="lu", bg=[20, 20, 20], text="Labels text", closed=1))
+        s.context_menu["item3"].add_window("wind2", Collapsable_Window(w="98%w", h="250px", anchor=("lu ld (0px) (10px)", s.context_menu["item3"].windows["wind1"]), bg=[20, 20, 20], text="Font", closed=1))
+        s.context_menu["item3"].add_window("wind3", Collapsable_Window(w="98%w", h="320px", anchor=("lu ld (0px) (10px)", s.context_menu["item3"].windows["wind2"]), bg=[20, 20, 20], text="Text colors", closed=1))
+        s.context_menu["item3"].add_window("wind4", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item3"].windows["wind3"]), bg=[20, 20, 20], text="Projection labels", closed=1))
         
-        s.context_menu["item3"].add_element("text_title", Entrata("50%w", "120px", "lu", "45%w", "30px", text="Title", title="Title text"))
-        s.context_menu["item3"].add_element("text_label_x", Entrata("50%w", "170px", "lu", "45%w", "30px", text="X axis", title="Label text X"))
-        s.context_menu["item3"].add_element("text_label_y", Entrata("50%w", "205px", "lu", "45%w", "30px", text="Y axis", title="Y"))
-        s.context_menu["item3"].add_element("text_label_2y", Entrata("50%w", "240px", "lu", "45%w", "30px", text="2°Y axis", title="2°Y"))
+        s.context_menu["item3"].add_element("text_title", Entrata("50%w", "100px", "lu", "45%w", "30px", text="Title", title="Title text"), window="wind1")
+        s.context_menu["item3"].add_element("text_label_x", Entrata("50%w", "150px", "lu", "45%w", "30px", text="X axis", title="Label text X"), window="wind1")
+        s.context_menu["item3"].add_element("text_label_y", Entrata("50%w", "185px", "lu", "45%w", "30px", text="Y axis", title="Y"), window="wind1")
+        s.context_menu["item3"].add_element("text_label_2y", Entrata("50%w", "220px", "lu", "45%w", "30px", text="2°Y axis", title="2°Y"), window="wind1")
         
-        s.context_menu["item3"].add_element("font_size_title", Entrata("75%w", "305px", "lu", "20%w", "30px", text="48", title="Title font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
-        s.context_menu["item3"].add_element("font_size_label_x", Entrata("75%w", "355px", "lu", "20%w", "30px", text="48", title="Label font size X", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
-        s.context_menu["item3"].add_element("font_size_label_y", Entrata("75%w", "390px", "lu", "20%w", "30px", text="48", title="Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
-        s.context_menu["item3"].add_element("font_size_label_2y", Entrata("75%w", "425px", "lu", "20%w", "30px", text="48", title="2°Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
-        s.context_menu["item3"].add_element("label_title_color", ColorPicker(s.palette_popup, "4", "30%w", "500px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore titolo"))
-        s.context_menu["item3"].add_element("label_x_color", ColorPicker(s.palette_popup, "5", "30%w", "570px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label X"))
-        s.context_menu["item3"].add_element("label_y_color", ColorPicker(s.palette_popup, "6", "30%w", "620px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label Y"))
-        s.context_menu["item3"].add_element("label_2y_color", ColorPicker(s.palette_popup, "7", "30%w", "670px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label 2Y"))
+        s.context_menu["item3"].add_element("font_size_title", Entrata("75%w", "355px", "lu", "20%w", "30px", text="48", title="Title font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128), window="wind2")
+        s.context_menu["item3"].add_element("font_size_label_x", Entrata("75%w", "405px", "lu", "20%w", "30px", text="48", title="Label font size X", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128), window="wind2")
+        s.context_menu["item3"].add_element("font_size_label_y", Entrata("75%w", "440px", "lu", "20%w", "30px", text="48", title="Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128), window="wind2")
+        s.context_menu["item3"].add_element("font_size_label_2y", Entrata("75%w", "475px", "lu", "20%w", "30px", text="48", title="2°Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128), window="wind2")
         
-        s.context_menu["item3"].add_element("show_coords_projection", Bottone_Toggle("95%w", "750px", "ru", "30px", "30px", text="Mostra proiezione coords", type_checkbox=True, text_on_right=False))
-        s.context_menu["item3"].add_element("show_coords_value", Bottone_Toggle("95%w", "790px", "ru", "30px", "30px", text="Mostra valore coords", type_checkbox=True, text_on_right=False))
+        s.context_menu["item3"].add_element("label_title_color", ColorPicker(s.palette_popup, "4", "50%w", "650px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore titolo"), window="wind3")
+        s.context_menu["item3"].add_element("label_x_color", ColorPicker(s.palette_popup, "5", "50%w", "720px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label X"), window="wind3")
+        s.context_menu["item3"].add_element("label_y_color", ColorPicker(s.palette_popup, "6", "50%w", "770px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label Y"), window="wind3")
+        s.context_menu["item3"].add_element("label_2y_color", ColorPicker(s.palette_popup, "7", "50%w", "820px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label 2Y"), window="wind3")
+        
+        s.context_menu["item3"].add_element("show_coords_projection", Bottone_Toggle("95%w", "950px", "ru", "30px", "30px", text="Mostra proiezione coords", type_checkbox=True, text_on_right=False), window="wind4")
+        s.context_menu["item3"].add_element("show_coords_value", Bottone_Toggle("95%w", "990px", "ru", "30px", "30px", text="Mostra valore coords", type_checkbox=True, text_on_right=False), window="wind4")
         # # ITEM 3 AX LABELS -----------------------------------------------
         
 
         # # ITEM 4 AXES ----------------------------------------------------
-        s.context_menu["item4"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Assi}"))
+        # s.context_menu["item4"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Assi}"))
+        s.context_menu["item4"].add_window("wind1", Collapsable_Window(x="1%w", y="10px", w="98%w", h="180px", anchor="lu", bg=[20, 20, 20], text="More settings", closed=1))
+        s.context_menu["item4"].add_window("wind2", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item4"].windows["wind1"]), bg=[20, 20, 20], text="Round precision", closed=1))
+        s.context_menu["item4"].add_window("wind3", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item4"].windows["wind2"]), bg=[20, 20, 20], text="Grid", closed=1))
+        s.context_menu["item4"].add_window("wind4", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item4"].windows["wind3"]), bg=[20, 20, 20], text="Ax Formatting", closed=1))
+        s.context_menu["item4"].add_window("wind5", Collapsable_Window(w="98%w", h="470px", anchor=("lu ld (0px) (10px)", s.context_menu["item4"].windows["wind4"]), bg=[20, 20, 20], text="Colori", closed=1))
         
-        s.context_menu["item4"].add_element("second_y_axis", Bottone_Toggle("70%w", "140px", "cd", "35%w", "50px", False, False, "Toggle 2° Y axis"))
-        s.context_menu["item4"].add_element("invert_x_axis", Bottone_Toggle("30%w", "140px", "cd", "35%w", "50px", False, False, "Invert X axis"))
+        s.context_menu["item4"].add_element("second_y_axis", Bottone_Toggle("70%w", "140px", "cd", "35%w", "50px", False, False, "Toggle 2° Y axis"), window="wind1")
+        s.context_menu["item4"].add_element("invert_x_axis", Bottone_Toggle("30%w", "140px", "cd", "35%w", "50px", False, False, "Invert X axis"), window="wind1")
 
-        s.context_menu["item4"].add_element("round_x", Entrata("75%w", "180px", "lu", "20%w", "30px", text="2", title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
-        s.context_menu["item4"].add_element("round_y", Entrata("75%w", "215px", "lu", "20%w", "30px", text="2", title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
-        s.context_menu["item4"].add_element("round_2y", Entrata("75%w", "250px", "lu", "20%w", "30px", text="2", title="2°Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12))
+        s.context_menu["item4"].add_element("round_x", Entrata("75%w", "250px", "lu", "20%w", "30px", text="2", title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12), window="wind2")
+        s.context_menu["item4"].add_element("round_y", Entrata("75%w", "285px", "lu", "20%w", "30px", text="2", title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12), window="wind2")
+        s.context_menu["item4"].add_element("round_2y", Entrata("75%w", "320px", "lu", "20%w", "30px", text="2", title="2°Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12), window="wind2")
         
-        s.context_menu["item4"].add_element("show_grid_x", Bottone_Toggle("95%w", "315px", "ru", "30px", "30px", text="Mostra griglia X", state=True, type_checkbox=True, text_on_right=False))
-        s.context_menu["item4"].add_element("show_grid_y", Bottone_Toggle("95%w", "350px", "ru", "30px", "30px", text="Mostra griglia Y", state=True, type_checkbox=True, text_on_right=False))
-        s.context_menu["item4"].add_element("show_grid_2y", Bottone_Toggle("95%w", "385px", "ru", "30px", "30px", text="Mostra griglia 2°Y", state=True, type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("show_grid_x", Bottone_Toggle("95%w", "425px", "ru", "30px", "30px", text="Mostra griglia X", state=True, type_checkbox=True, text_on_right=False), window="wind3")
+        s.context_menu["item4"].add_element("show_grid_y", Bottone_Toggle("95%w", "460px", "ru", "30px", "30px", text="Mostra griglia Y", state=True, type_checkbox=True, text_on_right=False), window="wind3")
+        s.context_menu["item4"].add_element("show_grid_2y", Bottone_Toggle("95%w", "495px", "ru", "30px", "30px", text="Mostra griglia 2°Y", state=True, type_checkbox=True, text_on_right=False), window="wind3")
         
-        s.context_menu["item4"].add_element("formatting_x", Bottone_Toggle("95%w", "445px", "ru", "30px", "30px", text="Usa notazione scientifica asse X", type_checkbox=True, text_on_right=False))
-        s.context_menu["item4"].add_element("formatting_y", Bottone_Toggle("95%w", "480px", "ru", "30px", "30px", text="Usa notazione scientifica asse Y", type_checkbox=True, text_on_right=False))
-        s.context_menu["item4"].add_element("formatting_2y", Bottone_Toggle("95%w", "515px", "ru", "30px", "30px", text="Usa notazione scientifica asse 2°Y", type_checkbox=True, text_on_right=False))
+        s.context_menu["item4"].add_element("formatting_x", Bottone_Toggle("95%w", "625px", "ru", "30px", "30px", text="Not. Scien. asse X", type_checkbox=True, text_on_right=False), window="wind4")
+        s.context_menu["item4"].add_element("formatting_y", Bottone_Toggle("95%w", "660px", "ru", "30px", "30px", text="Not. Scien. asse Y", type_checkbox=True, text_on_right=False), window="wind4")
+        s.context_menu["item4"].add_element("formatting_2y", Bottone_Toggle("95%w", "695px", "ru", "30px", "30px", text="Not. Scien. asse 2°Y", type_checkbox=True, text_on_right=False), window="wind4")
         
-        s.context_menu["item4"].add_element("ax_color_x", ColorPicker(s.palette_popup, "8", "30%w", "625px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse X"))
-        s.context_menu["item4"].add_element("ax_color_y", ColorPicker(s.palette_popup, "9", "30%w", "675px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse Y"))
-        s.context_menu["item4"].add_element("ax_color_2y", ColorPicker(s.palette_popup, "10", "30%w", "730px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse 2°Y"))
-        s.context_menu["item4"].add_element("tick_color_x", ColorPicker(s.palette_popup, "11", "30%w", "820px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values X"))
-        s.context_menu["item4"].add_element("tick_color_y", ColorPicker(s.palette_popup, "12", "30%w", "870px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y"))
-        s.context_menu["item4"].add_element("tick_color_2y", ColorPicker(s.palette_popup, "13", "30%w", "920px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values 2°Y"))
+        s.context_menu["item4"].add_element("ax_color_x", ColorPicker(s.palette_popup, "8", "30%w", "875px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse X"), window="wind5")
+        s.context_menu["item4"].add_element("ax_color_y", ColorPicker(s.palette_popup, "9", "30%w", "925px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse Y"), window="wind5")
+        s.context_menu["item4"].add_element("ax_color_2y", ColorPicker(s.palette_popup, "10", "30%w", "980px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse 2°Y"), window="wind5")
+        s.context_menu["item4"].add_element("tick_color_x", ColorPicker(s.palette_popup, "11", "30%w", "1070px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values X"), window="wind5")
+        s.context_menu["item4"].add_element("tick_color_y", ColorPicker(s.palette_popup, "12", "30%w", "1120px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y"), window="wind5")
+        s.context_menu["item4"].add_element("tick_color_2y", ColorPicker(s.palette_popup, "13", "30%w", "1170px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values 2°Y"), window="wind5")
         # # ITEM 4 AXES ----------------------------------------------------
 
 
         # # ITEM 5 LEGEND --------------------------------------------------
         s.context_menu["item5"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Legenda}"))
     
+        s.context_menu["item5"].add_window("wind1", Collapsable_Window(x="1%w", y="170px", w="98%w", h="180px", anchor="lu", bg=[20, 20, 20], text="Position and size", closed=1))
+        s.context_menu["item5"].add_window("wind2", Collapsable_Window(w="98%w", h="280px", anchor=("lu ld (0px) (10px)", s.context_menu["item5"].windows["wind1"]), bg=[20, 20, 20], text="Background", closed=1))
+        s.context_menu["item5"].add_window("wind3", Collapsable_Window(w="98%w", h="220px", anchor=("lu ld (0px) (10px)", s.context_menu["item5"].windows["wind2"]), bg=[20, 20, 20], text="Text and icons", closed=1))
+        s.context_menu["item5"].add_window("wind4", Collapsable_Window(w="98%w", h="170px", anchor=("lu ld (0px) (10px)", s.context_menu["item5"].windows["wind3"]), bg=[20, 20, 20], text="2D marker", closed=1))
+        
+
         s.context_menu["item5"].add_element("show_legend", Bottone_Toggle("95%w", "80px", "ru", "30px", "30px", text="\\#dfffdf{\\b{Mostra legenda}}", state=False, type_checkbox=True, text_on_right=False))
 
-        s.context_menu["item5"].add_element("x_legend", Entrata("75%w", "155px", "lu", "20%w", "30px", text="0.5", title="X legend", lunghezza_max=5, solo_numeri=True, num_valore_minimo=-0.5, num_valore_massimo=1.5))
-        s.context_menu["item5"].add_element("y_legend", Entrata("75%w", "190px", "lu", "20%w", "30px", text="0.5", title="Y legend", lunghezza_max=5, solo_numeri=True, num_valore_minimo=-0.5, num_valore_massimo=1.5))
+        s.context_menu["item5"].add_element("x_legend", Entrata("75%w", "205px", "lu", "20%w", "30px", text="0.5", title="X legend", lunghezza_max=5, solo_numeri=True, num_valore_minimo=-0.5, num_valore_massimo=1.5), window="wind1")
+        s.context_menu["item5"].add_element("y_legend", Entrata("75%w", "240px", "lu", "20%w", "30px", text="0.5", title="Y legend", lunghezza_max=5, solo_numeri=True, num_valore_minimo=-0.5, num_valore_massimo=1.5), window="wind1")
         
-        s.context_menu["item5"].add_element("font_size_legend", Entrata("75%w", "255px", "lu", "20%w", "30px", text="48", title="Legend font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128))
+        s.context_menu["item5"].add_element("font_size_legend", Entrata("75%w", "305px", "lu", "20%w", "30px", text="48", title="Legend font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128), window="wind1")
         
-        s.context_menu["item5"].add_element("show_legend_background", Bottone_Toggle("95%w", "350px", "ru", "30px", "30px", text="\\#dfffdf{\\b{Disegna bg}}", state=False, type_checkbox=True, text_on_right=False))
-        s.context_menu["item5"].add_element("legend_color_background", ColorPicker(s.palette_popup, "14", "30%w", "430px", "cc", "30%w", "40px", [250, 250, 250], bg=[50, 50, 50], text="Color legend bg"))
-        s.context_menu["item5"].add_element("transparent_background", Bottone_Toggle("95%w", "490px", "ru", "30px", "30px", text="Trasparenza bg", state=True, type_checkbox=True, text_on_right=False))
-        s.context_menu["item5"].add_element("blur_strenght", Entrata("75%w", "530px", "lu", "20%w", "30px", text="6", title="Forza di blur", lunghezza_max=2, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=12))
+        s.context_menu["item5"].add_element("show_legend_background", Bottone_Toggle("95%w", "400px", "ru", "30px", "30px", text="\\#dfffdf{\\b{Disegna bg}}", state=False, type_checkbox=True, text_on_right=False), window="wind2")
+        s.context_menu["item5"].add_element("legend_color_background", ColorPicker(s.palette_popup, "14", "30%w", "480px", "cc", "30%w", "40px", [250, 250, 250], bg=[50, 50, 50], text="Color legend bg"), window="wind2")
+        s.context_menu["item5"].add_element("transparent_background", Bottone_Toggle("95%w", "540px", "ru", "30px", "30px", text="Trasparenza bg", state=True, type_checkbox=True, text_on_right=False), window="wind2")
+        s.context_menu["item5"].add_element("blur_strenght", Entrata("75%w", "580px", "lu", "20%w", "30px", text="6", title="Forza di blur", lunghezza_max=2, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=12), window="wind2")
         
-        s.context_menu["item5"].add_element("show_icons", Bottone_Toggle("95%w", "620px", "ru", "30px", "30px", text="Mostra icone", state=True, type_checkbox=True, text_on_right=False))
-        s.context_menu["item5"].add_element("match_color_text", Bottone_Toggle("95%w", "660px", "ru", "30px", "30px", text="Match text color", state=True, type_checkbox=True, text_on_right=False))
-        s.context_menu["item5"].add_element("color_text", ColorPicker(s.palette_popup, "15", "30%w", "720px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Color legend text"))
+        s.context_menu["item5"].add_element("show_icons", Bottone_Toggle("95%w", "710px", "ru", "30px", "30px", text="Mostra icone", state=True, type_checkbox=True, text_on_right=False), window="wind3")
+        s.context_menu["item5"].add_element("match_color_text", Bottone_Toggle("95%w", "750px", "ru", "30px", "30px", text="Match text color", state=True, type_checkbox=True, text_on_right=False), window="wind3")
+        s.context_menu["item5"].add_element("color_text", ColorPicker(s.palette_popup, "15", "30%w", "810px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Color legend text"), window="wind3")
         
-        s.context_menu["item5"].add_element("text_2D_plot", Entrata("75%w", "770px", "lu", "20%w", "30px", text=r"1\mum", title="Testo marker scala"))
-        s.context_menu["item5"].add_element("size_scale_marker2D", Entrata("75%w", "810px", "lu", "20%w", "30px", text="1000", title="Valore marker scala", solo_numeri=True))
+        s.context_menu["item5"].add_element("text_2D_plot", Entrata("75%w", "950px", "lu", "20%w", "30px", text=r"1\mum", title="Testo marker scala"), window="wind4")
+        s.context_menu["item5"].add_element("size_scale_marker2D", Entrata("75%w", "990px", "lu", "20%w", "30px", text="1000", title="Valore marker scala", solo_numeri=True), window="wind4")
         # # ITEM 5 LEGEND --------------------------------------------------
 
 
@@ -369,6 +396,10 @@ class Costruttore:
             self.scene["main"].context_menu["item2"].elements["column_x"].hide_plus_children(state_2D)
             self.scene["main"].context_menu["item2"].elements["column_y"].hide_plus_children(state_2D)
             self.scene["main"].context_menu["item2"].elements["column_ey"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].windows["wind1"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].windows["wind2"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].windows["wind3"].hide_plus_children(state_2D)
+            self.scene["main"].context_menu["item2"].windows["wind4"].hide_plus_children(state_2D)
 
             self.scene["main"].context_menu["item2"].elements["_title_drop_menu_base2D"].hide_plus_children(state_1D)
             self.scene["main"].context_menu["item2"].elements["plot_name2D"].hide_plus_children(state_1D)
@@ -378,6 +409,9 @@ class Costruttore:
             self.scene["main"].context_menu["item2"].elements["flip_x"].hide_plus_children(state_1D)
             self.scene["main"].context_menu["item2"].elements["spacing_x"].hide_plus_children(state_1D)
             self.scene["main"].context_menu["item2"].elements["spacing_y"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].windows["wind2D_1"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].windows["wind2D_2"].hide_plus_children(state_1D)
+            self.scene["main"].context_menu["item2"].windows["wind2D_3"].hide_plus_children(state_1D)
         
 
         def hide_metadata_based_on_metadata_lenght():

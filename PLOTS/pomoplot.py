@@ -2289,13 +2289,13 @@ class PomoPlot:
                 if self.plot_mode == 0:
                     fix = 1
                     while fix:
-                        if self.coords_of_ticks[0][0] < self.spazio_coordinate_native[4]:
+                        if self.coords_of_ticks[2][0] < self.spazio_coordinate_native[4]:
                             _ = self.coords_of_ticks[2].pop(0)
                         else:
                             fix = 0                
                     fix = 1
                     while fix:
-                        if self.coords_of_ticks[1][0] < self.spazio_coordinate_native[5]:
+                        if self.coords_of_ticks[2][-1] < self.spazio_coordinate_native[5]:
                             _ = self.coords_of_ticks[2].pop(0)
                         else:
                             fix = 0
