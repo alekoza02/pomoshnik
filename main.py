@@ -60,8 +60,3 @@ if __name__ == "__main__":
         func_stats.save('profilatore.prof', type='pstat')
 
     print(f"Il programma è stato in esecuzione per {perf_counter() - start_time:.0f}s")
-
-
-# Gestire le 2 scroll per determinare quale elenco di plots visualizzare
-# Gestire le modifiche nelle modalità di plot
-# Gestire l'UI dei plot in base alla modalità

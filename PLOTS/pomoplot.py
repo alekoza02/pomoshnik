@@ -240,6 +240,8 @@ class PomoPlot:
         self.UI_pos_y_molecola: 'Entrata' = UI.costruttore.scene["main"].context_menu["item11"].elements["pos_y_molecola"]
         self.UI_dimensione_molecola: 'Entrata' = UI.costruttore.scene["main"].context_menu["item11"].elements["dimensione_molecola"]
 
+        self.UI_compute_derivative: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["compute_derivative"]
+        self.UI_output_derivative: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["output_derivative"]
 
         self.UI_compute_interpolation: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["compute"]
         self.UI_min_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["min_x"]
@@ -268,7 +270,9 @@ class PomoPlot:
         self.molecule_preview = self.UI_molecule_preview
         self.add_molecola = self.UI_add_molecola
         self.output_interpolation = self.UI_output_interpolation
+        self.output_derivative = self.UI_output_derivative
         self.compute_interpolation = self.UI_compute_interpolation
+        self.compute_derivative= self.UI_compute_derivative
         # NO CHANGES PERFORMED ----------------------------------------------------------
 
         try:
@@ -665,6 +669,12 @@ class PomoPlot:
             self.output_interpolation.change_text(self.linear_interpolation())
 
 
+        # compute derivative
+        if self.plot_mode == 0 and self.compute_derivative.flag_foo:
+            self.compute_derivative.flag_foo = False
+            self.output_derivative.change_text(self.derivative())
+
+
         # choose mode and hide unecessary UI
         if self.active_tab == 10:
             self.elenco_metadata.hide_plus_children(False)
@@ -696,12 +706,12 @@ class PomoPlot:
             except IndexError as e:
                 return f"\\#dc143c{{ATTENZIONE! Carica un grafico prima.}}\n\nRaised error:\n\\i{{{e}}}"
 
-            needed_indices = (base_data.data[:, 0] >= MateUtils.inp2flo(self.min_x_interpolation, np.min(base_data.data[:, 0]))) & (base_data.data[:, 0] <= MateUtils.inp2flo(self.max_x_interpolation, np.max(base_data.data[:, 0])))
+            needed_indices = (base_data.data[:, base_data.column_x] >= MateUtils.inp2flo(self.min_x_interpolation, np.min(base_data.data[:, base_data.column_x]))) & (base_data.data[:, base_data.column_x] <= MateUtils.inp2flo(self.max_x_interpolation, np.max(base_data.data[:, base_data.column_x])))
 
-            x = base_data.data[:, 0]
-            y = base_data.data[:, 1]
+            x = base_data.data[:, base_data.column_x]
+            y = base_data.data[:, base_data.column_y]
             
-            ey = base_data.data[:, 2] if base_data.data.shape[1] > 2 else None
+            ey = base_data.data[:, base_data.column_ey] if base_data.data.shape[1] > 2 else None
 
             x = x[needed_indices]
             y = y[needed_indices]
@@ -760,6 +770,25 @@ class PomoPlot:
 
         except RuntimeError as e:
             return f"\\#dc143c{{ATTENZIONE! Interpolazione fallita.}}\n\nCausa più probabile:\n\\#ffdd60{{Dati troppo divergenti.}}\n\nPossibile soluzione:\n\\#ffdd60{{Scegliere un range di dati più lineare.}}\n\nRaised error:\n\\i{{{e}}}"
+
+
+    def derivative(self) -> None:
+
+        try:
+            base_data = self.plots[self.scroll_plots.ele_selected_index]
+            derivata = np.gradient(base_data.data[:, base_data.column_y])
+
+            data_deri = np.vstack((base_data.data[:, base_data.column_x], derivata))
+            data_deri = data_deri.transpose(1, 0)
+
+            self.update_plot_list(_Single1DPlot(f"Derivata_{base_data.nome}", data_deri, ""))
+
+            return f"Calcolato correttamente.\n(\\#aaffaa{{Derivata_{base_data.nome}}})"        
+        
+        except IndexError as e:
+            return f"\\#dc143c{{ATTENZIONE! Carica un grafico prima.}}\n\nRaised error:\n\\i{{{e}}}"
+                    
+                    
 
 
     def OUTDATED_customfoo_interpolation(self, curve: str = "gaussian") -> str:
@@ -856,6 +885,7 @@ class PomoPlot:
         self._disegna_bg()      
 
         if self.plot_mode == 1: self._disegna_dati2D()
+        if self.plot_mode == 1: self._disegna_ZBAR()
 
         if self.plot_mode == 0: self._disegna_gradiente()
         self._disegna_assi()
@@ -871,7 +901,103 @@ class PomoPlot:
             self._disegna_mouse_coordinate(logica) # aggiungi secondo asse
             self._disegna_mouse_zoom(logica)
 
+
+    def _disegna_ZBAR(self):
+
+        if self.second_y_axis:
+
+            for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
+                if status:
             
+                    if self.zoom_boundaries[1] < 0:
+                        self.zoom_boundaries[1] = 0
+                    if self.zoom_boundaries[0] < 0:
+                        self.zoom_boundaries[0] = 0
+                    if self.zoom_boundaries[2] > 1:
+                        self.zoom_boundaries[2] = 1
+                    if self.zoom_boundaries[3] > 1:
+                        self.zoom_boundaries[3] = 1
+
+                    dimensioni = plot.data.shape
+
+                    indice_inizio_x = dimensioni[0] * self.zoom_boundaries[0]
+                    indice_inizio_y = dimensioni[1] * (1 - self.zoom_boundaries[3])
+                    indice_fine_x = dimensioni[0] * self.zoom_boundaries[2]
+                    indice_fine_y = dimensioni[1] * (1 - self.zoom_boundaries[1])
+
+                    fa = plot.data[int(indice_inizio_x) : int(indice_fine_x), int(indice_inizio_y) : int(indice_fine_y), 2]
+
+                    # fill la barra di altezza map colore
+                    map_color_array = np.zeros((1, 255, 3))
+
+                    for i in range(3):
+                        map_color_array[:, :, i] = np.linspace(plot.colore_base2[i], plot.colore_base1[i], map_color_array.shape[1]).reshape(int(map_color_array.shape[0]), map_color_array.shape[1])
+
+                    
+                    self.screen._blit_surface(
+                        self.screen._generate_surface(map_color_array), (self.max_plot_square[0] + self.max_plot_square[2] * 1.05, self.max_plot_square[1]), scale=(self.max_plot_square[2] * 0.05, self.max_plot_square[3]))
+
+                    # disegna la barra di altezza map colore
+                    self.screen._add_rectangle(
+                        [self.max_plot_square[0] + self.max_plot_square[2] * 1.05, self.max_plot_square[1], self.max_plot_square[2] * 0.05, self.max_plot_square[3]], self.ax_color_2y, 3 * self.scale_factor_viewport
+                    )
+
+                    # aggiorno valore dei tick
+                    fa_min = np.min(fa)
+                    fa_max = np.max(fa - fa_min)
+
+
+                    self.spazio_coordinate_native[4] = fa_min
+                    self.spazio_coordinate_native[5] = fa_max
+                    
+                    # calcolo posizione dei tick
+                    ticks_2y = self._find_optimal_ticks([self.spazio_coordinate_native[4], self.spazio_coordinate_native[5]])
+
+                    # fast check for good and bad
+                    fix = 1
+                    while fix:
+                        if ticks_2y[0] < self.spazio_coordinate_native[4]:
+                            _ = ticks_2y.pop(0)
+                        else:
+                            fix = 0                
+                    fix = 1
+                    while fix:
+                        if len(ticks_2y) > 0 and ticks_2y[-1] > self.spazio_coordinate_native[5]:
+                            _ = ticks_2y.pop()
+                        else:
+                            fix = 0
+
+
+                    coords_ticks_2y = ticks_2y
+                    coords_ticks_2y -= self.spazio_coordinate_native[4]
+                    coords_ticks_2y /= (self.spazio_coordinate_native[5] - self.spazio_coordinate_native[4] + 1e-6)
+                    coords_ticks_2y *= (self.max_plot_square[3])  
+                    coords_ticks_2y = self.max_plot_square[3] - coords_ticks_2y      
+                    coords_ticks_2y += self.max_plot_square[1]
+
+                    # preparo l'asse e il render
+                    formattatore_2y = "e" if self.formatting_y else "f"
+                    self.offset_2y_tick_value: int = (self.pixel_len_subdivisions + 25) * self.scale_factor_viewport
+                    labels_info_text = []
+                    labels_info_pos = []
+                    labels_info_anchor = []
+                    labels_info_color = []
+                    labels_info_rotation = []
+
+                    for index, coord in enumerate(coords_ticks_2y):
+                        self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2] * 1.1, coord], [self.max_plot_square[0] + self.max_plot_square[2] * 1.1 + self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_2y, 4 * self.scale_factor_viewport)
+
+                        labels_info_text.append(f"{ticks_2y[index]:.{self.round_ticks_2y}{formattatore_2y}}")
+                        labels_info_pos.append([self.max_plot_square[0] + self.max_plot_square[2] * 1.1 + self.offset_x_label + self.offset_x_tick_value, coord])
+                        labels_info_anchor.append("lc")
+                        labels_info_color.append(self.tick_color_2y)
+                        labels_info_rotation.append(0)
+
+                    # disegno il valore corrispondente
+                    self.screen._add_text(labels_info_text, labels_info_pos, anchor=labels_info_anchor, size=1.5 * self.scale_factor_viewport, color=labels_info_color, rotation=labels_info_rotation)
+
+
+
 
     def _disegna_dati2D(self):
        
@@ -1599,7 +1725,7 @@ class PomoPlot:
             labels_info_rotation.append(0)
         
 
-        if self.second_y_axis:
+        if self.second_y_axis and self.plot_mode == 0:
             for index, coord in enumerate(self.coords_of_ticks[2]):
                 if self.show_grid_2y:
                     self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_2y, self.scale_factor_viewport)
@@ -2296,7 +2422,7 @@ class PomoPlot:
                     fix = 1
                     while fix:
                         if self.coords_of_ticks[2][-1] > self.spazio_coordinate_native[5]:
-                            _ = self.coords_of_ticks[2].pop(0)
+                            _ = self.coords_of_ticks[2].pop()
                         else:
                             fix = 0
 

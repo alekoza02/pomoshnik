@@ -334,13 +334,19 @@ class Costruttore:
 
 
         # # ITEM 9 INTERPOLATION -------------------------------------------
-        s.context_menu["item9"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Interpolazioni}"))
+        s.context_menu["item9"].add_window("wind1", Collapsable_Window(x="1%w", y="10px", w="98%w", h="380px", anchor="lu", bg=[20, 20, 20], text="Derivata", closed=1))
+        s.context_menu["item9"].add_window("wind2", Collapsable_Window(w="98%w", h="580px", anchor=("lu ld (0px) (10px)", s.context_menu["item9"].windows["wind1"]), bg=[20, 20, 20], text="Interpolazione", closed=1))
         
-        s.context_menu["item9"].add_element("min_x", Entrata("40%w", "100px", "cu", "30%w", "-*h", text="", title="Min. X", solo_numeri=True))
-        s.context_menu["item9"].add_element("max_x", Entrata("40%w", "180px", "cd", "30%w", "-*h", text="", title="Max. X", solo_numeri=True))
-        s.context_menu["item9"].add_element("intersection", Bottone_Toggle("10%w", "250px", "ld", "30px", "30px", text="Find intersection X"))
-        s.context_menu["item9"].add_element("compute", Bottone_Push("90%w", "100px", "ru", "30%w", "80px", text="Compute", function=self.bott_calls.change_state))
-        s.context_menu["item9"].add_element("output", Label_Text("5%w", "320px", "lu", "90%w", "-*h", text="Interpolation results:\n---"))
+        # s.context_menu["item9"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Interpolazioni}"))
+        
+        s.context_menu["item9"].add_element("compute_derivative", Bottone_Push("50%w", "100px", "cu", "50%w", "50px", text="Compute derivative", function=self.bott_calls.change_state), window="wind1")
+        s.context_menu["item9"].add_element("output_derivative", Label_Text("5%w", "200px", "lu", "90%w", "-*h", text="Derivative results:\n---"), window="wind1")
+        
+        s.context_menu["item9"].add_element("min_x", Entrata("40%w", "500px", "cu", "30%w", "-*h", text="", title="Min. X", solo_numeri=True), window="wind2")
+        s.context_menu["item9"].add_element("max_x", Entrata("40%w", "580px", "cd", "30%w", "-*h", text="", title="Max. X", solo_numeri=True), window="wind2")
+        s.context_menu["item9"].add_element("intersection", Bottone_Toggle("10%w", "650px", "ld", "30px", "30px", text="Find intersection X"), window="wind2")
+        s.context_menu["item9"].add_element("compute", Bottone_Push("90%w", "500px", "ru", "30%w", "80px", text="Compute", function=self.bott_calls.change_state), window="wind2")
+        s.context_menu["item9"].add_element("output", Label_Text("5%w", "720px", "lu", "90%w", "-*h", text="Interpolation results:\n---"), window="wind2")
         # # ITEM 9 INTERPOLATION -------------------------------------------
 
 

@@ -34,13 +34,21 @@
     - Normalize (1 ax 2 plots same height) (0-1) and (0-100)
     - Disable plot overlap
     - Interpolation (linear)
+    - Derivate
+    - Choose the column to plot (0 = x, 1 = y, 2 = ey)
+    - Invert X axis
+---
+- Plots2D
+    - Data import
+    - Setting spacing
+    - Setting color map (2 values)
+    - Flip image
+    - Z-BAR
 ---
 - Labels
     - XY label ticks offset
     - Centered ticks with the ax
-    - Number of big subdivisions 
-    - Number of small subdivisions 
-    - Lenght of big / small subdivisions
+    - Auto - Number of big subdivisions 
     - Centering of the label
     - Size
     - Axis auto detect boundaries
@@ -64,6 +72,7 @@
 - Import
     - Import different extensions
     - Sort by X - Value
+    - Import .tiff
 ---
 - Metadata
     - Adding molecules
@@ -97,11 +106,20 @@
         - Setting progressive change
         - Setting zone change
     - Interpolation (custom curve)
-    - Choose the column to plot (0 = x, 1 = y, 2 = ey)
+---
+Plots 2D
+    - Color-ramp (32 values)
+---
+Plots 3D
+    - Resolution X and Y
+    - Wireframe
+    - Shader with colorbar
+    - Overlapping
 ---
 - Labels
     - Custom offset
     - Vertical writing (japanase style)
+    - Small ticks with no value
 ---
 - Title
     - Custom offset
@@ -119,7 +137,6 @@
     - Adding arrows
     - Adding boxes
     - Adding circles
-    - Adding derivative
     - Adding integral in interval
 ---
 - Statistics
