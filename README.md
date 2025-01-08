@@ -11,4 +11,5 @@ Some examples of plots done using the Pomoshnik:
 ![example7](PLOTS\examples\example7.png)
 
 New tools are being developed to unify the workflow:
-![example4](PLOTS\examples\example5.png)
+
+![example7](PLOTS/examples/example5.png)
