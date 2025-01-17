@@ -146,7 +146,7 @@ class Costruttore:
         # # ITEM 1 GEOMETRY ------------------------------------------------
         s.context_menu["item1"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", w="-*w", h="-*h", text=r"\#88dd88{Impostazioni base Geometria}"))
         s.context_menu["item1"].add_window("wind1", Collapsable_Window(x="1%w", y="150px", w="98%w", h="310px", anchor="lu", bg=[20, 20, 20], text="Canvas proportions (size)", closed=1))
-        s.context_menu["item1"].add_window("wind2", Collapsable_Window(w="98%w", h="250px", anchor=("lu ld (0px) (10px)", s.context_menu["item1"].windows["wind1"]), bg=[20, 20, 20], text="Canvas colors", closed=1))
+        s.context_menu["item1"].add_window("wind2", Collapsable_Window(w="98%w", h="270px", anchor=("lu ld (0px) (10px)", s.context_menu["item1"].windows["wind1"]), bg=[20, 20, 20], text="Canvas colors", closed=1))
         s.context_menu["item1"].add_window("wind3", Collapsable_Window(w="98%w", h="240px", anchor=("lu ld (0px) (10px)", s.context_menu["item1"].windows["wind2"]), bg=[20, 20, 20], text="Normalization and overlapping", closed=1))
         
         s.context_menu["item1"].add_element("plot_mode", RadioButton("50%w", "120px", "cd", "35%w", "50px", "x", cb_n=2, cb_s=[1, 0], cb_t=["1D", "2D"], w_button="17.5%w", h_button="50px", type_checkbox=False, always_one_active=True))
@@ -159,8 +159,10 @@ class Costruttore:
         
         s.context_menu["item1"].add_element("mantain_prop", Bottone_Toggle("25%w", "415px", "cc", "30px", "30px", True, True, "Mantain axis proportions"), window="wind1")
         
-        s.context_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", "30%w", "600px", "cc", "30%w", "40px", [50, 50, 50], bg=[50, 50, 50], text="Color plot area"), window="wind2")
-        s.context_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", "30%w", "650px", "cc", "30%w", "40px", [40, 40, 40], bg=[50, 50, 50], text="Color background"), window="wind2")
+        s.context_menu["item1"].add_element("tema_chiaro", Bottone_Push("30%w", "580px", "cc", "33%w", "50px", self.bott_calls.change_state, "Tema chiaro"), window="wind2")
+        s.context_menu["item1"].add_element("tema_scuro", Bottone_Push("70%w", "580px", "cc", "33%w", "50px", self.bott_calls.change_state, "Tema scuro"), window="wind2")
+        s.context_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", "30%w", "650px", "cc", "30%w", "40px", [50, 50, 50], bg=[50, 50, 50], text="Color plot area"), window="wind2")
+        s.context_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", "30%w", "700px", "cc", "30%w", "40px", [40, 40, 40], bg=[50, 50, 50], text="Color background"), window="wind2")
         
         s.context_menu["item1"].add_element("norma_perc", RadioButton("50%w", "845px", "cc", "70%w", "50px", "x", cb_n=2, cb_s=[0, 0], cb_t=["[0..1]", "[%]"], type_checkbox=0, w_button="35%w", h_button="50px"), window="wind3")
         s.context_menu["item1"].add_element("overlap", Bottone_Toggle("50%w", "920px", "cc", "35%w", "50px", True, False, "Plots Overlap"), window="wind3")

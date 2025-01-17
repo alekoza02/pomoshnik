@@ -1,0 +1,9 @@
+pygame
+numpy
+scipy
+numba
+psutil
+pyperclip
+yappi
+rdkit
+pillow

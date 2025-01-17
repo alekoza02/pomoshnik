@@ -90,8 +90,11 @@
     - Anti - Lag 
         - no update if too slow
     - When zooming, report the full image with the zoom area drawn
+    - Change overlap method -> disegna_1D()
+    - V and > inside the box
 ---
 - Plots
+    - Normalization for single plot, not whole stack
     - Mode
         - Classic plot
         - Histogram
@@ -120,11 +123,14 @@ Plots 3D
     - Custom offset
     - Vertical writing (japanase style)
     - Small ticks with no value
+    - Tooltip
+    - Coordinate projection -> color, position, background
 ---
 - Title
     - Custom offset
 ---
-- Legend $\checkmark$
+- Legend
+    - change name legend   
 ---
 - Export
     - Export in png (custom size)
@@ -132,12 +138,14 @@ Plots 3D
 ---
 - Import
     - Import .ale extension
+    - live update
 ---
 - Metadata
     - Adding arrows
     - Adding boxes
     - Adding circles
     - Adding integral in interval
+    - Adding text
 ---
 - Statistics
 ---
@@ -145,3 +153,18 @@ Plots 3D
 
 # BIG PROJECTS
 - Polar coordinates
+
+
+# UI improvements
+
+
+
+
+
+
+
+
+
+
+
+

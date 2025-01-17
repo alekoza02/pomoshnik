@@ -128,6 +128,10 @@ class PomoPlot:
         self.UI_h_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["h_plot_area"]
         self.UI_size_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["size_plot_area"]
         self.UI_mantain_proportions: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["mantain_prop"]
+        
+        self.UI_tema_chiaro: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item1"].elements["tema_chiaro"]
+        self.UI_tema_scuro: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item1"].elements["tema_scuro"]
+        
         self.UI_plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["plot_area_bg"]
         self.UI_canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["canvas_area_bg"]
         
@@ -273,6 +277,8 @@ class PomoPlot:
         self.output_derivative = self.UI_output_derivative
         self.compute_interpolation = self.UI_compute_interpolation
         self.compute_derivative= self.UI_compute_derivative
+        self.tema_chiaro = self.UI_tema_chiaro
+        self.tema_scuro = self.UI_tema_scuro
         # NO CHANGES PERFORMED ----------------------------------------------------------
 
         try:
@@ -689,6 +695,38 @@ class PomoPlot:
         # change attributs due to different plot mode
         self.minimal_offset_data_x = 0.05 if self.plot_mode == 0 else 0.00
         self.minimal_offset_data_y = 0.05 if self.plot_mode == 0 else 0.00 
+
+
+        # change with default theme light and dark
+        if self.UI_tema_scuro.flag_foo:
+            self.UI_tema_scuro.flag_foo = False
+            self.UI_plot_area_color.set_color([50, 50, 50])
+            self.UI_canvas_area_color.set_color([40, 40, 40])
+            self.UI_ax_color_x.set_color([70, 70, 70])
+            self.UI_ax_color_y.set_color([70, 70, 70])
+            self.UI_ax_color_2y.set_color([70, 70, 70])
+            self.UI_label_x_color.set_color([255, 255, 255])
+            self.UI_label_y_color.set_color([255, 255, 255])
+            self.UI_label_2y_color.set_color([255, 255, 255])
+            self.UI_label_title_color.set_color([255, 255, 255])
+            self.UI_tick_color_x.set_color([255, 255, 255])
+            self.UI_tick_color_y.set_color([255, 255, 255])
+            self.UI_tick_color_2y.set_color([255, 255, 255])
+        
+        if self.UI_tema_chiaro.flag_foo:
+            self.UI_tema_chiaro.flag_foo = False
+            self.UI_plot_area_color.set_color([255, 255, 255])
+            self.UI_canvas_area_color.set_color([255, 255, 255])
+            self.UI_ax_color_x.set_color([193, 193, 193])
+            self.UI_ax_color_y.set_color([193, 193, 193])
+            self.UI_ax_color_2y.set_color([193, 193, 193])
+            self.UI_label_x_color.set_color([0, 0, 0])
+            self.UI_label_y_color.set_color([0, 0, 0])
+            self.UI_label_2y_color.set_color([0, 0, 0])
+            self.UI_label_title_color.set_color([0, 0, 0])
+            self.UI_tick_color_x.set_color([0, 0, 0])
+            self.UI_tick_color_y.set_color([0, 0, 0])
+            self.UI_tick_color_2y.set_color([0, 0, 0])
 
 
     def linear_interpolation(self) -> str:
@@ -1201,7 +1239,7 @@ class PomoPlot:
 
                 if plot.gradiente and plot.grad_mode == "vert":
                     # VERTICAL
-                    for x1, y1, x2, y2 in zip(extracted[:, 0].astype(int)[:-1], extracted[:, 1].astype(int)[:-1], extracted[:, 0].astype(int)[1:], extracted[:, 1].astype(int)[1:]):
+                    for x1, y1, x2, y2 in zip(extracted[:, plot.column_x].astype(int)[:-1], extracted[:, plot.column_y].astype(int)[:-1], extracted[:, plot.column_x].astype(int)[1:], extracted[:, plot.column_y].astype(int)[1:]):
                         if x1 > x2:
                             x1, x2 = x2, x1 
                         
@@ -2546,7 +2584,7 @@ class PomoPlot:
 
 
         # SUPPORTO .CSV
-        if self.data_path.endswith(".csv"): self.divisore = ","
+        if self.data_path.endswith(".csv") or self.data_path.endswith(".CSV"): self.divisore = ","
         
         # SUPPORTO .dpt
         if self.data_path.endswith(".dpt"): self.divisore = ","
