@@ -534,7 +534,7 @@ class Bottone_Push(BaseElement):
 
     def eventami(self, events: list['Event'], logica: 'Logica'):
 
-        if self.hide == False or self.disable == False:
+        if self.do_stuff:
 
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -605,7 +605,6 @@ class Bottone_Push(BaseElement):
         super().hide_plus_children(booleano, gerarchia)
         try: self.label_title.hide = booleano
         except: ...
-        self.disable = booleano
     
         
         

@@ -157,7 +157,7 @@ class Costruttore:
         s.context_menu["item1"].add_element("x_plot_area", Entrata("75%w", "305px", "lu", "20%w", "30px", text="0.15", title="X plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999), window="wind1")
         s.context_menu["item1"].add_element("y_plot_area", Entrata("75%w", "340px", "lu", "20%w", "30px", text="0.1", title="Y plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999), window="wind1")
         
-        s.context_menu["item1"].add_element("mantain_prop", Bottone_Toggle("25%w", "415px", "cc", "30px", "30px", True, True, "Mantain axis proportions"), window="wind1")
+        s.context_menu["item1"].add_element("mantain_prop", Bottone_Toggle("25%w", "415px", "cc", "30px", "30px", False, True, "Mantain axis proportions"), window="wind1")
         
         s.context_menu["item1"].add_element("tema_chiaro", Bottone_Push("30%w", "580px", "cc", "33%w", "50px", self.bott_calls.change_state, "Tema chiaro"), window="wind2")
         s.context_menu["item1"].add_element("tema_scuro", Bottone_Push("70%w", "580px", "cc", "33%w", "50px", self.bott_calls.change_state, "Tema scuro"), window="wind2")
@@ -256,6 +256,8 @@ class Costruttore:
         s.context_menu["item4"].add_window("wind3", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item4"].windows["wind2"]), bg=[20, 20, 20], text="Grid", closed=1))
         s.context_menu["item4"].add_window("wind4", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item4"].windows["wind3"]), bg=[20, 20, 20], text="Ax Formatting", closed=1))
         s.context_menu["item4"].add_window("wind5", Collapsable_Window(w="98%w", h="470px", anchor=("lu ld (0px) (10px)", s.context_menu["item4"].windows["wind4"]), bg=[20, 20, 20], text="Colori", closed=1))
+        s.context_menu["item4"].add_window("wind6", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item4"].windows["wind5"]), bg=[20, 20, 20], text="Positioning", closed=1))
+        s.context_menu["item4"].add_window("wind7", Collapsable_Window(w="98%w", h="130px", anchor=("lu ld (0px) (10px)", s.context_menu["item4"].windows["wind6"]), bg=[20, 20, 20], text="Font size", closed=1))
         
         s.context_menu["item4"].add_element("second_y_axis", Bottone_Toggle("70%w", "140px", "cd", "35%w", "50px", False, False, "Toggle 2° Y axis"), window="wind1")
         s.context_menu["item4"].add_element("invert_x_axis", Bottone_Toggle("30%w", "140px", "cd", "35%w", "50px", False, False, "Invert X axis"), window="wind1")
@@ -278,6 +280,11 @@ class Costruttore:
         s.context_menu["item4"].add_element("tick_color_x", ColorPicker(s.palette_popup, "11", "30%w", "1070px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values X"), window="wind5")
         s.context_menu["item4"].add_element("tick_color_y", ColorPicker(s.palette_popup, "12", "30%w", "1120px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y"), window="wind5")
         s.context_menu["item4"].add_element("tick_color_2y", ColorPicker(s.palette_popup, "13", "30%w", "1170px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values 2°Y"), window="wind5")
+        
+        s.context_menu["item4"].add_element("offset_x_label_y", Entrata("75%w", "1330px", "lu", "20%w", "30px", text="45", title="Offset X of ticks Y axis:", lunghezza_max=4, solo_numeri=True), window="wind6")
+        s.context_menu["item4"].add_element("offset_y_label_x", Entrata("75%w", "1365px", "lu", "20%w", "30px", text="-27", title="Offset Y of ticks X axis:", lunghezza_max=4, solo_numeri=True), window="wind6")
+        
+        s.context_menu["item4"].add_element("size_ticks", Entrata("75%w", "1520px", "lu", "20%w", "30px", text="1", title="Font size ticks Y axis:", lunghezza_max=4, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=3), window="wind7")
         # # ITEM 4 AXES ----------------------------------------------------
 
 
@@ -420,6 +427,11 @@ class Costruttore:
             self.scene["main"].context_menu["item2"].windows["wind2D_1"].hide_plus_children(state_1D)
             self.scene["main"].context_menu["item2"].windows["wind2D_2"].hide_plus_children(state_1D)
             self.scene["main"].context_menu["item2"].windows["wind2D_3"].hide_plus_children(state_1D)
+
+            self.scene["main"].context_menu["item1"].elements["mantain_prop"].hide_plus_children(state_1D)
+
+            if state_1D:
+                self.scene["main"].context_menu["item1"].elements["mantain_prop"].state_toggle = not state_1D
         
 
         def hide_metadata_based_on_metadata_lenght():

@@ -86,7 +86,12 @@ class UI:
 
         self.logica = Logica()
         self.event_manager = EventManager()
-        self.costruttore = Costruttore(self.MAIN, self.w_screen * 0.9, self.h_screen * 0.9, self.h_screen / 75)
+        
+        font_size = self.h_screen / 75
+        if font_size in [2, 4, 9, 11, 16]:
+            font_size -= 1
+        
+        self.costruttore = Costruttore(self.MAIN, self.w_screen * 0.9, self.h_screen * 0.9, font_size) # fail at: 2, 4, 9, 11, 16
         self.costruttore.scene["main"].disegna_scena_inizio_ciclo(self.logica)
         self.costruttore.scene["main"].disegna_scena_fine_ciclo(self.logica)
 

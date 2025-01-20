@@ -207,6 +207,11 @@ class PomoPlot:
         self.UI_tick_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_y"]
         self.UI_tick_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_2y"]
         
+        self.UI_offset_ticks_ax_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["offset_y_label_x"]
+        self.UI_offset_ticks_ax_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["offset_x_label_y"]
+        
+        self.UI_size_ticks: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["size_ticks"]
+        
         self.UI_formatting_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_x"]
         self.UI_formatting_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_y"]
         
@@ -347,6 +352,11 @@ class PomoPlot:
         self.label_y_color = self.UI_label_y_color.get_color()
         self.label_2y_color = self.UI_label_2y_color.get_color()
 
+        self.offset_ticks_ax_x = self.UI_offset_ticks_ax_x.get_text()
+        self.offset_ticks_ax_y = self.UI_offset_ticks_ax_y.get_text()
+
+        self.size_ticks = self.UI_size_ticks.get_text()
+        
         self.show_coords_projection = self.UI_show_coords_projection.state_toggle
         self.show_coords_value = self.UI_show_coords_value.state_toggle
 
@@ -1751,7 +1761,7 @@ class PomoPlot:
             self.screen._add_line([[coord, coords[3]], [coord, coords[3] + self.pixel_len_subdivisions * self.scale_factor_viewport]], self.ax_color_x, 4 * self.scale_factor_viewport)
 
             labels_info_text.append(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x}{formattatore_x}}")
-            labels_info_pos.append([coord, coords[3] + self.offset_y_label + self.offset_y_tick_value])
+            labels_info_pos.append([coord, coords[3] + float(self.offset_ticks_ax_y)])
             labels_info_anchor.append("cc")
             labels_info_color.append(self.tick_color_x)
             labels_info_rotation.append(0)
@@ -1763,7 +1773,7 @@ class PomoPlot:
             self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_y, 4 * self.scale_factor_viewport)
 
             labels_info_text.append(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y}{formattatore_y}}")
-            labels_info_pos.append([coords[0] - self.offset_x_label - self.offset_x_tick_value, coord])
+            labels_info_pos.append([coords[0] + float(self.offset_ticks_ax_x), coord])
             labels_info_anchor.append("rc")
             labels_info_color.append(self.tick_color_y)
             labels_info_rotation.append(0)
@@ -1776,13 +1786,13 @@ class PomoPlot:
                 self.screen._add_line([[coords[2], coord], [coords[2] + self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_2y, 4 * self.scale_factor_viewport)
 
                 labels_info_text.append(f"{self.value_of_ticks[2][index]:.{self.round_ticks_2y}{formattatore_2y}}")
-                labels_info_pos.append([coords[0] + self.max_plot_square[2] + self.offset_x_label + self.offset_x_tick_value, coord])
+                labels_info_pos.append([coords[0] + self.max_plot_square[2] - float(self.offset_ticks_ax_x), coord])
                 labels_info_anchor.append("lc")
                 labels_info_color.append(self.tick_color_2y)
                 labels_info_rotation.append(0)
 
         # disegno il valore corrispondente
-        self.screen._add_text(labels_info_text, labels_info_pos, anchor=labels_info_anchor, size=1.5 * self.scale_factor_viewport, color=labels_info_color, rotation=labels_info_rotation)
+        self.screen._add_text(labels_info_text, labels_info_pos, anchor=labels_info_anchor, size=float(self.size_ticks) * self.scale_factor_viewport, color=labels_info_color, rotation=labels_info_rotation)
 
 
     def _disegna_assi(self):
