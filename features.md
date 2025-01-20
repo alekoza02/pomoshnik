@@ -155,9 +155,6 @@ Plots 3D
 - Polar coordinates
 
 
-# UI improvements
-
-
 
 
 

@@ -913,31 +913,37 @@ class PomoPlot:
     def plot(self, logica: 'Logica', screenshot=0):
         """Richiesta UI pomoshnik, si può utilizzare con altri metodi di disegno. coordinate, colori e dimensioni sono forniti per poter essere usati in qualunque formato."""
 
-        self.update_attributes()
+        try:
 
-        if not screenshot:
-            self.update(logica)
+            self.update_attributes()
 
-        self._normalize_data2screen() # preparazione dati
+            if not screenshot:
+                self.update(logica)
 
-        self._disegna_bg()      
+            self._normalize_data2screen() # preparazione dati
 
-        if self.plot_mode == 1: self._disegna_dati2D()
-        if self.plot_mode == 1: self._disegna_ZBAR()
+            self._disegna_bg()      
 
-        if self.plot_mode == 0: self._disegna_gradiente()
-        self._disegna_assi()
-        self._disegna_labels(logica)
-        self._disegna_ticks()
+            if self.plot_mode == 1: self._disegna_dati2D()
+            if self.plot_mode == 1: self._disegna_ZBAR()
 
-        if self.plot_mode == 0: self._disegna_dati1D()
-        
-        self._disegna_legend(logica)
-        self._disegna_molecola(logica, screenshot)
+            if self.plot_mode == 0: self._disegna_gradiente()
+            self._disegna_assi()
+            self._disegna_labels(logica)
+            self._disegna_ticks()
 
-        if not screenshot:
-            self._disegna_mouse_coordinate(logica) # aggiungi secondo asse
-            self._disegna_mouse_zoom(logica)
+            if self.plot_mode == 0: self._disegna_dati1D()
+            
+            self._disegna_legend(logica)
+            self._disegna_molecola(logica, screenshot)
+
+            if not screenshot:
+                self._disegna_mouse_coordinate(logica) # aggiungi secondo asse
+                self._disegna_mouse_zoom(logica)
+
+        except Exception as e:
+            ...
+            # print("Frame drawing error.")
 
 
     def _disegna_ZBAR(self):
@@ -2485,7 +2491,7 @@ class PomoPlot:
         self.spazio_coordinate_native[5] -= self.spazio_coordinate_native[4]
 
 
-    def import_plot_data(self, path: str, divisore: str = None, image=False) -> None:
+    def import_plot_data(self, path: str, divisore: str = None, separatore_decimale=".", image=False, retry_on_fail=True) -> None:
         
         """Importa un tipo di file e genera un plot con le X, Y e gli errori sulle Y (raccoglie rispettivamente le prime 3 colonne)
 
@@ -2501,7 +2507,7 @@ class PomoPlot:
         
         if os.path.isdir(path):
             for new_path in [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]:
-                self.import_plot_data(new_path, divisore, image)
+                self.import_plot_data(new_path, divisore, separatore_decimale, image, retry_on_fail)
             return
         
 
@@ -2584,14 +2590,17 @@ class PomoPlot:
 
 
         # SUPPORTO .CSV
-        if self.data_path.endswith(".csv") or self.data_path.endswith(".CSV"): self.divisore = ","
+        if self.data_path.endswith(".csv") or self.data_path.endswith(".CSV") and divisore is None: self.divisore = ","
         
         # SUPPORTO .dpt
         if self.data_path.endswith(".dpt"): self.divisore = ","
 
         # estrazione data
-        with open(self.data_path, 'r') as file:
-            data = [line for line in file]
+        try:
+            with open(self.data_path, 'r') as file:
+                data = [line for line in file]
+        except UnicodeDecodeError:
+            return
 
         # SUPPORTO FORMATO HEX utf-16-le
         if data[0].startswith(r"ÿþ"): 
@@ -2599,6 +2608,8 @@ class PomoPlot:
             with codecs.open(self.data_path, 'r', encoding='utf-16-le') as file:
                 data = [line.strip() for line in file]
 
+        if separatore_decimale != ".":
+            data = [i.replace(separatore_decimale, ".") for i in data]
         data = [i.split(self.divisore) for i in data]
 
         # controllo dati indesiderati
@@ -2658,6 +2669,7 @@ class PomoPlot:
 
             if data.shape[1] == 3 and image:
                 self.update_plot_list(_Single2DPlot(f"2D{nome}", data, metadata_lst))
+                self.scroll_plots2D.ele_selected_index = len(self.scroll_plots2D.elementi) - 1
             
             elif not image:
                 # test ordinamento x
@@ -2665,9 +2677,13 @@ class PomoPlot:
                 data = data[indici]
 
                 self.update_plot_list(_Single1DPlot(nome, data, metadata_lst))
+                self.scroll_plots1D.ele_selected_index = len(self.scroll_plots1D.elementi) - 1
 
         except Exception as e:
-            print(f"Impossibile caricare il file: {path}\n{e}")
+            if self.data_path.endswith(".csv") or self.data_path.endswith(".CSV") and retry_on_fail: 
+                self.import_plot_data(path, ";", separatore_decimale=",", retry_on_fail=False)
+            else:
+                print(f"Impossibile caricare il file: {path}\n{e}")
 
 
 class _Single1DPlot:
