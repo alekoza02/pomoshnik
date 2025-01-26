@@ -50,6 +50,7 @@ class BaseElement:
         else:
             self.bg = array(bg)
 
+        self.bg_backup = self.bg.copy()
         self.hide: bool = hide
         self.hide_from_window: bool = False
         self.hide_from_menu: bool = False
@@ -1506,6 +1507,16 @@ class Scroll(BaseElement):
             self.ele_mask.pop(self.ele_selected_index)
             if self.ele_selected_index == len(self.elementi) and self.ele_selected_index > 0:
                 self.ele_selected_index -= 1
+
+                if self.elemento_attivo < 0:
+                    self.ele_first -= 1
+    
+    def remove_item_index(self, index):
+        if len(self.elementi) > 0:
+            self.elementi.pop(index)
+            self.ele_mask.pop(index)
+            if index == len(self.elementi) and index > 0:
+                index -= 1
 
                 if self.elemento_attivo < 0:
                     self.ele_first -= 1

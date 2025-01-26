@@ -37,6 +37,7 @@
     - Derivate
     - Choose the column to plot (0 = x, 1 = y, 2 = ey)
     - Invert X axis
+    - Interpolation (custom curve)
 ---
 - Plots2D
     - Data import
@@ -53,6 +54,8 @@
     - Size
     - Axis auto detect boundaries
     - Custom font
+    - Custom offset
+    - Custom ticks size
 ---
 - Title
     - Centering of the label
@@ -108,7 +111,6 @@
     - Setting color
         - Setting progressive change
         - Setting zone change
-    - Interpolation (custom curve)
 ---
 Plots 2D
     - Color-ramp (32 values)
@@ -120,7 +122,6 @@ Plots 3D
     - Overlapping
 ---
 - Labels
-    - Custom offset
     - Vertical writing (japanase style)
     - Small ticks with no value
     - Tooltip

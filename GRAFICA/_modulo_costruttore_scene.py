@@ -244,8 +244,8 @@ class Costruttore:
         s.context_menu["item3"].add_element("label_y_color", ColorPicker(s.palette_popup, "6", "50%w", "770px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label Y"), window="wind3")
         s.context_menu["item3"].add_element("label_2y_color", ColorPicker(s.palette_popup, "7", "50%w", "820px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label 2Y"), window="wind3")
         
-        s.context_menu["item3"].add_element("show_coords_projection", Bottone_Toggle("95%w", "950px", "ru", "30px", "30px", text="Mostra proiezione coords", type_checkbox=True, text_on_right=False), window="wind4")
-        s.context_menu["item3"].add_element("show_coords_value", Bottone_Toggle("95%w", "990px", "ru", "30px", "30px", text="Mostra valore coords", type_checkbox=True, text_on_right=False), window="wind4")
+        s.context_menu["item3"].add_element("show_coords_projection", Bottone_Toggle("95%w", "950px", "ru", "30px", "30px", text="Mostra proiezione coords", state=True, type_checkbox=True, text_on_right=False), window="wind4")
+        s.context_menu["item3"].add_element("show_coords_value", Bottone_Toggle("95%w", "990px", "ru", "30px", "30px", text="Mostra valore coords", state=True, type_checkbox=True, text_on_right=False), window="wind4")
         # # ITEM 3 AX LABELS -----------------------------------------------
         
 
@@ -345,6 +345,7 @@ class Costruttore:
         # # ITEM 9 INTERPOLATION -------------------------------------------
         s.context_menu["item9"].add_window("wind1", Collapsable_Window(x="1%w", y="10px", w="98%w", h="380px", anchor="lu", bg=[20, 20, 20], text="Derivata", closed=1))
         s.context_menu["item9"].add_window("wind2", Collapsable_Window(w="98%w", h="580px", anchor=("lu ld (0px) (10px)", s.context_menu["item9"].windows["wind1"]), bg=[20, 20, 20], text="Interpolazione", closed=1))
+        s.context_menu["item9"].add_window("wind3", Collapsable_Window(w="98%w", h="880px", anchor=("lu ld (0px) (10px)", s.context_menu["item9"].windows["wind2"]), bg=[20, 20, 20], text="Custom curve", closed=1))
         
         # s.context_menu["item9"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Interpolazioni}"))
         
@@ -356,6 +357,24 @@ class Costruttore:
         s.context_menu["item9"].add_element("intersection", Bottone_Toggle("10%w", "650px", "ld", "30px", "30px", text="Find intersection X"), window="wind2")
         s.context_menu["item9"].add_element("compute", Bottone_Push("90%w", "500px", "ru", "30%w", "80px", text="Compute", function=self.bott_calls.change_state), window="wind2")
         s.context_menu["item9"].add_element("output", Label_Text("5%w", "720px", "lu", "90%w", "-*h", text="Interpolation results:\n---"), window="wind2")
+        
+        s.context_menu["item9"].add_element("curve_function", Entrata("95%w", "1075px", "ru", "60%w", "-*h", text="p[0]+p[1]*np.exp(p[2]+(p[3]*x))", title="Custom function"), window="wind3")
+        s.context_menu["item9"].add_element("param_0", Entrata("12.5%w", "1150px", "lu", "15.5%w", "-*h", text="", title="p[0]"), window="wind3")
+        s.context_menu["item9"].add_element("param_1", Entrata("12.5%w", "1200px", "lu", "15.5%w", "-*h", text="", title="p[1]"), window="wind3")
+        s.context_menu["item9"].add_element("param_2", Entrata("12.5%w", "1250px", "lu", "15.5%w", "-*h", text="", title="p[2]"), window="wind3")
+        s.context_menu["item9"].add_element("param_3", Entrata("12.5%w", "1300px", "lu", "15.5%w", "-*h", text="", title="p[3]"), window="wind3")
+        
+        s.context_menu["item9"].add_element("l_param_0", Label_Text("30%w", "1150px", "lu", "15.5%w", "-*h", text="-> NULL"), window="wind3")
+        s.context_menu["item9"].add_element("l_param_1", Label_Text("30%w", "1200px", "lu", "15.5%w", "-*h", text="-> NULL"), window="wind3")
+        s.context_menu["item9"].add_element("l_param_2", Label_Text("30%w", "1250px", "lu", "15.5%w", "-*h", text="-> NULL"), window="wind3")
+        s.context_menu["item9"].add_element("l_param_3", Label_Text("30%w", "1300px", "lu", "15.5%w", "-*h", text="-> NULL"), window="wind3")
+        
+        s.context_menu["item9"].add_element("compute_custom_curve", Bottone_Push("90%w", "1150px", "ru", "30%w", "80px", text="Compute", function=self.bott_calls.change_state), window="wind3")
+        s.context_menu["item9"].add_element("show_guess", Bottone_Toggle("95%w", "1275px", "ru", "30px", "30px", text="Show guess function", text_on_right=False), window="wind3")
+        
+        s.context_menu["item9"].add_element("info1", Label_Text("5%w", "1400px", "lu", "90%w", "-*h", text="Use 'p[x]' instead of the parameter you\nwant to calculate."), window="wind3")
+        s.context_menu["item9"].add_element("info2", Label_Text("5%w", "1500px", "lu", "90%w", "-*h", text="Example: p[0] * x ** 2 + p[1] * x + p[2]\nGives -> \\i{ax\\^{2} + bx + c}"), window="wind3")
+        s.context_menu["item9"].add_element("info3", Label_Text("5%w", "1600px", "lu", "90%w", "-*h", text="Curve fit results:\n---"), window="wind3")
         # # ITEM 9 INTERPOLATION -------------------------------------------
 
 

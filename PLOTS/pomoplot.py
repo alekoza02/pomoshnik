@@ -8,6 +8,7 @@ from rdkit.Chem import Draw
 from rdkit.Chem import rdChemReactions as Reactions
 from rdkit import RDLogger
 import os
+from scipy.optimize import curve_fit
 
 RDLogger.DisableLog('rdApp.*') 
 
@@ -257,6 +258,21 @@ class PomoPlot:
         self.UI_max_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["max_x"]
         self.UI_output_interpolation: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["output"]
         self.UI_intersection_interpolation: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item9"].elements["intersection"]
+
+        self.UI_curve_function: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["curve_function"]
+        self.UI_param_0: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_0"]
+        self.UI_param_1: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_1"]
+        self.UI_param_2: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_2"]
+        self.UI_param_3: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_3"]
+        self.UI_compute_custom_curve: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["compute_custom_curve"]
+        self.UI_show_guess: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item9"].elements["show_guess"]
+
+        self.UI_l_param_0: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["l_param_0"]
+        self.UI_l_param_1: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["l_param_1"]
+        self.UI_l_param_2: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["l_param_2"]
+        self.UI_l_param_3: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["l_param_3"]
+
+        self.UI_info3: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["info3"]
     
     
     def update_attributes(self):
@@ -282,8 +298,16 @@ class PomoPlot:
         self.output_derivative = self.UI_output_derivative
         self.compute_interpolation = self.UI_compute_interpolation
         self.compute_derivative= self.UI_compute_derivative
+        self.compute_custom_curve = self.UI_compute_custom_curve
         self.tema_chiaro = self.UI_tema_chiaro
         self.tema_scuro = self.UI_tema_scuro
+
+        self.l_param_0 = self.UI_l_param_0
+        self.l_param_1 = self.UI_l_param_1
+        self.l_param_2 = self.UI_l_param_2
+        self.l_param_3 = self.UI_l_param_3
+        self.info3 = self.UI_info3
+
         # NO CHANGES PERFORMED ----------------------------------------------------------
 
         try:
@@ -396,16 +420,33 @@ class PomoPlot:
         self.max_x_interpolation = self.UI_max_x_interpolation.get_text()
         self.intersection_interpolation = self.UI_intersection_interpolation.state_toggle
 
+        self.curve_function = self.UI_curve_function.get_text()
+        self.param_0 = self.UI_param_0.get_text()
+        self.param_1 = self.UI_param_1.get_text()
+        self.param_2 = self.UI_param_2.get_text()
+        self.param_3 = self.UI_param_3.get_text()
+        self.show_guess = self.UI_show_guess.state_toggle
+
         self.pos_x_molecola = self.UI_pos_x_molecola.get_text()
         self.pos_y_molecola = self.UI_pos_y_molecola.get_text()        
         self.dimensione_molecola = self.UI_dimensione_molecola.get_text()        
 
 
-    def update_plot_list(self, added_plot):
+    def update_plot_list(self, added_plot, active_on_load=False, substitute=False):
+        
+
         if type(added_plot) == _Single1DPlot:
-            self.scroll_plots1D.add_element_scroll(added_plot, False)
+            if substitute:
+                try:
+                    nomi = [plot.nome for plot in self.scroll_plots1D.elementi]
+                    where = nomi.index(added_plot.nome)
+                    self.scroll_plots1D.remove_item_index(where)
+                except ValueError as e:
+                    ...
+            self.scroll_plots1D.add_element_scroll(added_plot, active_on_load)
+        
         elif type(added_plot) == _Single2DPlot:    
-            self.scroll_plots2D.add_element_scroll(added_plot, False)
+            self.scroll_plots2D.add_element_scroll(added_plot, active_on_load)
         
 
     def update(self, logica: 'Logica'):
@@ -691,6 +732,19 @@ class PomoPlot:
             self.output_derivative.change_text(self.derivative())
 
 
+        # compute custom curve
+        if self.plot_mode == 0 and self.compute_custom_curve.flag_foo:
+            self.compute_custom_curve.flag_foo = False
+            ris = self.fit_curve()
+            form_x = "e" if self.formatting_x else "f"
+            if ris is None:
+                return
+            
+            labels = [self.l_param_0, self.l_param_1, self.l_param_2, self.l_param_3]
+            for i in range(len(ris)):
+                labels[i].change_text(f"{float(ris[i]):.{self.round_ticks_x}{form_x}}")
+                
+
         # choose mode and hide unecessary UI
         if self.active_tab == 10:
             self.elenco_metadata.hide_plus_children(False)
@@ -838,121 +892,121 @@ class PomoPlot:
                     
                     
 
+    def fit_curve(self):
 
-    def OUTDATED_customfoo_interpolation(self, curve: str = "gaussian") -> str:
-        """
-        OUTDATED
+        mancano_valori = False
+        entries = [self.UI_param_0, self.UI_param_1, self.UI_param_2, self.UI_param_3]
+        num_params_usati = self.curve_function.count("p[")
+        for i in range(num_params_usati):
+            try:
+                entries[i].bg = entries[i].bg_backup
+                float(entries[i].testo) 
+            except Exception:
+                entries[i].bg = np.array([200, 60, 60])
+                mancano_valori = True
 
-        Esegue un'interpolazione con una curva specificata del grafico attivo in quel momento. Restituisce un output stringa contenente tutti i dati relativi all'esito
+        try:
+            # Dynamically create the curve function using eval
+            curve_func = eval(f"lambda x, *p: {self.curve_function}")
+            
+            plot = self.plots[self.scroll_plots.ele_selected_index]
 
-        Parameters
-        ----------
-        curve : str, optional
-            nome della curva, opzioni accettate: 'gaussian', 'sigmoid', by default "gaussian"
+            x = plot.data[:, plot.column_x]
+            y = plot.data[:, plot.column_y]
 
-        Returns
-        -------
-        str
-            OUTPUT dell'interpolazione
-        """
-        # base_data = self.plots[self.active_plot]
+            initial_guess = [self.param_0, self.param_1, self.param_2, self.param_3]
+            initial_guess = [float(i) for i in initial_guess if i != ""]
 
-        # if base_data.maschera is None: return "Prego, Accendere un grafico per cominciare"
+            # PREVIEW --------------------------------
+            if self.show_guess:
+                y_interpolata_iniziale = curve_func(x, *initial_guess)  
+                guess_curve_fit_data = np.vstack((x, y_interpolata_iniziale))
+                guess_curve_fit_data = guess_curve_fit_data.transpose(1, 0)
+
+                contains_invalid = np.isnan(guess_curve_fit_data).any() or np.isinf(guess_curve_fit_data).any()
+                if not contains_invalid:
+                    self.update_plot_list(_Single1DPlot(f"Guess Curve Fit", guess_curve_fit_data, ""), active_on_load=True, substitute=True)
+            else:
+                nomi = [plot.nome for plot in self.scroll_plots1D.elementi]
+                try:
+                    index = nomi.index("Guess Curve Fit")
+                    self.scroll_plots1D.remove_item_index(index)
+                except ValueError:
+                    ...
+            # PREVIEW --------------------------------
+
+
+            if len(x) < len(initial_guess):
+                raise ValueError(f"\\#dc143c{{ATTENZIONE! Punti insufficienti.}}\n\nRaised error:\n\\i{{Numero parametri: {len(initial_guess)}}}\n\\i{{Punti minimi richiesti: {len(initial_guess) + 1}}}\n\\i{{Punti presenti nel grafico: {len(x)}}}")
+            
+            # Fit the curve
+            params, covariance = curve_fit(curve_func, x, y, p0=initial_guess)
+            self.info3.change_text(f"Calcolato correttamente.\n(\\#aaffaa{{curve_fit_{plot.nome}}})")
+            
+            y_interpolata_finale = curve_func(x, *params) 
+
+            curve_fit_data = np.vstack((x, y_interpolata_finale))
+            curve_fit_data = curve_fit_data.transpose(1, 0)
+
+
+            contains_invalid = np.isnan(curve_fit_data).any() or np.isinf(curve_fit_data).any()
+
+            if contains_invalid:
+                raise ValueError(f"\\#dc143c{{ATTENZIONE! Overflow, prova altri parametri.}}\n\nRaised error:\n\\i{{NaN data present in the calculations}}")
+
+            self.update_plot_list(_Single1DPlot(f"curve_fit_{plot.nome}", curve_fit_data, ""), active_on_load=True, substitute=True)
+            return params
         
-        # x = base_data.x[base_data.maschera]
-        # y = base_data.y[base_data.maschera]
+        except IndexError as e:
+            if mancano_valori:
+                self.info3.change_text(f"\\#dc143c{{ATTENZIONE! Inserisci tutti i parametri.}}\n\nRaised error:\n\\i{{{e}}}")
+            else:
+                self.info3.change_text(f"\\#dc143c{{ATTENZIONE! Carica un grafico prima.}}\n\nRaised error:\n\\i{{{e}}}")
+        except TypeError as e:
+            ...
+        except AttributeError as e:
+            self.info3.change_text(f"\\#dc143c{{ATTENZIONE! sintassi sbagliata.}}\n\nRaised error:\n\\i{{{e}}}")
+            # self.UI_curve_function.change_text("")
+        except ValueError as e:
+            self.info3.change_text(f"{e}")
+        except RuntimeError as e:
+            self.info3.change_text(f"\\#dc143c{{ATTENZIONE! Convergenza non raggiunta.}}\n\nRaised error:\n\\i{{{e}}}")
 
-        # try:
-
-        #     match curve:
-        #         case "gaussian":
-        #             def gaussian(x, amplitude, mean, stddev):
-        #                 return amplitude * np.exp(-((x - mean) / stddev) ** 2 / 2)
-                
-        #             if len(x) < 3: return f"Punti insufficienti.\nNumero parametri: 3\nPunti minimi richiesti: 4\nPunti presenti nel grafico: {len(x)}"
-
-        #             initial_guess_gauss = [max(y)-min(y), x[len(x)//2], (len(x) - 6) // 2]  # Initial guess for amplitude, mean, and standard deviation
-        #             params_gaus, covariance = curve_fit(gaussian, x, y, p0=initial_guess_gauss)
-
-        #             base_data.y_interp_lin = gaussian(base_data.x, *params_gaus)
-        #             base_data.interpol_maschera = deepcopy(base_data.maschera)
-
-        #             base_data.interpolation_type = "Fit Gaussiano"
-
-        #             errori = np.sqrt(np.diag(covariance))
-        #             console_output = f"Interpolazione Guassiana del grafico {base_data.nome}:\nA: {params_gaus[0]:.{self.approx_label}f} \\pm {errori[0]:.{self.approx_label}f}\n\\mu: {params_gaus[1]:.{self.approx_label}f} \\pm {errori[1]:.{self.approx_label}f}\n\\sigma: {params_gaus[2]:.{self.approx_label}f} \\pm {errori[2]:.{self.approx_label}f}"
-
-        #             y_i = gaussian(x, initial_guess_gauss[0], initial_guess_gauss[1], initial_guess_gauss[2])
-
-        #             correlation = 1 - np.sum( ( y - y_i )**2 ) /np.sum( ( y - (np.sum(y)/len(y)) )**2 )
-        #             correlation_type = "R quadro"
-        #             console_output += f"\n{correlation_type}: {correlation}"
-
-        #         case "sigmoid":
-        #             def sigmoide(x, a, b, lambda_0, delta_lambda):
-        #                 return b + a / (1 + np.exp((-np.array(x) + lambda_0) / delta_lambda))
-
-        #             if len(x) < 5: return f"Punti insufficienti.\nNumero parametri: 4\nPunti minimi richiesti: 5\nPunti presenti nel grafico: {len(x)}"
-
-        #             initial_guess_sigmo = [max(y)-min(y), (max(y)-min(y)) // 2, x[len(x)//2], 1]
-        #             # a -> larghezza delta (segno determina orientamento scalino)
-        #             # b -> y_punto_medio
-        #             # lambda_0 -> x_punto_medio
-        #             # delta_lambda -> valore per il quale un ala raggiunge metà dell'altezza del flesso
-        #             params_sigm, covariance = curve_fit(sigmoide, x, y, p0=initial_guess_sigmo)
-
-        #             base_data.y_interp_lin = sigmoide(base_data.x, *params_sigm)
-        #             base_data.interpol_maschera = deepcopy(base_data.maschera)
-
-        #             base_data.interpolation_type = "Fit Sigmoide"
-
-        #             errori = np.sqrt(np.diag(covariance))
-        #             console_output = f"Interpolazione sigmoide del grafico {base_data.nome}:\na: {params_sigm[0]:.{self.approx_label}f} \\pm {errori[0]:.{self.approx_label}f}\nb: {params_sigm[1]:.{self.approx_label}f} \\pm {errori[1]:.{self.approx_label}f}\n\\lambda^2_0: {params_sigm[2]:.{self.approx_label}f} \\pm {errori[2]:.{self.approx_label}f}\n\\Delta\\lambda: {params_sigm[3]:.{self.approx_label}f} \\pm {errori[3]:.{self.approx_label}f}"
-
-        #             y_i = sigmoide(x, initial_guess_sigmo[0], initial_guess_sigmo[1], initial_guess_sigmo[2], initial_guess_sigmo[3])
-        #             correlation = 1 - np.sum( ( y - y_i )**2 ) /np.sum( ( y - (np.sum(y)/len(y)) )**2 )
-        #             correlation_type = "R quadro"
-        #             console_output += f"\n{correlation_type}: {correlation}"
-
-        #     return console_output
-
-        # except RuntimeError as e:
-        #     return f"Parametri ottimali non trovati, prova con un altro zoom.\n£{e}£"
 
 
     def plot(self, logica: 'Logica', screenshot=0):
         """Richiesta UI pomoshnik, si può utilizzare con altri metodi di disegno. coordinate, colori e dimensioni sono forniti per poter essere usati in qualunque formato."""
 
-        try:
+        # try:
 
-            self.update_attributes()
+        self.update_attributes()
 
-            if not screenshot:
-                self.update(logica)
+        if not screenshot:
+            self.update(logica)
 
-            self._normalize_data2screen() # preparazione dati
+        self._normalize_data2screen() # preparazione dati
 
-            self._disegna_bg()      
+        self._disegna_bg()      
 
-            if self.plot_mode == 1: self._disegna_dati2D()
-            if self.plot_mode == 1: self._disegna_ZBAR()
+        if self.plot_mode == 1: self._disegna_dati2D()
+        if self.plot_mode == 1: self._disegna_ZBAR()
 
-            if self.plot_mode == 0: self._disegna_gradiente()
-            self._disegna_assi()
-            self._disegna_labels(logica)
-            self._disegna_ticks()
+        if self.plot_mode == 0: self._disegna_gradiente()
+        self._disegna_assi()
+        self._disegna_labels(logica)
+        self._disegna_ticks()
 
-            if self.plot_mode == 0: self._disegna_dati1D()
-            
-            self._disegna_legend(logica)
-            self._disegna_molecola(logica, screenshot)
+        if self.plot_mode == 0: self._disegna_dati1D()
+        
+        self._disegna_legend(logica)
+        self._disegna_molecola(logica, screenshot)
 
-            if not screenshot:
-                self._disegna_mouse_coordinate(logica) # aggiungi secondo asse
-                self._disegna_mouse_zoom(logica)
+        if not screenshot:
+            self._disegna_mouse_coordinate(logica) # aggiungi secondo asse
+            self._disegna_mouse_zoom(logica)
 
-        except Exception as e:
-            ...
+        # except Exception as e:
+        #     ...
             # print("Frame drawing error.")
 
 
@@ -1761,7 +1815,7 @@ class PomoPlot:
             self.screen._add_line([[coord, coords[3]], [coord, coords[3] + self.pixel_len_subdivisions * self.scale_factor_viewport]], self.ax_color_x, 4 * self.scale_factor_viewport)
 
             labels_info_text.append(f"{self.value_of_ticks[0][index]:.{self.round_ticks_x}{formattatore_x}}")
-            labels_info_pos.append([coord, coords[3] + float(self.offset_ticks_ax_y)])
+            labels_info_pos.append([coord, coords[3] + float(self.offset_ticks_ax_y) * self.scale_factor_viewport])
             labels_info_anchor.append("cc")
             labels_info_color.append(self.tick_color_x)
             labels_info_rotation.append(0)
@@ -1773,7 +1827,7 @@ class PomoPlot:
             self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_y, 4 * self.scale_factor_viewport)
 
             labels_info_text.append(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y}{formattatore_y}}")
-            labels_info_pos.append([coords[0] + float(self.offset_ticks_ax_x), coord])
+            labels_info_pos.append([coords[0] + float(self.offset_ticks_ax_x) * self.scale_factor_viewport, coord])
             labels_info_anchor.append("rc")
             labels_info_color.append(self.tick_color_y)
             labels_info_rotation.append(0)
@@ -1786,7 +1840,7 @@ class PomoPlot:
                 self.screen._add_line([[coords[2], coord], [coords[2] + self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_2y, 4 * self.scale_factor_viewport)
 
                 labels_info_text.append(f"{self.value_of_ticks[2][index]:.{self.round_ticks_2y}{formattatore_2y}}")
-                labels_info_pos.append([coords[0] + self.max_plot_square[2] - float(self.offset_ticks_ax_x), coord])
+                labels_info_pos.append([coords[0] + self.max_plot_square[2] - float(self.offset_ticks_ax_x) * self.scale_factor_viewport, coord])
                 labels_info_anchor.append("lc")
                 labels_info_color.append(self.tick_color_2y)
                 labels_info_rotation.append(0)
