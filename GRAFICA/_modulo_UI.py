@@ -69,6 +69,7 @@ class UI:
 
         pygame.init()
         self.init_screen_data()
+        self.mixer_audio()
 
         # custom mouse
         # pygame.mouse.set_visible(False)
@@ -87,7 +88,7 @@ class UI:
         self.logica = Logica()
         self.event_manager = EventManager()
         
-        font_size = self.h_screen / 75
+        font_size = self.h_screen / 85
         if font_size in [2, 4, 9, 11, 16]:
             font_size -= 1
         
@@ -192,6 +193,12 @@ class UI:
         self.event_manager.event_manage_ui(eventi, self.costruttore.scene["main"], self.logica)
         self.costruttore.scene["main"].disegna_scena_inizio_ciclo(self.logica)
         
+
+    def mixer_audio(self) -> None:
+        if 0:
+            pygame.mixer.music.load("./TEXTURES/AUDIO_SC2/cyhtm.mp3")
+            pygame.mixer.music.play(-1)
+            pygame.mixer.music.set_volume(0.125)
 
 
     def end_cycle(self) -> None:

@@ -57,7 +57,7 @@ class PomoPlot:
         # ------------------------------------------------------------------------------
         # offset dei label in PIXEL
 
-        self.draw_bounding_box: bool = True
+        self.show_bounding_box: bool = True
 
         self.n_subdivisions_x: int = 5
         self.n_subdivisions_y: int = 5
@@ -219,6 +219,7 @@ class PomoPlot:
         self.UI_show_grid_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_x"]
         self.UI_show_grid_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_y"]
         self.UI_show_grid_2y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_2y"]
+        self.UI_show_bounding_box: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_bounding_box"]
         
         self.UI_show_legend: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend"]
         self.UI_x_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["x_legend"]
@@ -271,6 +272,10 @@ class PomoPlot:
         self.UI_l_param_1: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["l_param_1"]
         self.UI_l_param_2: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["l_param_2"]
         self.UI_l_param_3: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["l_param_3"]
+
+        self.UI_presets1: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["presets1"]
+        self.UI_presets2: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["presets2"]
+        self.UI_presets3: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["presets3"]
 
         self.UI_info3: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["info3"]
     
@@ -401,6 +406,7 @@ class PomoPlot:
         self.show_grid_x = self.UI_show_grid_x.state_toggle
         self.show_grid_y = self.UI_show_grid_y.state_toggle
         self.show_grid_2y = self.UI_show_grid_2y.state_toggle
+        self.show_bounding_box = self.UI_show_bounding_box.state_toggle
         
         self.show_legend = self.UI_show_legend.state_toggle
         self.x_legend = self.UI_x_legend.get_text()
@@ -745,6 +751,17 @@ class PomoPlot:
                 labels[i].change_text(f"{float(ris[i]):.{self.round_ticks_x}{form_x}}")
                 
 
+        if self.UI_presets1.flag_foo:
+            self.UI_presets1.flag_foo = False
+            self.UI_curve_function.change_text("p[0]+p[1]*np.exp(p[2]+(p[3]*x))")
+        if self.UI_presets2.flag_foo:
+            self.UI_presets2.flag_foo = False
+            self.UI_curve_function.change_text("p[0]*np.exp(-((x-p[1])/p[2])**2/2)")
+        if self.UI_presets3.flag_foo:
+            self.UI_presets3.flag_foo = False
+            self.UI_curve_function.change_text("p[0]+p[1]/(1+np.exp((-x+p[2])/p[3]))")
+
+
         # choose mode and hide unecessary UI
         if self.active_tab == 10:
             self.elenco_metadata.hide_plus_children(False)
@@ -764,8 +781,8 @@ class PomoPlot:
         # change with default theme light and dark
         if self.UI_tema_scuro.flag_foo:
             self.UI_tema_scuro.flag_foo = False
-            self.UI_plot_area_color.set_color([50, 50, 50])
-            self.UI_canvas_area_color.set_color([40, 40, 40])
+            self.UI_plot_area_color.set_color([30, 30, 30])
+            self.UI_canvas_area_color.set_color([30, 30, 30])
             self.UI_ax_color_x.set_color([70, 70, 70])
             self.UI_ax_color_y.set_color([70, 70, 70])
             self.UI_ax_color_2y.set_color([70, 70, 70])
@@ -806,6 +823,7 @@ class PomoPlot:
             try:
                 base_data = self.plots[self.scroll_plots.ele_selected_index]
             except IndexError as e:
+                self.compute_interpolation.sound_error.play()
                 return f"\\#dc143c{{ATTENZIONE! Carica un grafico prima.}}\n\nRaised error:\n\\i{{{e}}}"
 
             needed_indices = (base_data.data[:, base_data.column_x] >= MateUtils.inp2flo(self.min_x_interpolation, np.min(base_data.data[:, base_data.column_x]))) & (base_data.data[:, base_data.column_x] <= MateUtils.inp2flo(self.max_x_interpolation, np.max(base_data.data[:, base_data.column_x])))
@@ -819,7 +837,9 @@ class PomoPlot:
             y = y[needed_indices]
             ey = ey[needed_indices] if base_data.data.shape[1] > 2 else None
 
-            if len(x) < 3: return f"\\#dc143c{{ATTENZIONE! Punti insufficienti.}}\n\nPunti minimi richiesti: \\#ffdd60{{3}}\nPunti presenti nel grafico: \\#ffdd60{{{len(x)}}}"
+            if len(x) < 3: 
+                self.compute_interpolation.sound_error.play()
+                return f"\\#dc143c{{ATTENZIONE! Punti insufficienti.}}\n\nPunti minimi richiesti: \\#ffdd60{{3}}\nPunti presenti nel grafico: \\#ffdd60{{{len(x)}}}"
 
             m = None
             q = None
@@ -871,6 +891,7 @@ class PomoPlot:
             return params_str
 
         except RuntimeError as e:
+            self.compute_interpolation.sound_error.play()
             return f"\\#dc143c{{ATTENZIONE! Interpolazione fallita.}}\n\nCausa più probabile:\n\\#ffdd60{{Dati troppo divergenti.}}\n\nPossibile soluzione:\n\\#ffdd60{{Scegliere un range di dati più lineare.}}\n\nRaised error:\n\\i{{{e}}}"
 
 
@@ -888,6 +909,7 @@ class PomoPlot:
             return f"Calcolato correttamente.\n(\\#aaffaa{{Derivata_{base_data.nome}}})"        
         
         except IndexError as e:
+            self.compute_derivative.sound_error.play()
             return f"\\#dc143c{{ATTENZIONE! Carica un grafico prima.}}\n\nRaised error:\n\\i{{{e}}}"
                     
                     
@@ -902,6 +924,7 @@ class PomoPlot:
                 entries[i].bg = entries[i].bg_backup
                 float(entries[i].testo) 
             except Exception:
+                self.compute_custom_curve.sound_error.play()
                 entries[i].bg = np.array([200, 60, 60])
                 mancano_valori = True
 
@@ -937,6 +960,7 @@ class PomoPlot:
 
 
             if len(x) < len(initial_guess):
+                self.compute_custom_curve.sound_error.play()
                 raise ValueError(f"\\#dc143c{{ATTENZIONE! Punti insufficienti.}}\n\nRaised error:\n\\i{{Numero parametri: {len(initial_guess)}}}\n\\i{{Punti minimi richiesti: {len(initial_guess) + 1}}}\n\\i{{Punti presenti nel grafico: {len(x)}}}")
             
             # Fit the curve
@@ -952,6 +976,7 @@ class PomoPlot:
             contains_invalid = np.isnan(curve_fit_data).any() or np.isinf(curve_fit_data).any()
 
             if contains_invalid:
+                self.compute_custom_curve.sound_error.play()
                 raise ValueError(f"\\#dc143c{{ATTENZIONE! Overflow, prova altri parametri.}}\n\nRaised error:\n\\i{{NaN data present in the calculations}}")
 
             self.update_plot_list(_Single1DPlot(f"curve_fit_{plot.nome}", curve_fit_data, ""), active_on_load=True, substitute=True)
@@ -959,18 +984,26 @@ class PomoPlot:
         
         except IndexError as e:
             if mancano_valori:
+                self.compute_custom_curve.sound_error.play()
                 self.info3.change_text(f"\\#dc143c{{ATTENZIONE! Inserisci tutti i parametri.}}\n\nRaised error:\n\\i{{{e}}}")
             else:
+                self.compute_custom_curve.sound_error.play()
                 self.info3.change_text(f"\\#dc143c{{ATTENZIONE! Carica un grafico prima.}}\n\nRaised error:\n\\i{{{e}}}")
         except TypeError as e:
             ...
         except AttributeError as e:
-            self.info3.change_text(f"\\#dc143c{{ATTENZIONE! sintassi sbagliata.}}\n\nRaised error:\n\\i{{{e}}}")
+            self.compute_custom_curve.sound_error.play()
+            self.info3.change_text(f"\\#dc143c{{ATTENZIONE! Sintassi sbagliata.}}\n\nRaised error:\n\\i{{{e}}}")
             # self.UI_curve_function.change_text("")
         except ValueError as e:
+            self.compute_custom_curve.sound_error.play()
             self.info3.change_text(f"{e}")
         except RuntimeError as e:
+            self.compute_custom_curve.sound_error.play()
             self.info3.change_text(f"\\#dc143c{{ATTENZIONE! Convergenza non raggiunta.}}\n\nRaised error:\n\\i{{{e}}}")
+        except SyntaxError as e:
+            self.compute_custom_curve.sound_error.play()
+            self.info3.change_text(f"\\#dc143c{{ATTENZIONE! Sinstassi sbaglaita.}}\n\nRaised error:\n\\i{{{e}}}")
 
 
 
@@ -1102,7 +1135,7 @@ class PomoPlot:
                         labels_info_rotation.append(0)
 
                     # disegno il valore corrispondente
-                    self.screen._add_text(labels_info_text, labels_info_pos, anchor=labels_info_anchor, size=1.5 * self.scale_factor_viewport, color=labels_info_color, rotation=labels_info_rotation)
+                    self.screen._add_text(labels_info_text, labels_info_pos, anchor=labels_info_anchor, size=float(self.size_ticks) * self.scale_factor_viewport, color=labels_info_color, rotation=labels_info_rotation)
 
 
 
@@ -1853,7 +1886,7 @@ class PomoPlot:
 
         coords = self._get_plot_area_coord()
 
-        if self.draw_bounding_box:
+        if self.show_bounding_box:
             self.screen._add_line([[self.max_plot_square[0], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]]], self.ax_color_x, 4 * self.scale_factor_viewport)
             self.screen._add_line([[self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1]], [self.max_plot_square[0] + self.max_plot_square[2], self.max_plot_square[1] + self.max_plot_square[3]]], self.ax_color_x, 4 * self.scale_factor_viewport)
         
@@ -2744,7 +2777,7 @@ class PomoPlot:
                 self.scroll_plots1D.ele_selected_index = len(self.scroll_plots1D.elementi) - 1
 
         except Exception as e:
-            if self.data_path.endswith(".csv") or self.data_path.endswith(".CSV") and retry_on_fail: 
+            if (self.data_path.endswith(".csv") or self.data_path.endswith(".CSV")) and retry_on_fail: 
                 self.import_plot_data(path, ";", separatore_decimale=",", retry_on_fail=False)
             else:
                 print(f"Impossibile caricare il file: {path}\n{e}")

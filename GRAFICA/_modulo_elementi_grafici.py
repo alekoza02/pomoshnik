@@ -18,6 +18,28 @@ from GRAFICA._modulo_database import Dizionario; diction = Dizionario()
 
 
 
+class AudioTracks:
+    def __init__(self):
+        pygame.init()
+        self.UI_sel = pygame.mixer.Sound("./TEXTURES/AUDIO_SC2/UI_sel.wav")
+        self.UI_sel.set_volume(.2)
+        self.UI_sel_old = pygame.mixer.Sound("./TEXTURES/AUDIO_SC2/UI_Button0_old.wav")
+        self.UI_sel_old.set_volume(.2)
+        self.UI_hov = pygame.mixer.Sound("./TEXTURES/AUDIO_SC2/UI_Nova_MouseOver1.wav")
+        self.UI_hov.set_volume(.1)
+        self.UI_open = pygame.mixer.Sound("./TEXTURES/AUDIO_SC2/UI_BnetWindowOpen.wav")
+        self.UI_open.set_volume(.2)
+        self.UI_close = pygame.mixer.Sound("./TEXTURES/AUDIO_SC2/UI_Popup_Type01_0.wav")
+        self.UI_close.set_volume(.2)
+        self.UI_typing = pygame.mixer.Sound("./TEXTURES/AUDIO_SC2/UI_TextCrawlType01.wav")
+        self.UI_typing.set_volume(.2)
+        self.UI_error = pygame.mixer.Sound("./TEXTURES/AUDIO_SC2/UI_Error.wav")
+        self.UI_error.set_volume(.2) 
+
+
+audio = AudioTracks()
+
+
 class BaseElement:
 
     '''
@@ -37,13 +59,21 @@ class BaseElement:
 
     FULL_coord_window = None
 
-    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, bg=None) -> None:
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, bg=None, tooltip="", show_tooltip=True) -> None:
         
         self.latex_font = latex_font
         self.is_child = False
         self.schermo = BaseElement.FULL_coord_window["screen"]
 
         self.color_text = color_text
+
+        self.sound_select_birth = audio.UI_sel
+        self.sound_select_death = audio.UI_sel
+        self.sound_select = audio.UI_sel
+        self.sound_hover = audio.UI_hov
+        self.sound_typing = audio.UI_typing
+        self.sound_error = audio.UI_error
+        
 
         if bg is None:
             self.bg = array(BaseElement.FULL_coord_window["bg_def"])
@@ -64,6 +94,7 @@ class BaseElement:
         self.ori_coords = (x, y, w, h, anchor)
 
         self.need_update = False
+        self.previous_hover = False
 
         self.x_Context = 0
         self.y_Context = 0
@@ -72,6 +103,12 @@ class BaseElement:
 
         self.move_x = 0
         self.move_y = 0
+
+        self.show_tooltip = show_tooltip
+        if self.show_tooltip:
+            self.tooltip = tooltip
+            if self.tooltip == "":
+                self.tooltip = self.testo
 
         self.recalc_geometry(x, y, w, h, anchor)
 
@@ -82,12 +119,26 @@ class BaseElement:
         cls.FULL_coord_window = FULL_coord_window 
 
 
+    def get_tooltip(self, logica: 'Logica'):
+        if self.do_stuff:        
+            if self.show_tooltip and self.bounding_box.collidepoint(logica.mouse_pos):
+                return self.tooltip
+
+
     def disegnami(self, logica):
         ...
 
     
     def eventami(self, events, logica):
         ...
+
+
+    def hover_sound(self, status):
+        if self.previous_hover != status:
+            self.previous_hover = self.hover
+            if self.previous_hover:
+                if not self.sound_hover is None:
+                    self.sound_hover.play()
 
 
     def check_for_lost_focus(self, events, logica):
@@ -315,7 +366,7 @@ class BaseElement:
 class Label_Text(BaseElement):
 
     def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, no_parent=False) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, color_text, latex_font=latex_font)
+        super().__init__(x, y, anchor, w, h, text, hide, color_text, latex_font=latex_font, show_tooltip=False)
         self.debug = False
         self.no_parent = no_parent
 
@@ -441,7 +492,7 @@ class Label_Text(BaseElement):
                         self.testo_diplayed[0] = testo_diplayed_iteration
 
 
-    def change_text(self, text):
+    def change_text(self, text, highlight=False):
         if self.latex_font:
             old_text = self.testo
             self.testo = text
@@ -453,11 +504,15 @@ class Label_Text(BaseElement):
             self.testo = text
 
 
+    def get_tooltip(self, logica):
+        return None
+
+
 
 class Bottone_Push(BaseElement):
 
-    def __init__(self, x="", y="", anchor="lu", w="", h="", function=None, text="", hide=False, disable=False, bg=None) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide, bg=bg)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", function=None, text="", hide=False, disable=False, bg=None, tooltip="") -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, bg=bg, tooltip=tooltip)
 
         self.contorno = 2
 
@@ -513,6 +568,7 @@ class Bottone_Push(BaseElement):
 
             colore = [s_colore if s_colore <= 255 else 255 for s_colore in colore]
 
+            pygame.draw.rect(self.schermo, [100, 100, 100], [self.x-1, self.y-1, self.w+2, self.h+2], 1, self.smussatura)
             pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
 
             if self.texture is None:
@@ -540,10 +596,12 @@ class Bottone_Push(BaseElement):
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if self.bounding_box.collidepoint(event.pos):
-                        self.callback(self)
+                        if not self.sound_select is None: self.sound_select.play()
                         self.animazione.riavvia()
+                        self.callback(self)
 
             self.hover = True if self.bounding_box.collidepoint(logica.mouse_pos) else False
+            self.hover_sound(self.hover)
                     
 
     def animazione_press(self, dt: int, colore):
@@ -610,8 +668,8 @@ class Bottone_Push(BaseElement):
         
         
 class Bottone_Toggle(BaseElement):
-    def __init__(self, x="", y="", anchor="lu", w="", h="", state=False, type_checkbox=True, text="", hide=False, disable=False, text_on_right=True) -> None:
-        super().__init__(x, y, anchor, w, h, text, hide)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", state=False, type_checkbox=True, text="", hide=False, disable=False, text_on_right=True, tooltip="") -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, tooltip=tooltip)
         
         self.contorno = 2
 
@@ -665,6 +723,7 @@ class Bottone_Toggle(BaseElement):
             if self.checkbox:
 
                 pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
+                pygame.draw.rect(self.schermo, [100, 100, 100], [self.x-1, self.y-1, self.w+2, self.h+2], 1, self.smussatura)
 
                 if self.state_toggle:
                     pygame.draw.rect(self.schermo, [255, 255, 255], [self.x + 4, self.y + 4, self.w - 8, self.h - 8], self.contorno, self.smussatura)
@@ -675,6 +734,7 @@ class Bottone_Toggle(BaseElement):
             else:
 
                 pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, self.smussatura)
+                pygame.draw.rect(self.schermo, [100, 100, 100], [self.x-1, self.y-1, self.w+2, self.h+2], 1, self.smussatura)
 
                 if self.texture is None:
                     self.label_title.disegnami(logica)
@@ -689,13 +749,15 @@ class Bottone_Toggle(BaseElement):
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if self.bounding_box.collidepoint(event.pos):
-                        
                         if self.state_toggle:
+                            if not self.sound_select_death is None: self.sound_select_death.play()
                             self.state_toggle = False
                         else:
+                            if not self.sound_select_birth is None: self.sound_select_birth.play()
                             self.state_toggle = True
 
             self.hover = True if self.bounding_box.collidepoint(logica.mouse_pos) else False
+            self.hover_sound(self.hover)
 
 
     def animazione_press(self, colore):
@@ -751,8 +813,8 @@ class Bottone_Toggle(BaseElement):
 
 
 class RadioButton(BaseElement):
-    def __init__(self, x="", y="", anchor="lu", w="", h="", axis="x", bg=None, cb_n=1, cb_s=[False], cb_t=["Default item"], title="", multiple_choice=False, hide=False, type_checkbox=True, w_button="30px", h_button="30px", always_one_active=False, default_active=0) -> None:
-        super().__init__(x, y, anchor, w, h, title, hide)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", axis="x", bg=None, cb_n=1, cb_s=[False], cb_t=["Default item"], cb_tooltips=[""], title="", multiple_choice=False, hide=False, type_checkbox=True, w_button="30px", h_button="30px", always_one_active=False, default_active=0) -> None:
+        super().__init__(x, y, anchor, w, h, title, hide, show_tooltip=False)
 
         if not bg is None:
             self.bg = bg
@@ -769,7 +831,7 @@ class RadioButton(BaseElement):
 
         self.type_checkbox = type_checkbox
 
-        self.cb_n, self.cb_s, self.cb_t = cb_n, cb_s, cb_t
+        self.cb_n, self.cb_s, self.cb_t, self.cb_tooltips = cb_n, cb_s, cb_t, cb_tooltips
 
         self.w_button, self.h_button = w_button, h_button
         
@@ -786,15 +848,19 @@ class RadioButton(BaseElement):
         if self.h_button[-2:] == "%h":
             self.h_button_calcoli = f"{float(self.h_button[:-2]) * self.one_percent_y}px"
         
-        for index, state, text  in zip(range(cb_n), cb_s, cb_t):
+        for index, state, text, tooltip in zip(range(cb_n), cb_s, cb_t, cb_tooltips):
             
             match self.main_ax:
                 case "x": 
                         spacing = (self.w - float(self.w_button_calcoli[:-2]) * cb_n) / (cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(f"{self.x}px {index * (float(self.w_button_calcoli[:-2]) + spacing)}px", f"{self.y}px", "lu", w_button, h_button, state, type_checkbox, text=text, hide=hide))
+                        self.toggles.append(Bottone_Toggle(f"{self.x}px {index * (float(self.w_button_calcoli[:-2]) + spacing)}px", f"{self.y}px", "lu", w_button, h_button, state, type_checkbox, text=text, hide=hide, tooltip=tooltip))
+                        self.toggles[-1].sound_select_birth = audio.UI_sel_old
+                        self.toggles[-1].sound_select_death = audio.UI_sel_old
                 case "y":
                         spacing = (self.h - float(self.h_button_calcoli[:-2]) * cb_n) / (cb_n - 1)
-                        self.toggles.append(Bottone_Toggle(f"{self.x}px", f"{self.y}px {index * (float(self.h_button_calcoli[:-2]) + spacing)}px", "lu", w_button, h_button, state, type_checkbox, text=text, hide=hide))
+                        self.toggles.append(Bottone_Toggle(f"{self.x}px", f"{self.y}px {index * (float(self.h_button_calcoli[:-2]) + spacing)}px", "lu", w_button, h_button, state, type_checkbox, text=text, hide=hide, tooltip=tooltip))
+                        self.toggles[-1].sound_select_birth = audio.UI_sel_old
+                        self.toggles[-1].sound_select_death = audio.UI_sel_old
                     
                 case _: raise TypeError(f"Invalid mode {self.main_ax}, accepted types: 'x', 'y'.")
         
@@ -847,6 +913,10 @@ class RadioButton(BaseElement):
     @property
     def buttons_state(self):
         return [bottone.state_toggle for bottone in self.toggles]
+
+
+    def get_tooltip(self, logica):
+        return [tog.get_tooltip(logica) for tog in self.toggles]
 
 
     def set_state(self, states):
@@ -932,8 +1002,8 @@ class RadioButton(BaseElement):
 
 
 class Entrata(BaseElement):
-    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", title="Entrata", hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False) -> None:       
-        super().__init__(x, y, anchor, w, h, text, hide)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", title="Entrata", hide=False, lunghezza_max=None, solo_numeri=False, num_valore_minimo=None, num_valore_massimo=None, is_hex=False, tooltip="") -> None:       
+        super().__init__(x, y, anchor, w, h, text, hide, tooltip=tooltip)
 
         self.contorno = 0
 
@@ -972,7 +1042,8 @@ class Entrata(BaseElement):
 
             self.label_title.disegnami(logica)
 
-            pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno, 5)
+            pygame.draw.rect(self.schermo, colore, [self.x, self.y, self.w, self.h], self.contorno)
+            pygame.draw.rect(self.schermo, [100, 100, 100], [self.x-1, self.y-1, self.w+2, self.h+2], 1)
 
             if self.selezionato:
                 pygame.draw.rect(self.schermo, [90, 90, 90], [self.x + self.font.font_pixel_dim[0] * self.highlight_region[0] + self.offset_grafico_testo, self.y, self.font.font_pixel_dim[0] * (self.highlight_region[1] - self.highlight_region[0]), self.h], 0, 5)
@@ -1015,6 +1086,7 @@ class Entrata(BaseElement):
                 self.animazione_puntatore.riavvia()
 
             self.hover = True if self.bounding_box.collidepoint(logica.mouse_pos) else False
+            self.hover_sound(self.hover)
 
 
     def check_for_lost_focus(self, events, logica):
@@ -1042,6 +1114,7 @@ class Entrata(BaseElement):
                 if event.button == 1:
                     if self.bounding_box.collidepoint(event.pos):
                         if self.selezionato:
+                            if self.do_stuff and not self.sound_select is None: self.sound_select.play()
                             self.animazione_puntatore.riavvia()
 
 
@@ -1149,6 +1222,9 @@ class Entrata(BaseElement):
                 
                 if event.type == pygame.KEYDOWN:
 
+                    # SOUND / AUDIO
+                    self.sound_typing.play()
+                    
                     # copia, incolla e taglia       
                     if logica.ctrl and event.key == pygame.K_c:
                         
@@ -1511,6 +1587,7 @@ class Scroll(BaseElement):
                 if self.elemento_attivo < 0:
                     self.ele_first -= 1
     
+
     def remove_item_index(self, index):
         if len(self.elementi) > 0:
             self.elementi.pop(index)
@@ -1520,6 +1597,10 @@ class Scroll(BaseElement):
 
                 if self.elemento_attivo < 0:
                     self.ele_first -= 1
+
+
+    def get_tooltip(self, logica):
+        return None
 
 
     @property
@@ -1725,9 +1806,9 @@ class Scroll(BaseElement):
 
 
 class ColorPicker(BaseElement):
-    def __init__(self, palette, id, x="", y="", anchor="lu", w="", h="", initial_color=[200, 200, 200], text="", hide=False, bg=None) -> None:
+    def __init__(self, palette, id, x="", y="", anchor="lu", w="", h="", initial_color=[200, 200, 200], text="", hide=False, bg=None, tooltip="") -> None:
+        super().__init__(x, y, anchor, w, h, text, hide, tooltip=tooltip)
         
-        super().__init__(x, y, anchor, w, h, text, hide)
 
         self.label_title = Label_Text(anchor=(f"lc rc (10px) (0px)", self), w="-*w", h="-*h", text=text, hide=hide)
 
@@ -1959,6 +2040,10 @@ class Palette(BaseElement):
 
             [entrata.disegnami(logica) for entrata in self.RGB_inputs]
             self.HEX_input.disegnami(logica)
+
+
+    def get_tooltip(self, logica):
+        return None
 
 
     def eventami(self, logica: 'Logica', events):
@@ -2259,6 +2344,9 @@ class Collapsable_Window(BaseElement):
     def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, color_text=[200, 200, 200], latex_font=False, bg=None, closed=False, group=1):
         super().__init__(x, y, anchor, w, h, text, hide, color_text, latex_font, bg)
         self.expand_button: Bottone_Toggle = Bottone_Toggle(anchor=(f"lu lu (10px) (10px)", self), w=f"40px", h=f"40px", state=not closed, text=">")
+        self.expand_button.sound_select_death = audio.UI_close
+        self.expand_button.sound_select_birth = audio.UI_open
+        
         self.h_chiuso = f"60px"
         self.h_aperto = self.ori_coords[3]
         self.delta_h = float(self.bounding_box[3]) - float(self.h_chiuso[:-2])
@@ -2267,6 +2355,10 @@ class Collapsable_Window(BaseElement):
         self.group = group
 
         self.initialize_window = True
+
+
+    def get_tooltip(self, logica):
+        return self.expand_button.get_tooltip(logica)
 
 
     def eventami(self, events, logica):
@@ -2331,9 +2423,10 @@ class Collapsable_Window(BaseElement):
 
 
 class ContextMenu(BaseElement):
-    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, separator_size=2, bg=[25, 25, 25], scrollable=True) -> None:
+    def __init__(self, x="", y="", anchor="lu", w="", h="", text="", hide=False, separator_size=2, bg=[25, 25, 25], scrollable=True, root=False, ) -> None:
         super().__init__(x, y, anchor, w, h, text, hide)
 
+        self.root = root
         self.previous_hide = None
 
         self.inizializzato = False
@@ -2352,15 +2445,19 @@ class ContextMenu(BaseElement):
         self.separator_size = separator_size
         self.max_window_group = 0
 
+        if self.root:
+            self.PRIVATE_tooltip_label = Label_Text(x="0.5%w", y="99.5%h", anchor="ld", w="-*w", h="-*h", text="\\h{Tooltip initialized}")
+            self.add_element("PRIV_tooltip", self.PRIVATE_tooltip_label)
     
+
     def disegnami(self, logica):
 
         if not self.hide:
             pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
             [ele.disegnami(logica, self.y + self.h) for index, ele in self.windows.items()]
 
-            [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
-            [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) == ColorPicker]
+            [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) != ColorPicker and index != "PRIV_tooltip"]
+            [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) == ColorPicker and index != "PRIV_tooltip"]
 
             for sep in self.separators:
                 if sep > 0:
@@ -2376,6 +2473,21 @@ class ContextMenu(BaseElement):
                 pygame.draw.circle(self.schermo, [255, 0, 0], self.ru, 5)
                 pygame.draw.circle(self.schermo, [255, 0, 0], self.rc, 5)
                 pygame.draw.circle(self.schermo, [255, 0, 0], self.rd, 5)
+
+
+    def search_for_tooltip(self, logica: 'Logica'):
+        if self.do_stuff:
+            return [ele.get_tooltip(logica) for index, ele in self.elements.items()]
+
+
+    def change_tooltip(self, message):
+        if self.root:
+            self.PRIVATE_tooltip_label.change_text(f"{message}", highlight=True)
+            self.PRIVATE_tooltip_label.disegnami(None)
+
+    
+    def get_tooltip(self, logica):
+        return None
 
 
     def eventami(self, events, logica: 'Logica'):
@@ -2551,8 +2663,8 @@ class ContextMenu(BaseElement):
 
 class Screen(BaseElement):
 
-    def __init__(self, x="", y="", anchor="lu", w="", h="", hide=False, latex_font=False, screenshot_type=False):
-        super().__init__(x, y, anchor, w, h, "", hide, latex_font=latex_font)
+    def __init__(self, x="", y="", anchor="lu", w="", h="", hide=False, latex_font=False, screenshot_type=False, tooltip="", show_tooltip=True):
+        super().__init__(x, y, anchor, w, h, "", hide, latex_font=latex_font, tooltip=tooltip, show_tooltip=show_tooltip)
 
         self.screenshot_type = screenshot_type
         self.tavolozza = pygame.Surface((self.w, self.h))

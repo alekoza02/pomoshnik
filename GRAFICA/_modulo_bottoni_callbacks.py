@@ -1,4 +1,6 @@
 from tkinter import filedialog
+import pygame
+import time
 import os
 
 NON_ESEGUIRE = False
@@ -14,6 +16,9 @@ class BottoniCallbacks:
 
     @staticmethod
     def exit(bottone: 'Bottone_Push'):
+        # init_sound = pygame.mixer.Sound("./TEXTURES/AUDIO_SC2/Battlecruiser_Pissed06.ogg")
+        # init_sound.play()
+        # time.sleep(4.5)
         exit()
 
 
