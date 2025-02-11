@@ -3,7 +3,7 @@ import os
 from numpy import array
 from time import perf_counter
 
-from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, ContextMenu, BaseElement, Screen, Palette, Collapsable_Window
+from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, ContextMenu, BaseElement, Screen, Palette, Collapsable_Window, Slider
 from GRAFICA._modulo_bottoni_callbacks import BottoniCallbacks
 
 NON_ESEGUIRE = False
@@ -293,10 +293,10 @@ class Costruttore:
 
         s.context_menu["item5"].add_element("show_legend", Bottone_Toggle("95%w", "80px", "ru", "30px", "30px", text="\\#dfffdf{\\b{Mostra legenda}}", state=False, type_checkbox=True, text_on_right=False, tooltip="Abilita la renderizzazione della legenda.\n\\#dc143c{Attenzione: è necessario abilitare la legenda per modificare le impostazioni.}"))
 
-        s.context_menu["item5"].add_element("x_legend", Entrata("75%w", "205px", "lu", "20%w", "30px", text="0.5", title="X legend", lunghezza_max=5, solo_numeri=True, num_valore_minimo=-0.5, num_valore_massimo=1.5, tooltip="Imposta la posizione X del centro della legenda. \\i{\\#aaffaa{Min: -0.5} | \\#ffaaaa{Max: 1.5} | Std: 0.5}\n\\#777777{Valori tra 0 e 1 posizionano la legenda dentro al grafico, ma è possibile uscire da questi limiti.}"), window="wind1")
-        s.context_menu["item5"].add_element("y_legend", Entrata("75%w", "240px", "lu", "20%w", "30px", text="0.5", title="Y legend", lunghezza_max=5, solo_numeri=True, num_valore_minimo=-0.5, num_valore_massimo=1.5, tooltip="Imposta la posizione Y del centro della legenda. \\i{\\#aaffaa{Min: -0.5} | \\#ffaaaa{Max: 1.5} | Std: 0.5}\n\\#777777{Valori tra 0 e 1 posizionano la legenda dentro al grafico, ma è possibile uscire da questi limiti.}"), window="wind1")
-        
-        s.context_menu["item5"].add_element("font_size_legend", Entrata("75%w", "305px", "lu", "20%w", "30px", text="48", title="Legend font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del font della legenda. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}\n\\#777777{Nota: Cambia solo la dimensione del testo, non del simbolo.}"), window="wind1")
+        s.context_menu["item5"].add_element("x_legend", Slider("25%w", "260px", "lu", "40%w", "30px", title="X legend", initial_value=0.5, min_value=-0.5, max_value=1.5, tooltip="Imposta la posizione X del centro della legenda. \\i{\\#aaffaa{Min: -0.5} | \\#ffaaaa{Max: 1.5} | Std: 0.5}\n\\#777777{Valori tra 0 e 1 posizionano la legenda dentro al grafico, ma è possibile uscire da questi limiti.}"), window="wind1")
+        s.context_menu["item5"].add_element("y_legend", Slider("25%w", "295px", "lu", "40%w", "30px", title="Y legend", initial_value=0.5, min_value=-0.5, max_value=1.5, tooltip="Imposta la posizione Y del centro della legenda. \\i{\\#aaffaa{Min: -0.5} | \\#ffaaaa{Max: 1.5} | Std: 0.5}\n\\#777777{Valori tra 0 e 1 posizionano la legenda dentro al grafico, ma è possibile uscire da questi limiti.}"), window="wind1")
+
+        s.context_menu["item5"].add_element("font_size_legend", Entrata("85%w", "195px", "lu", "10%w", "30px", text="48", title="Legend font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del font della legenda. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}\n\\#777777{Nota: Cambia solo la dimensione del testo, non del simbolo.}"), window="wind1")
         
         s.context_menu["item5"].add_element("show_legend_background", Bottone_Toggle("95%w", "400px", "ru", "30px", "30px", text="\\#dfffdf{\\b{Disegna bg}}", state=False, type_checkbox=True, text_on_right=False, tooltip="Decide se disegnare lo sfondo della legenda. Altre impostazioni seguono."), window="wind2")
         s.context_menu["item5"].add_element("legend_color_background", ColorPicker(s.palette_popup, "14", "30%w", "480px", "cc", "30%w", "40px", [250, 250, 250], bg=[50, 50, 50], text="Color legend bg", tooltip="Imposta il colore dello sfondo della legenda.\n\\#777777{Quando lo sfondo è trasparente, questo colore fungerà da attenuatore dei colori sottostanti.}"), window="wind2")

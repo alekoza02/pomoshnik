@@ -1466,7 +1466,11 @@ class Entrata(BaseElement):
         self.testo = text
 
 
-    def get_text(self) -> str:
+    def get_text(self, real_time=False) -> str:
+        
+        if real_time:
+            return f"{self.testo}"
+
         if self.return_previous_text:
             restituisco = f"{self.previous_text}"
         else:
@@ -2095,6 +2099,11 @@ class Palette(BaseElement):
             self.aggiorna_colore = False
 
     
+    def check_for_lost_focus(self, events, logica):
+        [entrata.check_for_lost_focus(events, logica) for entrata in self.RGB_inputs]
+        self.HEX_input.check_for_lost_focus(events, logica)
+
+
     def update_window_change(self):
         super().update_window_change()
         [ele.update_window_change() for ele in self.colori_bottoni]
@@ -2495,7 +2504,7 @@ class ContextMenu(BaseElement):
         if not self.hide:
 
             # Classic event
-            [ele.check_for_lost_focus(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
+            [ele.check_for_lost_focus(events, logica) for index, ele in self.elements.items() if type(ele)]
             [ele.eventami(events, logica) for index, ele in self.windows.items()]
             [ele.eventami(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
 
@@ -2658,6 +2667,109 @@ class ContextMenu(BaseElement):
     
     def add_separator(self, y):
         self.separators.append(y)
+
+
+
+class Slider(BaseElement):
+    def __init__(self, x="", y="", anchor="lu", w="", h="", title="", color_text=[200, 200, 200], initial_value=0, min_value=0, max_value=1, hide=False, bg=None, tooltip="", show_tooltip=True):
+        super().__init__(x, y, anchor, w, h, "", hide, color_text, False, bg, tooltip, show_tooltip)
+
+        self.value = initial_value
+        self.keep_updating = False
+
+        self.min_value = min_value
+        self.max_value = max_value
+
+        self.label_title = Label_Text(anchor=("rc lc (-30px) (0)", self), w="-*w", h="-*h", color_text=color_text, text=title)
+        self.indicatore = Entrata(anchor=("lc rc (30px) (0)", self), w="-*w", h="-*h", title="", text=f"-------", lunghezza_max=6, solo_numeri=True, num_valore_minimo=min_value, num_valore_massimo=max_value, tooltip="Indicatore relativo al valore dello slider.")
+
+
+    def get_value(self):
+        return (self.max_value - self.min_value) * self.value + self.min_value
+
+    
+    def get_value_normalized(self, inp_value):
+        return (inp_value - self.min_value) / (self.max_value - self.min_value)
+
+
+    def disegnami(self, logica):
+        if self.do_stuff:
+            self.label_title.disegnami(logica)
+            self.indicatore.disegnami(logica)
+            pygame.draw.rect(self.schermo, self.bg, [self.x, self.y + self.h / 2 - self.h / 5, self.w, self.h / 2.5], 0, border_radius=2)
+            pygame.draw.rect(self.schermo, [150, 200, 150], [self.x, self.y + self.h / 2 - self.h / 5, self.w * self.value, self.h / 2.5], 0, border_radius=2)
+            pygame.draw.circle(self.schermo, [60, 60, 60], [self.x + self.w * self.value, self.y + self.h / 2], self.h / 2, 0)
+            pygame.draw.circle(self.schermo, [255, 255, 255], [self.x + self.w * self.value, self.y + self.h / 2], self.h / 5, 0)
+
+
+
+    def eventami(self, events, logica: 'Logica'):
+        if self.do_stuff:
+
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if self.bounding_box.collidepoint(event.pos):
+                        self.keep_updating = True
+                if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    self.keep_updating = False
+
+            if self.indicatore.selezionato:
+                self.indicatore.eventami(events, logica)
+                try:
+                    self.value = self.get_value_normalized(float(self.indicatore.get_text(real_time=True)))
+                except Exception:
+                    ...
+            else:
+                self.indicatore.change_text(f"{self.get_value():.3f}")
+
+
+            if self.keep_updating:
+                self.value = (logica.mouse_pos[0] - self.x) / self.w
+                if self.value < 0:
+                    self.value = 0      
+                if self.value > 1:
+                    self.value = 1      
+
+
+    def hide_plus_children(self, booleano, gerarchia=2):
+        
+        match gerarchia:
+            case 0: self.hide_from_menu = booleano
+            case 1: self.hide_from_window = booleano
+            case 2: self.hide = booleano
+
+        super().hide_plus_children(booleano, gerarchia)
+        try: 
+            self.label_title.hide = booleano
+            self.indicatore.hide = booleano
+        except: ...
+
+
+    def move_update(self):
+        self.label_title.move_update()
+        self.indicatore.move_update()
+        super().move_update()
+
+
+    def update_context_menu(self, *args):
+        super().update_context_menu(*args)
+        self.label_title.update_context_menu(*args)
+        self.indicatore.update_context_menu(*args)
+
+
+    def update_window_change(self):
+        super().update_window_change()
+        self.label_title.update_window_change()
+        self.indicatore.update_window_change()
+
+
+    def check_for_lost_focus(self, events, logica):
+        self.indicatore.check_for_lost_focus(events, logica)
+
+
+class PopUp():
+    def __init__(self):
+        pass
 
 
 

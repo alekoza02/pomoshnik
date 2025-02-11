@@ -17,7 +17,7 @@ NON_ESEGUIRE = False
 
 if NON_ESEGUIRE:    
     from GRAFICA._modulo_UI import Logica, UI
-    from GRAFICA._modulo_elementi_grafici import Label_Text, Screen, Entrata, Bottone_Toggle, Scroll, ColorPicker, Bottone_Push, RadioButton
+    from GRAFICA._modulo_elementi_grafici import Label_Text, Screen, Entrata, Bottone_Toggle, Scroll, ColorPicker, Bottone_Push, RadioButton, Slider
 
 from GRAFICA._modulo_elementi_grafici import Label_Text, Screen
 
@@ -222,8 +222,8 @@ class PomoPlot:
         self.UI_show_bounding_box: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_bounding_box"]
         
         self.UI_show_legend: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend"]
-        self.UI_x_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["x_legend"]
-        self.UI_y_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["y_legend"]
+        self.UI_x_legend: 'Slider' = UI.costruttore.scene["main"].context_menu["item5"].elements["x_legend"]
+        self.UI_y_legend: 'Slider' = UI.costruttore.scene["main"].context_menu["item5"].elements["y_legend"]
         self.UI_font_size_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["font_size_legend"]
         self.UI_show_legend_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend_background"]
         self.UI_legend_bg_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["legend_color_background"]
@@ -409,8 +409,8 @@ class PomoPlot:
         self.show_bounding_box = self.UI_show_bounding_box.state_toggle
         
         self.show_legend = self.UI_show_legend.state_toggle
-        self.x_legend = self.UI_x_legend.get_text()
-        self.y_legend = self.UI_y_legend.get_text()
+        self.x_legend = self.UI_x_legend.get_value()
+        self.y_legend = self.UI_y_legend.get_value()
         self.font_size_legend = self.UI_font_size_legend.get_text()
         self.show_legend_background = self.UI_show_legend_background.state_toggle
         self.legend_bg_color = self.UI_legend_bg_color.get_color()
