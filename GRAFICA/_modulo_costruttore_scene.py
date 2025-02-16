@@ -3,7 +3,7 @@ import os
 from numpy import array
 from time import perf_counter
 
-from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, ContextMenu, BaseElement, Screen, Palette, Collapsable_Window, Slider
+from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, ContextMenu, BaseElement, Screen, PopUp_color_palette, Collapsable_Window, Slider
 from GRAFICA._modulo_bottoni_callbacks import BottoniCallbacks
 
 NON_ESEGUIRE = False
@@ -72,6 +72,8 @@ class Costruttore:
                 ele.update_window_change()
             for index, ele in scena.color_pickers.items():
                 ele.update_window_change()
+            
+            scena.pop_up_palette.update_window_change()
 
 
     def costruisci_main(self):
@@ -79,8 +81,6 @@ class Costruttore:
 
         s = self.scene["main"]
         
-        s.palette_popup = Palette(x="50%w", y="50%h", anchor="cc", w="40%w", h="40%h")
-
         s.context_menu["main"] = ContextMenu(x="0px", y="0px", w="100%w", h="100%h", anchor="lu", bg=[30, 30, 30], scrollable=False)
 
         s.context_menu["main"].add_element("clock", Label_Text(x="100%w", y="100%h", w="-*w", h="-*h", anchor="rd", text="." * 22))
@@ -98,8 +98,6 @@ class Costruttore:
         self.scene["main"] = Scena()
 
         s = self.scene["main"]
-        
-        s.palette_popup = Palette(x="50%w", y="50%h", anchor="cc", w="40%w", h="40%h")
 
         s.context_menu["main"] = ContextMenu(x="0px", y="0px", w="100%w", h="100%h", anchor="lu", bg=[30, 30, 30], scrollable=False, root=True)
 
@@ -154,8 +152,8 @@ class Costruttore:
         
         s.context_menu["item1"].add_element("tema_chiaro", Bottone_Push("30%w", "580px", "cc", "33%w", "50px", self.bott_calls.change_state, "Tema chiaro", tooltip="Imposta tema chiaro del plot.\n\\#777777{Cambi applicati a: Sfondo Canvas, Sfondo Plot, Colore assi, Colore titolo, Colore Label, Colore griglia.}"), window="wind2")
         s.context_menu["item1"].add_element("tema_scuro", Bottone_Push("70%w", "580px", "cc", "33%w", "50px", self.bott_calls.change_state, "Tema scuro", tooltip="Imposta tema scuro del plot.\n\\#777777{Cambi applicati a: Sfondo Canvas, Sfondo Plot, Colore assi, Colore titolo, Colore Label, Colore griglia.}"), window="wind2")
-        s.context_menu["item1"].add_element("plot_area_bg", ColorPicker(s.palette_popup, "0", "30%w", "650px", "cc", "30%w", "40px", [30, 30, 30], bg=[50, 50, 50], text="Color plot area", tooltip="Modifica il colore dello sfondo dell'area grafici.\n\\#777777{Consigliabile usare lo stesso colore qui e in 'Color background'}"), window="wind2")
-        s.context_menu["item1"].add_element("canvas_area_bg", ColorPicker(s.palette_popup, "1", "30%w", "700px", "cc", "30%w", "40px", [30, 30, 30], bg=[50, 50, 50], text="Color background", tooltip="Modifica il colore di tutta la tavolozza.\n\\#777777{Consigliabile usare lo stesso colore qui e in 'Color plot area'}"), window="wind2") 
+        s.context_menu["item1"].add_element("plot_area_bg", ColorPicker("30%w", "650px", "cc", "30%w", "40px", [30, 30, 30], bg=[50, 50, 50], text="Color plot area", tooltip="Modifica il colore dello sfondo dell'area grafici.\n\\#777777{Consigliabile usare lo stesso colore qui e in 'Color background'}"), window="wind2")
+        s.context_menu["item1"].add_element("canvas_area_bg", ColorPicker("30%w", "700px", "cc", "30%w", "40px", [30, 30, 30], bg=[50, 50, 50], text="Color background", tooltip="Modifica il colore di tutta la tavolozza.\n\\#777777{Consigliabile usare lo stesso colore qui e in 'Color plot area'}"), window="wind2") 
         
         s.context_menu["item1"].add_element("norma_perc", RadioButton("50%w", "845px", "cc", "70%w", "50px", "x", cb_n=2, cb_s=[0, 0], cb_t=["[0..1]", "[%]"], cb_tooltips=["Scala tutti i plot, forzando la scala da 0 a 1\n\\#ffaa00{NOTA: Necessario abilitare questa funzione per usare 'Plots Overlap'}", "Scala tutti i plot, forzando la scala da 0 a 100\n\\#ffaa00{NOTA: Questa funzione \\#dc143c{NON} abilita 'Plots Overlap'}"], type_checkbox=0, w_button="35%w", h_button="50px"), window="wind3")
         s.context_menu["item1"].add_element("overlap", Bottone_Toggle("50%w", "920px", "cc", "35%w", "50px", True, False, "Plots Overlap", tooltip="Permette la sovrapposizione dei grafici o stratificazione.\n\\#777777{BUG Conosciuti: 1) Altezza di un singolo grafico ~1 | 2) Crash improvvisi usando colonne di lettura diverse da: X0, Y1, EY2}"), window="wind3")
@@ -183,8 +181,8 @@ class Costruttore:
         s.context_menu["item2"].add_element("errorbar", Bottone_Toggle("40%w", "500px", "ru", "30px", "30px", text="Toggle errors", type_checkbox=True, text_on_right=False, state=True, tooltip="Se il plot importato possiede \\b{ALMENO} 3 colonne di dati, abilita la visualizzazione delle barre di errori.\n\\#777777{Il bottone avrà un leggero colore rosso o verde. Questo indicherà se è presente la 3° colonna di dati o meno.}"), window="wind2")
         s.context_menu["item2"].add_element("dashed", Bottone_Toggle("40%w", "550px", "ru", "30px", "30px", text="Dashed line", type_checkbox=True, text_on_right=False, state=True, tooltip="Abilita la visualizzazione di una linea tratteggiata al posto del tratto continuo.\n\\#777777{Richiede 'Toggle function' abilitato per funzionare.}"), window="wind2")
         
-        s.context_menu["item2"].add_element("colore_function", ColorPicker(s.palette_popup, "2", "30%w", "630px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore function", tooltip="Imposta il colore del tratto continuo / tratteggiato.\n\\#777777{Il colore è randomico ad ogni caricamento di un nuovo plot, ma sarà sempre una tonalità più scura del colore dello scatter.}"), window="wind2")
-        s.context_menu["item2"].add_element("colore_scatter", ColorPicker(s.palette_popup, "3", "30%w", "305px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter", tooltip="Imposta il colore dello scatter.\n\\#777777{Il colore è randomico ad ogni caricamento di un nuovo plot, ma sarà sempre una tonalità più chiara del colore del tratto.}"), window="wind1")
+        s.context_menu["item2"].add_element("colore_function", ColorPicker("30%w", "630px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore function", tooltip="Imposta il colore del tratto continuo / tratteggiato.\n\\#777777{Il colore è randomico ad ogni caricamento di un nuovo plot, ma sarà sempre una tonalità più scura del colore dello scatter.}"), window="wind2")
+        s.context_menu["item2"].add_element("colore_scatter", ColorPicker("30%w", "305px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore scatter", tooltip="Imposta il colore dello scatter.\n\\#777777{Il colore è randomico ad ogni caricamento di un nuovo plot, ma sarà sempre una tonalità più chiara del colore del tratto.}"), window="wind1")
     
         s.context_menu["item2"].add_element("gradient", Bottone_Toggle("40%w", "770px", "ru", "30px", "30px", 0, text="Gradient", text_on_right=0, tooltip="Abilita la visualizzazione del gradiente dell'area sottostante. \n\\#dc143c{Quest'opzione è molto pesante!} \\#777777{Considera di accenderla solo prima di renderizzare l'immagine}"), window="wind3")
         s.context_menu["item2"].add_element("grad_mode", RadioButton("90%w", "770px", "ru", "35%w", "80px", axis="y", cb_n=2, cb_s=[0, 1], cb_t=["Horizontal", "Vertical"], cb_tooltips=["Imposta il tipo di gradiente in: ORIZZONTALE. Più il valore Y si avvicina a 0, più il colore tende al trasparente.\n\\#777777{Nel caso di più plot con gradiente ORIZZONTALE attivo, solo il gradiente dell'ultimo grafico sarà renderizzato.}", "Imposta il tipo di gradiente in: VERTICALE. Più il \\DeltaY si avvicina a 0, più il colore tende al trasparente.\n\\#777777{Nel caso di più plot con gradiente VERTICALE attivo, è possibile sovrapporre aree più piccole su quelle più grandi.}"], type_checkbox=False, w_button="35%w", h_button="40px"), window="wind3")
@@ -207,8 +205,8 @@ class Costruttore:
         s.context_menu["item2"].add_element("spacing_x", Entrata("95%w", "215px", "ru", "30%w", "30px", text="1", title="Spacing X", lunghezza_max=13, solo_numeri=True, num_valore_minimo=1e-10, num_valore_massimo=1e10, tooltip="Imposta il valore di spacing tra un pixel e l'altro (ASSE X) (solitamente != 1) \\i{\\#aaffaa{Min: 1e-10} | \\#ffaaaa{Max: 1e10} | Std: 1}\n\\#777777{Durante l'import è possibile vedere nel CMD questo valore. Per alcuni formati, il processo è automatizzato.}"), window="wind2D_1")
         s.context_menu["item2"].add_element("spacing_y", Entrata("95%w", "250px", "ru", "30%w", "30px", text="1", title="Spacing Y", lunghezza_max=13, solo_numeri=True, num_valore_minimo=1e-10, num_valore_massimo=1e10, tooltip="Imposta il valore di spacing tra un pixel e l'altro (ASSE Y) (solitamente != 1) \\i{\\#aaffaa{Min: 1e-10} | \\#ffaaaa{Max: 1e10} | Std: 1}\n\\#777777{Durante l'import è possibile vedere nel CMD questo valore. Per alcuni formati, il processo è automatizzato.}"), window="wind2D_1")
         
-        s.context_menu["item2"].add_element("colore_base1", ColorPicker(s.palette_popup, "2", "30%w", "400px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore estremo LOW", tooltip="Imposta uno degli estremi di colore per la visualizzazione di un range di valori.\n\\#777777{Per visualizzare la visualizzazione della rampa di colore, abilitare la visualizzazione del secondo asse.}"), window="wind2D_2")
-        s.context_menu["item2"].add_element("colore_base2", ColorPicker(s.palette_popup, "3", "30%w", "455px", "cc", "30%w", "40px", [220, 20, 60], bg=[50, 50, 50], text="Colore estremo HIGH", tooltip="Imposta uno degli estremi di colore per la visualizzazione di un range di valori.\n\\#777777{Per visualizzare la visualizzazione della rampa di colore, abilitare la visualizzazione del secondo asse.}"), window="wind2D_2")
+        s.context_menu["item2"].add_element("colore_base1", ColorPicker("30%w", "400px", "cc", "30%w", "40px", [0, 0, 0], bg=[50, 50, 50], text="Colore estremo LOW", tooltip="Imposta uno degli estremi di colore per la visualizzazione di un range di valori.\n\\#777777{Per visualizzare la visualizzazione della rampa di colore, abilitare la visualizzazione del secondo asse.}"), window="wind2D_2")
+        s.context_menu["item2"].add_element("colore_base2", ColorPicker("30%w", "455px", "cc", "30%w", "40px", [220, 20, 60], bg=[50, 50, 50], text="Colore estremo HIGH", tooltip="Imposta uno degli estremi di colore per la visualizzazione di un range di valori.\n\\#777777{Per visualizzare la visualizzazione della rampa di colore, abilitare la visualizzazione del secondo asse.}"), window="wind2D_2")
         
         s.context_menu["item2"].add_element("flip_y", Bottone_Toggle("80%w", "600px", "ru", "30px", "30px", 0, text="Flip Y axis", text_on_right=0, tooltip="Inverte la visualizzazione dell'asse Y.\n\\#ffaa00{NOTA: Il valore dei tick NON cambierà.}"), window="wind2D_3")
         s.context_menu["item2"].add_element("flip_x", Bottone_Toggle("40%w", "600px", "ru", "30px", "30px", 0, text="Flip X axis", text_on_right=0, tooltip="Inverte la visualizzazione dell'asse X.\n\\#ffaa00{NOTA: Il valore dei tick NON cambierà.}"), window="wind2D_3")
@@ -232,10 +230,10 @@ class Costruttore:
         s.context_menu["item3"].add_element("font_size_label_y", Entrata("75%w", "440px", "lu", "20%w", "30px", text="48", title="Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
         s.context_menu["item3"].add_element("font_size_label_2y", Entrata("75%w", "475px", "lu", "20%w", "30px", text="48", title="2°Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
         
-        s.context_menu["item3"].add_element("label_title_color", ColorPicker(s.palette_popup, "4", "50%w", "650px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore titolo", tooltip="Seleziona il colore della scritta del titolo."), window="wind3")
-        s.context_menu["item3"].add_element("label_x_color", ColorPicker(s.palette_popup, "5", "50%w", "720px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label X", tooltip="Seleziona il colore della scritta del label X."), window="wind3")
-        s.context_menu["item3"].add_element("label_y_color", ColorPicker(s.palette_popup, "6", "50%w", "770px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label Y", tooltip="Seleziona il colore della scritta del label Y."), window="wind3")
-        s.context_menu["item3"].add_element("label_2y_color", ColorPicker(s.palette_popup, "7", "50%w", "820px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label 2Y", tooltip="Seleziona il colore della scritta del label 2Y."), window="wind3")
+        s.context_menu["item3"].add_element("label_title_color", ColorPicker("50%w", "650px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore titolo", tooltip="Seleziona il colore della scritta del titolo."), window="wind3")
+        s.context_menu["item3"].add_element("label_x_color", ColorPicker("50%w", "720px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label X", tooltip="Seleziona il colore della scritta del label X."), window="wind3")
+        s.context_menu["item3"].add_element("label_y_color", ColorPicker("50%w", "770px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label Y", tooltip="Seleziona il colore della scritta del label Y."), window="wind3")
+        s.context_menu["item3"].add_element("label_2y_color", ColorPicker("50%w", "820px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label 2Y", tooltip="Seleziona il colore della scritta del label 2Y."), window="wind3")
         
         s.context_menu["item3"].add_element("show_coords_projection", Bottone_Toggle("95%w", "950px", "ru", "30px", "30px", text="Mostra proiezione coords", state=True, type_checkbox=True, text_on_right=False, tooltip="Mostra la proiezione del punto selezionato sull'asse X con un linea verticale."), window="wind4")
         s.context_menu["item3"].add_element("show_coords_value", Bottone_Toggle("95%w", "990px", "ru", "30px", "30px", text="Mostra valore coords", state=True, type_checkbox=True, text_on_right=False, tooltip="Mostra il valore della coordinata del punto selezionato.\n\\#777777{Attenzione: per modificare l'arrotondamento di uno dei valori, modifica l'approssimazione di quel determinato asse.}"), window="wind4")
@@ -268,12 +266,12 @@ class Costruttore:
         s.context_menu["item4"].add_element("formatting_y", Bottone_Toggle("95%w", "660px", "ru", "30px", "30px", text="Not. Scien. asse Y", type_checkbox=True, text_on_right=False, tooltip="Decide il formattatore da usare per i valori dell'asse Y.\n\\#777777{Passa da una visualizzazione del tipo '1000.0' a '1.0e3'}"), window="wind4")
         s.context_menu["item4"].add_element("formatting_2y", Bottone_Toggle("95%w", "695px", "ru", "30px", "30px", text="Not. Scien. asse 2°Y", type_checkbox=True, text_on_right=False, tooltip="Decide il formattatore da usare per i valori dell'asse 2°Y.\n\\#777777{Passa da una visualizzazione del tipo '1000.0' a '1.0e3'}"), window="wind4")
         
-        s.context_menu["item4"].add_element("ax_color_x", ColorPicker(s.palette_popup, "8", "30%w", "875px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse X", tooltip="Controlla il colore dell'asse X e delle sue proiezioni."), window="wind5")
-        s.context_menu["item4"].add_element("ax_color_y", ColorPicker(s.palette_popup, "9", "30%w", "925px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse Y", tooltip="Controlla il colore dell'asse Y e delle sue proiezioni."), window="wind5")
-        s.context_menu["item4"].add_element("ax_color_2y", ColorPicker(s.palette_popup, "10", "30%w", "980px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse 2°Y", tooltip="Controlla il colore dell'asse 2°Y e delle sue proiezioni."), window="wind5")
-        s.context_menu["item4"].add_element("tick_color_x", ColorPicker(s.palette_popup, "11", "30%w", "1070px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values X", tooltip="Controlla il colore dei tick label dell'asse X."), window="wind5")
-        s.context_menu["item4"].add_element("tick_color_y", ColorPicker(s.palette_popup, "12", "30%w", "1120px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y", tooltip="Controlla il colore dei tick label dell'asse Y."), window="wind5")
-        s.context_menu["item4"].add_element("tick_color_2y", ColorPicker(s.palette_popup, "13", "30%w", "1170px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values 2°Y", tooltip="Controlla il colore dei tick label dell'asse 2°Y."), window="wind5")
+        s.context_menu["item4"].add_element("ax_color_x", ColorPicker("30%w", "875px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse X", tooltip="Controlla il colore dell'asse X e delle sue proiezioni."), window="wind5")
+        s.context_menu["item4"].add_element("ax_color_y", ColorPicker("30%w", "925px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse Y", tooltip="Controlla il colore dell'asse Y e delle sue proiezioni."), window="wind5")
+        s.context_menu["item4"].add_element("ax_color_2y", ColorPicker("30%w", "980px", "cc", "30%w", "40px", [70, 70, 70], bg=[50, 50, 50], text="Colore asse 2°Y", tooltip="Controlla il colore dell'asse 2°Y e delle sue proiezioni."), window="wind5")
+        s.context_menu["item4"].add_element("tick_color_x", ColorPicker("30%w", "1070px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values X", tooltip="Controlla il colore dei tick label dell'asse X."), window="wind5")
+        s.context_menu["item4"].add_element("tick_color_y", ColorPicker("30%w", "1120px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values Y", tooltip="Controlla il colore dei tick label dell'asse Y."), window="wind5")
+        s.context_menu["item4"].add_element("tick_color_2y", ColorPicker("30%w", "1170px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore values 2°Y", tooltip="Controlla il colore dei tick label dell'asse 2°Y."), window="wind5")
         
         s.context_menu["item4"].add_element("offset_x_label_y", Entrata("75%w", "1330px", "lu", "20%w", "30px", text="45", title="Offset Y of ticks X axis:", lunghezza_max=4, solo_numeri=True, tooltip="Imposta un offset in pixel della posizione dei tick label dell'asse X in verticale. \\i{\\#aaffaa{Min: -999} | \\#ffaaaa{Max: 9999} | Std: 45}"), window="wind6")
         s.context_menu["item4"].add_element("offset_y_label_x", Entrata("75%w", "1365px", "lu", "20%w", "30px", text="-27", title="Offset X of ticks Y axis:", lunghezza_max=4, solo_numeri=True, tooltip="Imposta un offset in pixel della posizione dei tick label dell'asse Y in orizzontale. \\i{\\#aaffaa{Min: -999} | \\#ffaaaa{Max: 9999} | Std: -27}"), window="wind6")
@@ -299,13 +297,13 @@ class Costruttore:
         s.context_menu["item5"].add_element("font_size_legend", Entrata("85%w", "195px", "lu", "10%w", "30px", text="48", title="Legend font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del font della legenda. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}\n\\#777777{Nota: Cambia solo la dimensione del testo, non del simbolo.}"), window="wind1")
         
         s.context_menu["item5"].add_element("show_legend_background", Bottone_Toggle("95%w", "400px", "ru", "30px", "30px", text="\\#dfffdf{\\b{Disegna bg}}", state=False, type_checkbox=True, text_on_right=False, tooltip="Decide se disegnare lo sfondo della legenda. Altre impostazioni seguono."), window="wind2")
-        s.context_menu["item5"].add_element("legend_color_background", ColorPicker(s.palette_popup, "14", "30%w", "480px", "cc", "30%w", "40px", [250, 250, 250], bg=[50, 50, 50], text="Color legend bg", tooltip="Imposta il colore dello sfondo della legenda.\n\\#777777{Quando lo sfondo è trasparente, questo colore fungerà da attenuatore dei colori sottostanti.}"), window="wind2")
+        s.context_menu["item5"].add_element("legend_color_background", ColorPicker("30%w", "480px", "cc", "30%w", "40px", [250, 250, 250], bg=[50, 50, 50], text="Color legend bg", tooltip="Imposta il colore dello sfondo della legenda.\n\\#777777{Quando lo sfondo è trasparente, questo colore fungerà da attenuatore dei colori sottostanti.}"), window="wind2")
         s.context_menu["item5"].add_element("transparent_background", Bottone_Toggle("95%w", "540px", "ru", "30px", "30px", text="Trasparenza bg", state=True, type_checkbox=True, text_on_right=False, tooltip="Cambia lo sfondo in trasparente, dando la possibilità di sfumare i colori sottostanti.\n\\#dc143c{Quest'opzione è molto pesante!} \\#777777{Considera di accenderla solo prima di renderizzare l'immagine}"), window="wind2")
         s.context_menu["item5"].add_element("blur_strenght", Entrata("75%w", "580px", "lu", "20%w", "30px", text="6", title="Forza di blur", lunghezza_max=2, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=12, tooltip="Aumenta l'effetto di sfumatura. \\i{\\#aaffaa{Min: 1} | \\#ffaaaa{Max: 12} | Std: 6}"), window="wind2")
         
         s.context_menu["item5"].add_element("show_icons", Bottone_Toggle("95%w", "710px", "ru", "30px", "30px", text="Mostra icone", state=True, type_checkbox=True, text_on_right=False, tooltip="Mostra il corrispondente simbolo usato nel grafico (combinazione di scatter e function)."), window="wind3")
         s.context_menu["item5"].add_element("match_color_text", Bottone_Toggle("95%w", "750px", "ru", "30px", "30px", text="Match text color", state=True, type_checkbox=True, text_on_right=False, tooltip="Decide se mostrare il titolo del singolo plot come colore unico o matchare il colore del plot."), window="wind3")
-        s.context_menu["item5"].add_element("color_text", ColorPicker(s.palette_popup, "15", "30%w", "810px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Color legend text", tooltip="Imposta il colore unificato del testo."), window="wind3")
+        s.context_menu["item5"].add_element("color_text", ColorPicker("30%w", "810px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Color legend text", tooltip="Imposta il colore unificato del testo."), window="wind3")
         
         s.context_menu["item5"].add_element("text_2D_plot", Entrata("75%w", "950px", "lu", "20%w", "30px", text=r"1\mum", title="Testo marker scala", tooltip="Imposta cosa visualizzare nel marker dimensionale nei plot 2D.\n\\#777777{Se per esempio l'asse X va da 0 a 1 \\mum, imposta 0.2 \\mum oppure 200 nm.}"), window="wind4")
         s.context_menu["item5"].add_element("size_scale_marker2D", Entrata("75%w", "990px", "lu", "20%w", "30px", text="1000", title="Valore marker scala", solo_numeri=True, tooltip="Imposta la dimensione del marker da mostrare. Indica la dimensione in unità dell'asse X.\n\\#777777{Se per esempio l'asse X va da 0 a 1 \\mum, imposta questo valore a 0.2 per visualizzare 0.2 \\mum.}"), window="wind4")
@@ -598,30 +596,22 @@ class Scena:
         self.color_pickers: dict[str, ColorPicker] = {}
         self.context_menu: dict[str, ContextMenu] = {}
         self.screens: dict[str, Screen] = {}
-        self.palette_popup: Palette = None
+
+
+        self.pop_up_palette: PopUp_color_palette = PopUp_color_palette(x="50%w", y="50%h", anchor="cc", w="40%w", h="40%h")
+        self.pop_up_palette_receiver: ColorPicker = None
+        self.pop_up_palette_aperto: bool = False
 
         self.user_wants_tooltips = True
-        self.pop_up_aperto: bool = False
-        self.pop_up: list[ColorPicker] = []
 
         self.functions: list[function] = []
 
 
-    def disegna_scena_inizio_ciclo(self, logica: 'Logica'):
-        [label.disegnami(logica) for indice, label in self.label.items()]
-        [bottone.disegnami(logica) for indice, bottone in self.bottoni_p.items()]
-        [bottone.disegnami(logica) for indice, bottone in self.bottoni_t.items()]
-        [bottone.disegnami(logica) for indice, bottone in self.bottoni_r.items()]
-        [entrate.disegnami(logica) for indice, entrate in self.entrate.items()]
-        [scroll.disegnami(logica) for indice, scroll in self.scrolls.items()]
-        [screen.disegnami(logica) for indice, screen in self.screens.items()]
-        [dropmenu.disegnami(logica) for indice, dropmenu in self.context_menu.items()]
-        [color_picker.disegnami(logica) for indice, color_picker in self.color_pickers.items()]
-    
-    
-    def disegna_scena_fine_ciclo(self, logica: 'Logica'):
-        self.palette_popup.disegnami(logica)
+    def disegna_scena(self, logica: 'Logica'):
+        [context.disegnami(logica) for indice, context in self.context_menu.items()]
         
+        self.pop_up_palette.disegnami(logica)
+
         if self.user_wants_tooltips:
             # gestione tooltip
             def flatten(lst):
@@ -652,56 +642,44 @@ class Scena:
                 [ele.change_tooltip(" | ".join(messaggio)) for index, ele in self.context_menu.items() if ele.root]
             else:
                 [ele.change_tooltip("Premere \\#aaffaa{CTRL + T} per disabilitare e/o riabilitare i tooltip") for index, ele in self.context_menu.items() if ele.root]
-
-
-
+    
     
     def gestisci_eventi(self, eventi: list[pygame.event.Event], logica: 'Logica'):
         
-        if not self.pop_up_aperto:
+        if not self.pop_up_palette_aperto:
 
-            [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_p.items()]
-            [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_t.items()]
-            [bottone.eventami(eventi, logica) for indice, bottone in self.bottoni_r.items()]
-            [entrata.eventami(eventi, logica) for indice, entrata in self.entrate.items()]
-            [scroll.eventami(eventi, logica) for indice, scroll in self.scrolls.items()]
-            [screen.eventami(eventi, logica) for indice, screen in self.screens.items()]
+            [context.eventami(eventi, logica) for indice, context in self.context_menu.items()]
 
-            # POSSIBILI GENERATORI DI POP-UP
+            # POSSIBILI GENERATORI DI POP-UP -> COLORE
+            # controllo degli elementi figli dei dropmenu
+            for indice, context in self.context_menu.items():
+                for indice_ele, elemento in context.elements.items():
+                    if type(elemento) == ColorPicker:
+                        pop_up_colore_domanda = elemento.check_open_popup_call()
 
-            for indice, color_picker in self.color_pickers.items():
-                pop_up_domanda_color = color_picker.eventami(eventi, logica)
-                
-                if pop_up_domanda_color:
-                    self.pop_up.append(color_picker)
-                    self.pop_up_aperto = True
-
-
-            for indice, dropmenu in self.context_menu.items():
-                pop_up_domanda_drop_menu = dropmenu.eventami(eventi, logica)
-
-                if pop_up_domanda_drop_menu:
-                    self.pop_up.append(pop_up_domanda_drop_menu)
-                    self.pop_up_aperto = True
+                        if pop_up_colore_domanda:
+                            self.pop_up_palette_receiver = elemento
+                            self.pop_up_palette_aperto = True
+                            self.pop_up_palette.active = True
+                            self.pop_up_palette.start_connection(self.pop_up_palette_receiver.send_popup_request())
 
             
             for foo in self.functions:
                 foo()
 
-        else:
-            
-            for elemento in self.pop_up:
-                if type(elemento) == ColorPicker:
-                    pop_running = elemento.eventami(eventi, logica)
-                    
-                    if not pop_running:
-                        self.pop_up.pop()
 
-            if len(self.pop_up) == 0:
-                self.pop_up_aperto = False
+        elif self.pop_up_palette.conferma_uscita:
+            self.pop_up_palette_aperto = False
+
+            self.pop_up_palette_receiver.open_call = False
+            self.pop_up_palette_receiver.receive_popup_answer(self.pop_up_palette.end_connection())
+            self.pop_up_palette_receiver = None
+
+            self.pop_up_palette.conferma_uscita = False
+            self.pop_up_palette.packet_out = None
 
         
-        self.palette_popup.eventami(logica, eventi)
+        self.pop_up_palette.eventami(eventi, logica)
 
         for event in eventi:
             # Check if a key was pressed

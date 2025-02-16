@@ -1,5 +1,5 @@
 import pygame
-from numpy import array
+import numpy as np
 from MATEMATICA._modulo_mate_utils import MateUtils
 import pyperclip
 import os
@@ -15,6 +15,7 @@ if NON_ESEGUIRE:
     # formula per ricavare l'altezza del Font: floor(font_size * 0.16209 + 1)
 
 from GRAFICA._modulo_database import Dizionario; diction = Dizionario()
+from GRAFICA._modulo_bottoni_callbacks import BottoniCallbacks
 
 
 
@@ -76,9 +77,9 @@ class BaseElement:
         
 
         if bg is None:
-            self.bg = array(BaseElement.FULL_coord_window["bg_def"])
+            self.bg = np.array(BaseElement.FULL_coord_window["bg_def"])
         else:
-            self.bg = array(bg)
+            self.bg = np.array(bg)
 
         self.bg_backup = self.bg.copy()
         self.hide: bool = hide
@@ -141,7 +142,7 @@ class BaseElement:
                     self.sound_hover.play()
 
 
-    def check_for_lost_focus(self, events, logica):
+    def check_for_lost_focus(self, events, logica, force_closure=False):
         ...
 
     
@@ -867,7 +868,7 @@ class RadioButton(BaseElement):
         for bottone in self.toggles:
             bottone.is_child = True
             if bottone.state_toggle:
-                bottone.bg = array([80, 100, 80])
+                bottone.bg = np.array([80, 100, 80])
             else:
                 bottone.bg = self.bg + 10 
 
@@ -880,7 +881,7 @@ class RadioButton(BaseElement):
 
             for bottone in self.toggles:
                 if bottone.state_toggle:
-                    bottone.bg = array([80, 100, 80])
+                    bottone.bg = np.array([80, 100, 80])
                 else:
                     bottone.bg = self.bg + 10
 
@@ -1070,9 +1071,9 @@ class Entrata(BaseElement):
                     numero_equivalente = MateUtils.inp2flo(self.testo, None)
 
                     if numero_equivalente is None:
-                        self.color_text = array([255, 0, 0])
+                        self.color_text = np.array([255, 0, 0])
                     else:
-                        self.color_text = array([200, 200, 200])
+                        self.color_text = np.array([200, 200, 200])
             else:
                 self.return_previous_text = False
                 self.previous_text = self.testo
@@ -1089,7 +1090,13 @@ class Entrata(BaseElement):
             self.hover_sound(self.hover)
 
 
-    def check_for_lost_focus(self, events, logica):
+    def check_for_lost_focus(self, events, logica, force_closure=False):
+
+        if force_closure:
+            self.selezionato = False
+            self.return_previous_text = False
+            _ = self.get_text()         # update of the value to avoid lost info 
+
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
@@ -1480,11 +1487,11 @@ class Entrata(BaseElement):
             numero_equivalente = MateUtils.inp2flo(restituisco, None)
 
             if numero_equivalente is None:
-                self.color_text = array([255, 0, 0])
+                self.color_text = np.array([255, 0, 0])
                 return self.num_valore_minimo
 
             else:
-                self.color_text = array((200, 200, 200))
+                self.color_text = np.array((200, 200, 200))
 
                 if not self.num_valore_minimo is None and numero_equivalente > self.num_valore_massimo:
                     self.change_text(f"{self.num_valore_massimo}")
@@ -1498,10 +1505,10 @@ class Entrata(BaseElement):
 
         elif self.is_hex:
             if MateUtils.hex2rgb(restituisco, std_return=None) is None:
-                self.color_text = array([255, 0, 0])
+                self.color_text = np.array([255, 0, 0])
                 return "aaaaaa"
             else:
-                self.color_text = array([200, 200, 200])
+                self.color_text = np.array([200, 200, 200])
                 return restituisco
 
         else:
@@ -1561,7 +1568,7 @@ class Scroll(BaseElement):
         self.ele_toggle = [Bottone_Toggle(anchor=(f"lu lu ({self.w * 0.01}px) ({self.label_title.font.font_pixel_dim[1] * (i + 2)}px)", self), w=f"{self.label_title.font.font_pixel_dim[1]}px", h=f"{self.label_title.font.font_pixel_dim[1]}px", state=False, text="") for i in range(self.ele_max)]
 
         for ele in self.ele_toggle:
-            ele.bg += array([10, 10, 10])
+            ele.bg += np.array([10, 10, 10])
 
         self.offset_grafico_testo = self.w * 0.02 + self.ele_toggle[0].w
 
@@ -1791,7 +1798,7 @@ class Scroll(BaseElement):
         [ele.update_window_change() for ele in self.ele_toggle]
 
         for ele in self.ele_toggle:
-            ele.bg += array([10, 10, 10])
+            ele.bg += np.array([10, 10, 10])
 
 
     def hide_plus_children(self, booleano, gerarchia=2):
@@ -1810,24 +1817,22 @@ class Scroll(BaseElement):
 
 
 class ColorPicker(BaseElement):
-    def __init__(self, palette, id, x="", y="", anchor="lu", w="", h="", initial_color=[200, 200, 200], text="", hide=False, bg=None, tooltip="") -> None:
+    def __init__(self, x="", y="", anchor="lu", w="", h="", initial_color=[200, 200, 200], text="", hide=False, bg=None, tooltip="") -> None:
         super().__init__(x, y, anchor, w, h, text, hide, tooltip=tooltip)
         
 
         self.label_title = Label_Text(anchor=(f"lc rc (10px) (0px)", self), w="-*w", h="-*h", text=text, hide=hide)
 
-        self.opener = Bottone_Push(anchor=("cc cc (0px) (0px)", self), w=w, h=h, function=self.apri_picker, hide=hide)
+        self.opener = Bottone_Push(anchor=("cc cc (0px) (0px)", self), w=w, h=h, function=BottoniCallbacks.change_state, hide=hide)
         self.opener.suppress_animation = True
         self.opener.contorno = 0
         self.opener.bg = initial_color
+        self.open_call = False
 
         self.update_mouse_position = False
 
-        self.id = id
-
         self.title = text
         
-        self.palette: Palette = palette
         self.picked_color = initial_color
 
     
@@ -1844,30 +1849,25 @@ class ColorPicker(BaseElement):
     def eventami(self, events, logica: 'Logica'):
 
         if self.do_stuff:
-
             self.opener.eventami(events, logica)
 
-            if self.palette.aggiorna_colore and self.id == self.palette.chosen_id:
-                self.opener.bg = array(self.palette.colore_scelto) * self.palette.intensity
-                self.set_color(array(self.palette.colore_scelto) * self.palette.intensity)
 
-            if self.update_mouse_position:
-                logica.mouse_pos = (self.palette.x + self.palette.w / 2, self.palette.y + self.palette.h / 2)
-                self.update_mouse_position = False
-
-            return self.palette.toggle
+    def receive_popup_answer(self, colore):
+        self.set_color(colore)
 
 
-    def apri_picker(self, __useless):
-        # pygame.mouse.set_pos(self.palette.x + self.palette.w / 2, self.palette.y + self.palette.h / 2)
-        # self.update_mouse_position = True
+    def send_popup_request(self):
+        return self.picked_color
+
+
+    def check_open_popup_call(self):
+        if self.opener.flag_foo:
+            self.opener.flag_foo = False
+            # The end call will be made by the windows manager, here we just initiate it
+            self.open_call = True
+
         
-        self.palette.mouse_inside_BB = False
-
-        self.palette.colore_scelto = self.picked_color
-        self.palette.intensity = 1
-        self.palette.toggle = False if self.palette.toggle else True
-        self.palette.chosen_id = self.id
+        return self.open_call
 
 
     def hide_plus_children(self, booleano, gerarchia=2):
@@ -1895,7 +1895,7 @@ class ColorPicker(BaseElement):
 
 
     def get_color(self):
-        return array(self.picked_color)
+        return np.array(self.picked_color)
 
 
     def update_context_menu(self, *args):
@@ -1910,207 +1910,6 @@ class ColorPicker(BaseElement):
         self.opener.update_window_change()
         
 
-
-class Palette(BaseElement):
-    def __init__(self, x="", y="", anchor="cc", w="", h="", initial_color=[200, 200, 200], bg=None) -> None:
-
-        super().__init__(x, y, anchor, w, h, "", False, bg=bg)
-
-        self.colore_scelto = initial_color
-        self.aggiorna_colore = False
-        self.intensity = 1
-        self.update_color_value = False
-
-        self.chosen_id = ""
-        self.toggle = False
-        self.mouse_inside_BB = False
-
-        ###### generazione colori ###### 
-        def generate_color_function(color):
-            def return_selected_color(__useless):
-                self.colore_scelto = array(color)
-                self.update_color_value = True
-            return return_selected_color
-        
-        colori = [
-            [255, 0, 0], [255, 125, 0], [255, 255, 0], [125, 255, 0], [0, 255, 0], [0, 255, 125], [0, 255, 255], [0, 125, 255], [0, 0, 255], [125, 0, 255], [255, 0, 255],
-            [255 + 32, 0 + 32, 0 + 32], [255 + 32, 125 + 32, 0 + 32], [255 + 32, 255 + 32, 0 + 32], [125 + 32, 255 + 32, 0 + 32], [0 + 32, 255 + 32, 0 + 32], [0 + 32, 255 + 32, 125 + 32], [0 + 32, 255 + 32, 255 + 32], [0 + 32, 125 + 32, 255 + 32], [0 + 32, 0 + 32, 255 + 32], [125 + 32, 0 + 32, 255 + 32], [255 + 32, 0 + 32, 255 + 32],
-            [255 + 64, 0 + 64, 0 + 64], [255 + 64, 125 + 64, 0 + 64], [255 + 64, 255 + 64, 0 + 64], [125 + 64, 255 + 64, 0 + 64], [0 + 64, 255 + 64, 0 + 64], [0 + 64, 255 + 64, 125 + 64], [0 + 64, 255 + 64, 255 + 64], [0 + 64, 125 + 64, 255 + 64], [0 + 64, 0 + 64, 255 + 64], [125 + 64, 0 + 64, 255 + 64], [255 + 64, 0 + 64, 255 + 64],
-            [255 + 96, 0 + 96, 0 + 96], [255 + 96, 125 + 96, 0 + 96], [255 + 96, 255 + 96, 0 + 96], [125 + 96, 255 + 96, 0 + 96], [0 + 96, 255 + 96, 0 + 96], [0 + 96, 255 + 96, 125 + 96], [0 + 96, 255 + 96, 255 + 96], [0 + 96, 125 + 96, 255 + 96], [0 + 96, 0 + 96, 255 + 96], [125 + 96, 0 + 96, 255 + 96], [255 + 96, 0 + 96, 255 + 96],
-            [255 + 128, 0 + 128, 0 + 128], [255 + 128, 125 + 128, 0 + 128], [255 + 128, 255 + 128, 0 + 128], [125 + 128, 255 + 128, 0 + 128], [0 + 128, 255 + 128, 0 + 128], [0 + 128, 255 + 128, 125 + 128], [0 + 128, 255 + 128, 255 + 128], [0 + 128, 125 + 128, 255 + 128], [0 + 128, 0 + 128, 255 + 128], [125 + 128, 0 + 128, 255 + 128], [255 + 128, 0 + 128, 255 + 128],
-            [255 + 160, 0 + 160, 0 + 160], [255 + 160, 125 + 160, 0 + 160], [255 + 160, 255 + 160, 0 + 160], [125 + 160, 255 + 160, 0 + 160], [0 + 160, 255 + 160, 0 + 160], [0 + 160, 255 + 160, 125 + 160], [0 + 160, 255 + 160, 255 + 160], [0 + 160, 125 + 160, 255 + 160], [0 + 160, 0 + 160, 255 + 160], [125 + 160, 0 + 160, 255 + 160], [255 + 160, 0 + 160, 255 + 160],
-            [255 + 192, 0 + 192, 0 + 192], [255 + 192, 125 + 192, 0 + 192], [255 + 192, 255 + 192, 0 + 192], [125 + 192, 255 + 192, 0 + 192], [0 + 192, 255 + 192, 0 + 192], [0 + 192, 255 + 192, 125 + 192], [0 + 192, 255 + 192, 255 + 192], [0 + 192, 125 + 192, 255 + 192], [0 + 192, 0 + 192, 255 + 192], [125 + 192, 0 + 192, 255 + 192], [255 + 192, 0 + 192, 255 + 192],
-            [255 + 224, 0 + 224, 0 + 224], [255 + 224, 125 + 224, 0 + 224], [255 + 224, 255 + 224, 0 + 224], [125 + 224, 255 + 224, 0 + 224], [0 + 224, 255 + 224, 0 + 224], [0 + 224, 255 + 224, 125 + 224], [0 + 224, 255 + 224, 255 + 224], [0 + 224, 125 + 224, 255 + 224], [0 + 224, 0 + 224, 255 + 224], [125 + 224, 0 + 224, 255 + 224], [255 + 224, 0 + 224, 255 + 224],
-            [255 + 255, 0 + 255, 0 + 255], [255 + 255, 125 + 255, 0 + 255], [255 + 255, 255 + 255, 0 + 255], [125 + 255, 255 + 255, 0 + 255], [0 + 255, 255 + 255, 0 + 255], [0 + 255, 255 + 255, 125 + 255], [0 + 255, 255 + 255, 255 + 255], [0 + 255, 125 + 255, 255 + 255], [0 + 255, 0 + 255, 255 + 255], [125 + 255, 0 + 255, 255 + 255], [255 + 255, 0 + 255, 255 + 255],
-        ]
-
-        for index_a, colore in enumerate(colori):
-            for index_b, componente in enumerate(colore):
-                if componente > 255:
-                    colori[index_a][index_b] = 255
-
-        color_functions = [generate_color_function(color) for color in colori]
-
-
-        self.colori_bottoni: list[Bottone_Push] = []
-
-        for y in range(9):
-            for x in range(11):    
-                
-                if x == 0:
-                    if y == 0:
-                        anchor = ("lu lu (0px) (0px)", self)
-                    else:
-                        anchor = ("lu ld (0px) (-1px)", self.colori_bottoni[(y - 1) * 11 + x])
-                else:
-                    anchor = ("lu ru (-1px) (0px)", self.colori_bottoni[-1])
-
-                ele_iter = Bottone_Push(anchor=anchor, w="2.4%w", h="2%w", function=color_functions[y * 11 + x])
-                self.colori_bottoni.append(ele_iter)
-            
-        for bottone, colore in zip(self.colori_bottoni, colori):
-            bottone.original_color = array(colore)
-            bottone.suppress_animation = True
-            bottone.contorno = 0
-            bottone.smussatura = 0
-
-        ###### generazione intensità ###### 
-        def generate_intens_function(intensity):
-            def return_selected_intensity(__useless):
-                self.intensity = intensity
-                self.update_color_value = True
-            return return_selected_intensity
-        
-        intensities = [0.0, 0.12, 0.24, 0.36, 0.48, 0.6, 0.76, 0.88, 1.0]
-        intensities = intensities[::-1]
-
-        intensities_functions = [generate_intens_function(intens) for intens in intensities]
-        
-        self.intens_bottoni: list[Bottone_Push] = []
-        for y in range(9):
-    
-            anchor = (f"lu ru ({self.w / 12}px) (0px)", self.colori_bottoni[y * 11 + 10])
-
-            ele_iter = Bottone_Push(anchor=anchor, w="2.4%w", h="2%w", function=intensities_functions[y])
-            self.intens_bottoni.append(ele_iter)
-    
-
-        for bottone, colore in zip(self.intens_bottoni, intensities):
-            bottone.bg = array([colore, colore , colore]) * 255
-            bottone.suppress_animation = True
-            bottone.contorno = 0
-            bottone.smussatura = 0
-
-        ###### generazione preview ###### 
-        self.preview_button = Bottone_Push(anchor=("ru ru (0px) (0px)", self), w="5%w", h=f"{9 * 1.9}%w", disable=True)
-        self.preview_button.contorno = 0
-        
-        ###### generazione entrate ###### 
-        self.RGB_inputs: list[Entrata] = []
-        for y in range(3):
-    
-            if y == 0:
-                anchor = (f"ld ld (5%w) ({-self.h / 12}px)", self)
-            else:
-                anchor = (f"lu ru (5%w) (0px)", self.RGB_inputs[-1])
-
-            ele_iter = Entrata(anchor=anchor, w=f"{20/6}%w", h="-*h", text=f"{self.colore_scelto[y]}", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=255, title="")
-            self.RGB_inputs.append(ele_iter)
-        
-        for index, entrata in enumerate(self.RGB_inputs):
-            entrata.bg = array([90, 90, 90])
-            entrata.bg[index] = 180
-
-        self.HEX_input: Entrata = Entrata(anchor=(f"lu ru (5%w) (0px)", self.RGB_inputs[-1]), w=f"{20/3}%w", h="-*h",
-                                 text=f"{MateUtils.rgb2hex(self.colore_scelto)}", title="", 
-                                 lunghezza_max=6, is_hex=True)
-        self.HEX_input.bg = array([60, 60, 60])
-
-        
-    def disegnami(self, logica):
-
-        if self.toggle:
-            pygame.draw.rect(self.schermo, [200, 200, 200], [self.x - 2, self.y - 2, self.w + 4, self.h + 4], 0, 5)
-            pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
-
-            for bottone in self.colori_bottoni:
-                bottone.bg = bottone.original_color * self.intensity
-            
-            [bottone.disegnami(logica) for bottone in self.colori_bottoni]
-            [bottone.disegnami(logica) for bottone in self.intens_bottoni]
-            self.preview_button.bg = array(self.colore_scelto) * self.intensity
-            
-            self.preview_button.disegnami(logica)
-
-            [entrata.disegnami(logica) for entrata in self.RGB_inputs]
-            self.HEX_input.disegnami(logica)
-
-
-    def get_tooltip(self, logica):
-        return None
-
-
-    def eventami(self, logica: 'Logica', events):
-    
-        stato_prima = self.toggle
-
-        BB_collision = self.bounding_box.collidepoint(logica.mouse_pos)
-        if not BB_collision and self.mouse_inside_BB: 
-            self.toggle = False
-            self.mouse_inside_BB = False
-        elif BB_collision:
-            self.mouse_inside_BB = True
-
-        for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: 
-                self.toggle = False
-                        
-        if self.toggle:
-            if self.update_color_value:
-                colore_nuovo = array(self.colore_scelto) * self.intensity
-                self.RGB_inputs[0].change_text(f"{int(colore_nuovo[0])}" )
-                self.RGB_inputs[1].change_text(f"{int(colore_nuovo[1])}" )
-                self.RGB_inputs[2].change_text(f"{int(colore_nuovo[2])}" )
-                self.HEX_input.change_text(f"{MateUtils.rgb2hex(colore_nuovo)}")
-                self.update_color_value = False
-
-            [bottone.eventami(events, logica) for bottone in self.colori_bottoni]
-            [bottone.eventami(events, logica) for bottone in self.intens_bottoni]
-
-            [entrata.eventami(events, logica) for entrata in self.RGB_inputs]
-            for index, entrata in enumerate(self.RGB_inputs):
-                if entrata.selezionato:
-                    self.colore_scelto[index] = MateUtils.inp2int(entrata.testo)
-                    self.intensity = 1
-                    self.HEX_input.change_text(MateUtils.rgb2hex([self.RGB_inputs[0].testo, self.RGB_inputs[1].testo, self.RGB_inputs[2].testo]))
-
-
-            self.HEX_input.eventami(events, logica)
-            if self.HEX_input.selezionato:
-                self.colore_scelto = array(MateUtils.hex2rgb(self.HEX_input.testo))
-                self.intensity = 1
-                
-                for colore, entrata in zip(self.colore_scelto, self.RGB_inputs):
-                    entrata.change_text(f"{colore}")
-
-        if self.toggle != stato_prima:
-            self.aggiorna_colore = True
-        else:
-            self.aggiorna_colore = False
-
-    
-    def check_for_lost_focus(self, events, logica):
-        [entrata.check_for_lost_focus(events, logica) for entrata in self.RGB_inputs]
-        self.HEX_input.check_for_lost_focus(events, logica)
-
-
-    def update_window_change(self):
-        super().update_window_change()
-        [ele.update_window_change() for ele in self.colori_bottoni]
-        [ele.update_window_change() for ele in self.intens_bottoni]
-        [ele.update_window_change() for ele in self.RGB_inputs]
-        self.HEX_input.update_window_change()
-        self.preview_button.update_window_change()
 
 
 class SubStringa:
@@ -2465,23 +2264,11 @@ class ContextMenu(BaseElement):
             pygame.draw.rect(self.schermo, self.bg, [self.x, self.y, self.w, self.h], 0, 5)
             [ele.disegnami(logica, self.y + self.h) for index, ele in self.windows.items()]
 
-            [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) != ColorPicker and index != "PRIV_tooltip"]
-            [ele.disegnami(logica) for index, ele in self.elements.items() if type(ele) == ColorPicker and index != "PRIV_tooltip"]
-
+            [ele.disegnami(logica) for index, ele in self.elements.items() if index != "PRIV_tooltip"]
+            
             for sep in self.separators:
                 if sep > 0:
                     pygame.draw.line(self.schermo, [60, 60, 60], [self.x + self.w * 0.01, sep + self.y], [self.x + self.w * 0.99, sep + self.y], self.separator_size)
-
-            if self.debug:
-                pygame.draw.circle(self.schermo, [255, 0, 0], self.lu, 5)
-                pygame.draw.circle(self.schermo, [255, 0, 0], self.lc, 5)
-                pygame.draw.circle(self.schermo, [255, 0, 0], self.ld, 5)
-                pygame.draw.circle(self.schermo, [255, 0, 0], self.cu, 5)
-                pygame.draw.circle(self.schermo, [255, 0, 0], self.cc, 5)
-                pygame.draw.circle(self.schermo, [255, 0, 0], self.cd, 5)
-                pygame.draw.circle(self.schermo, [255, 0, 0], self.ru, 5)
-                pygame.draw.circle(self.schermo, [255, 0, 0], self.rc, 5)
-                pygame.draw.circle(self.schermo, [255, 0, 0], self.rd, 5)
 
 
     def search_for_tooltip(self, logica: 'Logica'):
@@ -2504,9 +2291,9 @@ class ContextMenu(BaseElement):
         if not self.hide:
 
             # Classic event
-            [ele.check_for_lost_focus(events, logica) for index, ele in self.elements.items() if type(ele)]
+            [ele.check_for_lost_focus(events, logica) for index, ele in self.elements.items()]
             [ele.eventami(events, logica) for index, ele in self.windows.items()]
-            [ele.eventami(events, logica) for index, ele in self.elements.items() if type(ele) != ColorPicker]
+            [ele.eventami(events, logica) for index, ele in self.elements.items()]
 
 
             # Scroll update
@@ -2541,15 +2328,6 @@ class ContextMenu(BaseElement):
                         for index_elemento, elemento in window.child_id.items():
                             elemento.move_y += dizionario_altezze[index_window]
 
-                
-                # gestione pop-up
-                for indice, ele in self.elements.items():
-                    if type(ele) == ColorPicker:
-                        pop_up_domanda_color = ele.eventami(events, logica)
-                    
-                        if pop_up_domanda_color:
-                            return ele
-                
 
             # Bulk move di tutti gli elementi
             [ele.move_update() for index, ele in self.elements.items()]
@@ -2763,14 +2541,325 @@ class Slider(BaseElement):
         self.indicatore.update_window_change()
 
 
-    def check_for_lost_focus(self, events, logica):
-        self.indicatore.check_for_lost_focus(events, logica)
+    def check_for_lost_focus(self, events, logica, force_closure=False):
+        self.indicatore.check_for_lost_focus(events, logica, force_closure)
 
 
 class PopUp():
-    def __init__(self):
-        pass
+    def __init__(self, x, y, anchor, w, h):
+        
+        self.active = False
+        self.conferma_uscita = False                    # richiede la conferma di uscita: False = Accettata e terminata, True = Lanciata ma non accetta e non terminata
+        self.prima_entrata_bb = False
 
+        self.packet_in = None
+        self.packet_out = None
+
+        self.context_menu: ContextMenu = ContextMenu(x=x, y=y, anchor=anchor, w=w, h=h)
+        self.context_menu.update_window_change()
+
+    
+    def start_connection(self, input):
+        self.packet_in = input
+
+    
+    def end_connection(self):
+        return self.packet_out
+
+
+    def disegnami(self, logica):
+        if self.active:
+            self.context_menu.disegnami(logica)
+
+
+    def eventami(self, eventi, logica: 'Logica', ask_for_exit=False):
+        if self.active:
+            bb = pygame.Rect(self.context_menu.x - self.context_menu.w // 4, self.context_menu.y - self.context_menu.h // 4, 1.5 * self.context_menu.w, 1.5 * self.context_menu.h)
+            in_bb = bb.collidepoint(logica.mouse_pos)
+            
+            if not self.prima_entrata_bb and in_bb:
+                self.prima_entrata_bb = True
+
+            if not in_bb and self.prima_entrata_bb or ask_for_exit:
+                [ele.check_for_lost_focus(eventi, logica, force_closure=True) for index, ele in self.context_menu.elements.items()]
+                self.active = False
+                self.conferma_uscita = True
+                self.prima_entrata_bb = False
+
+
+
+class PopUp_color_palette(PopUp):
+    def __init__(self, x, y, anchor, w, h):
+        super().__init__(x, y, anchor, w, h)
+
+        self.update_return_color = False
+        self.pos_indicatore_x, self.pos_indicatore_y = 0, 0
+
+        self.context_menu.add_element("entrata_hex", Entrata(x="100%w -5%h", y="5%h", w="10%w", h="30px", anchor="ru", text="dc143c", title="HEX", is_hex=True))
+        self.context_menu.add_element("entrata_R", Entrata(x="100%w -5%h", y="5%h 80px", w="5%w", h="30px", anchor="ru", text="220", title="R", lunghezza_max=4, num_valore_massimo=255, num_valore_minimo=0, solo_numeri=True))
+        self.context_menu.add_element("entrata_G", Entrata(x="100%w -5%h", y="5%h 120px", w="5%w", h="30px", anchor="ru", text="20", title="G", lunghezza_max=4, num_valore_massimo=255, num_valore_minimo=0, solo_numeri=True))
+        self.context_menu.add_element("entrata_B", Entrata(x="100%w -5%h", y="5%h 160px", w="5%w", h="30px", anchor="ru", text="60", title="B", lunghezza_max=4, num_valore_massimo=255, num_valore_minimo=0, solo_numeri=True))
+
+        self.context_menu.add_element("preview", Bottone_Push(x="97.5%h", y="80%h", anchor="ld", w="15%w", h="75%h", disable=True))
+        self.context_menu.add_element("ok", Bottone_Push(x="100%w", y="100%h", anchor="rd", w="10%w", h="7.5%h", text="\\#aaff00{OK}", function=BottoniCallbacks.change_state))
+        self.context_menu.add_element("cancel", Bottone_Push(x="87.5%w", y="100%h", anchor="rd", w="12.5%w", h="7.5%h", text="\\#dc143c{Cancel}", function=BottoniCallbacks.change_state))
+
+        self.context_menu.add_element("color_array", Screen(x="5%h", y="5%h", w="90%h", h="75%h", anchor="lu"))
+        self.context_menu.add_element("inten_array", Screen(x="5%h", y="82.5%h", w="90%h", h="4.5%h", anchor="lu"))
+        self.context_menu.add_element("slider_RGB", Slider(x="5%h", y="95%h", w="90%h", h="5%h", initial_value=1, anchor="ld"))
+
+        self.context_menu.update_window_change()
+
+        self.main_color = [0, 0, 0]
+
+
+    def disegnami(self, logica):
+
+        if self.active:
+            try:
+                self.context_menu.elements["preview"].bg = self.main_color
+                self.context_menu.elements["preview"].contorno = 0
+            except:
+                ...
+
+            self.context_menu.elements["color_array"]._clear_canvas()
+            self.context_menu.elements["color_array"]._paste_array(self.generate_array_color() * 255, (0, 0))
+            
+            self.context_menu.elements["inten_array"]._clear_canvas()
+            self.context_menu.elements["inten_array"]._paste_array(self.generate_inten_color() * 255, (0, 0))
+
+            self.context_menu.elements["color_array"]._add_points([[self.pos_indicatore_x, self.pos_indicatore_y]], [255, 255, 255], 10, 3)
+            self.context_menu.elements["color_array"]._add_points([[self.pos_indicatore_x, self.pos_indicatore_y]], [0, 0, 0], 12, 2)
+            self.context_menu.elements["color_array"]._add_points([[self.pos_indicatore_x, self.pos_indicatore_y]], [0, 0, 0], 7, 2)
+        
+        super().disegnami(logica)
+
+
+    def eventami(self, eventi, logica: 'Logica'):
+        
+        self.context_menu.eventami(eventi, logica)
+
+        if self.context_menu.elements["entrata_hex"].selezionato:
+            self.main_color = MateUtils.hex2rgb(self.context_menu.elements["entrata_hex"].get_text(real_time=True))      # per display del colore attuale
+
+            self.context_menu.elements["entrata_R"].change_text(f"{self.main_color[0]}")
+            self.context_menu.elements["entrata_G"].change_text(f"{self.main_color[1]}")
+            self.context_menu.elements["entrata_B"].change_text(f"{self.main_color[2]}")
+            self.rgb_to_xy(self.main_color)
+        
+        elif self.context_menu.elements["entrata_R"].selezionato or self.context_menu.elements["entrata_G"].selezionato or self.context_menu.elements["entrata_B"].selezionato:
+            self.main_color = [MateUtils.inp2int(self.context_menu.elements["entrata_R"].get_text(real_time=True)), MateUtils.inp2int(self.context_menu.elements["entrata_G"].get_text(real_time=True)), MateUtils.inp2int(self.context_menu.elements["entrata_B"].get_text(real_time=True))]      # per display del colore attuale
+
+            self.context_menu.elements["entrata_hex"].change_text(MateUtils.rgb2hex(self.main_color))
+            self.rgb_to_xy(self.main_color)
+
+
+        for event in eventi:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 or logica.dragging:
+                if self.context_menu.elements["color_array"].bounding_box.collidepoint(logica.mouse_pos):
+                    self.pos_indicatore_x = logica.mouse_pos[0] - self.context_menu.elements["color_array"].x
+                    self.pos_indicatore_y = logica.mouse_pos[1] - self.context_menu.elements["color_array"].y
+                    self.update_text_from_coords()
+                
+                elif self.context_menu.elements["slider_RGB"].do_stuff:
+                    self.update_text_from_coords()
+
+
+        if self.context_menu.elements["ok"].flag_foo:
+            self.context_menu.elements["ok"].flag_foo = False
+            self.update_return_color = True
+            super().eventami(eventi, logica, True)
+
+        elif self.context_menu.elements["cancel"].flag_foo:
+            self.context_menu.elements["cancel"].flag_foo = False
+            self.update_return_color = False
+            super().eventami(eventi, logica, True)
+        
+        else:
+            self.update_return_color = True
+            super().eventami(eventi, logica)
+
+
+    def start_connection(self, input):
+        super().start_connection(input)
+        self.main_color = self.packet_in
+        self.original = self.packet_in
+
+        self.context_menu.elements["entrata_hex"].change_text(MateUtils.rgb2hex(self.main_color))
+        self.context_menu.elements["entrata_R"].change_text(f"{self.main_color[0]}")
+        self.context_menu.elements["entrata_G"].change_text(f"{self.main_color[1]}")
+        self.context_menu.elements["entrata_B"].change_text(f"{self.main_color[2]}")
+        self.rgb_to_xy(self.main_color)
+
+    
+    def end_connection(self):
+
+        if self.update_return_color:
+            self.main_color = MateUtils.hex2rgb(self.context_menu.elements["entrata_hex"].get_text())                  # per il return
+            self.packet_out = self.main_color
+        else:
+            self.packet_out = self.packet_in
+
+        self.update_return_color = False
+        return super().end_connection()
+    
+
+    def update_text_from_coords(self):
+        intensity = self.context_menu.elements["slider_RGB"].value
+        saturation = self.pos_indicatore_y / self.context_menu.elements["color_array"].h
+        rgb = self.pos_indicatore_x / self.context_menu.elements["color_array"].w
+
+        baseline = saturation * 255
+        free_delta = 255 - baseline
+        
+        rgb *= 6
+        resto = rgb - int(rgb)
+        resto *= free_delta
+
+        if 0 < rgb and rgb < 1:
+            risultato = np.array([free_delta, resto, 0]) + baseline
+        elif 1 < rgb and rgb < 2:
+            risultato = np.array([free_delta - resto, free_delta, 0]) + baseline
+        elif 2 < rgb and rgb < 3:
+            risultato = np.array([0, free_delta, resto]) + baseline
+        elif 3 < rgb and rgb < 4:
+            risultato = np.array([0, free_delta - resto, free_delta]) + baseline
+        elif 4 < rgb and rgb < 5:
+            risultato = np.array([resto, 0, free_delta]) + baseline
+        elif 5 < rgb and rgb < 6:
+            risultato = np.array([free_delta, 0, free_delta - resto]) + baseline
+        else:
+            return
+        
+        if saturation < 0 or saturation > 1:
+            return
+
+        self.main_color = risultato * intensity
+
+        self.context_menu.elements["entrata_hex"].change_text(MateUtils.rgb2hex(self.main_color.astype(int)))
+
+        self.context_menu.elements["entrata_R"].change_text(f"{round(self.main_color[0])}")
+        self.context_menu.elements["entrata_G"].change_text(f"{round(self.main_color[1])}")
+        self.context_menu.elements["entrata_B"].change_text(f"{round(self.main_color[2])}")
+
+    
+    def generate_inten_color(self):
+        w = round(self.context_menu.elements["color_array"].w)
+        h = round(self.context_menu.elements["color_array"].h)
+        mat = np.zeros((w, h, 3))
+
+        for x in range(w):
+            # controls Hue
+            mat[x, :, :] = x / w
+
+        return mat
+
+
+    def generate_array_color(self):
+        w = round(self.context_menu.elements["color_array"].w)
+        h = round(self.context_menu.elements["color_array"].h)
+        mat = np.zeros((w, h, 3))
+
+        for x in range(w):
+            # controls Hue
+            mat[x, :, :] = PopUp_color_palette.interpolation(x / w) 
+
+        for y in range(h):
+            # controls Saturation
+            mat[:, y, :] *= 1 - (y / w)
+            mat[:, y, :] += (y / w)
+
+        # controls Intensity
+        mat[:, :, :] *= self.context_menu.elements["slider_RGB"].value
+
+        return mat
+
+
+    def rgb_to_xy(self, rgb):
+            
+        w = round(self.context_menu.elements["color_array"].w)
+        h = round(self.context_menu.elements["color_array"].h)
+        
+        r, g, b = np.array(rgb) / 255.0  # Normalizzazione
+        x, y = 0, 0
+
+        max_v = max(r, g, b)
+        min_v = min(r, g, b)
+
+        # Calcolo dell'intensità
+        intensity = max_v
+        
+        # Calcolo della saturazione
+        y = 1 - ((max_v - min_v) / max_v)
+        y *= h
+
+        
+        r, g, b = (rgb - np.min(rgb)) / (np.max(rgb) - np.min(rgb))
+
+        # match della possibile combinazione
+        # 100 -> 110 -> 010 -> 011 -> 001 -> 101 -> 100
+        #  0  ->  1  ->  2  ->  3  ->  4  ->  5  ->  6
+        if r == 1:
+            # tonalità di rosso
+            if g == 0:
+                x = - b * w / 6 + 6 * w / 6
+            elif b == 0:
+                x = g * w / 6 + 0 * w / 6
+
+        elif g == 1:
+            # tonalità di verde
+            if r == 0:
+                x = b * w / 6 + 2 * w / 6
+            elif b == 0:
+                x = - r * w / 6 + 2 * w / 6
+
+        elif b == 1:
+            if r == 0:
+                x = - g * w / 6 + 4 * w / 6
+            elif g == 0:
+                x = r * w / 6 + 4 * w / 6
+
+        self.pos_indicatore_x = x
+        self.pos_indicatore_y = y
+        self.context_menu.elements["slider_RGB"].value = intensity
+
+
+    @staticmethod
+    def interpolation(value):
+        # 100 -> 110 -> 010 -> 011 -> 001 -> 101 -> 100
+        #  0  ->  1  ->  2  ->  3  ->  4  ->  5  ->  6
+        normalization_factor = 1 / 6
+        index = value // normalization_factor
+        inner_interpolation = (value % normalization_factor) / (1/6)
+
+        def interpolate(x1, y1, z1, x2, y2, z2, value):
+            if value == 0:
+                x, y, z = x1, y1, z1
+            else:
+                x = x1 + (x2 - x1) * value
+                y = y1 + (y2 - y1) * value
+                z = z1 + (z2 - z1) * value
+            return np.array([x, y, z])
+
+        if index == 0:
+            return interpolate(1, 0, 0, 1, 1, 0, inner_interpolation)
+        elif index == 1:
+            return interpolate(1, 1, 0, 0, 1, 0, inner_interpolation)
+        elif index == 2:
+            return interpolate(0, 1, 0, 0, 1, 1, inner_interpolation)
+        elif index == 3:
+            return interpolate(0, 1, 1, 0, 0, 1, inner_interpolation)
+        elif index == 4:
+            return interpolate(0, 0, 1, 1, 0, 1, inner_interpolation)
+        elif index == 5:
+            return interpolate(1, 0, 1, 1, 0, 0, inner_interpolation)
+        elif index == 6:
+            return np.array([1, 0, 0])
+        
+
+    def update_window_change(self):
+        self.context_menu.update_window_change()
+        [ele.update_window_change() for index, ele in self.context_menu.elements.items()]
 
 
 class Screen(BaseElement):

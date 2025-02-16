@@ -93,8 +93,7 @@ class UI:
             font_size -= 1
         
         self.costruttore = Costruttore(self.MAIN, self.w_screen * 0.9, self.h_screen * 0.9, font_size) # fail at: 2, 4, 9, 11, 16
-        self.costruttore.scene["main"].disegna_scena_inizio_ciclo(self.logica)
-        self.costruttore.scene["main"].disegna_scena_fine_ciclo(self.logica)
+        self.costruttore.scene["main"].disegna_scena(self.logica)
 
         self.cpu_sample: list[int] = [0 for i in range(100)]
 
@@ -191,7 +190,7 @@ class UI:
             self.costruttore.recalc(self.w, self.h)
 
         self.event_manager.event_manage_ui(eventi, self.costruttore.scene["main"], self.logica)
-        self.costruttore.scene["main"].disegna_scena_inizio_ciclo(self.logica)
+        self.costruttore.scene["main"].disegna_scena(self.logica)
         
 
     def mixer_audio(self) -> None:
@@ -208,8 +207,6 @@ class UI:
         '''
 
         # self.mouse_icon()
-
-        self.costruttore.scene["main"].disegna_scena_fine_ciclo(self.logica)
 
         # aggiornamento
         self.current_fps = self.clock.get_fps()
