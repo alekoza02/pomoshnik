@@ -3,7 +3,7 @@ import os
 from numpy import array
 from time import perf_counter
 
-from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, ContextMenu, BaseElement, Screen, PopUp_color_palette, Collapsable_Window, Slider
+from GRAFICA._modulo_elementi_grafici import Label_Text, Bottone_Push, Bottone_Toggle, RadioButton, Entrata, Scroll, ColorPicker, ContextMenu, BaseElement, Screen, PopUp_color_palette_hard, PopUp_color_palette_easy, Collapsable_Window, Slider
 from GRAFICA._modulo_bottoni_callbacks import BottoniCallbacks
 
 NON_ESEGUIRE = False
@@ -74,6 +74,7 @@ class Costruttore:
                 ele.update_window_change()
             
             scena.pop_up_palette.update_window_change()
+            scena.pop_up_palette_hard.update_window_change()
 
 
     def costruisci_main(self):
@@ -598,9 +599,15 @@ class Scena:
         self.screens: dict[str, Screen] = {}
 
 
-        self.pop_up_palette: PopUp_color_palette = PopUp_color_palette(x="50%w", y="50%h", anchor="cc", w="40%w", h="40%h")
+        self.pop_up_palette_hard: PopUp_color_palette_hard = PopUp_color_palette_hard(x="50%w", y="50%h", anchor="cc", w="40%w", h="40%h")
+        self.pop_up_palette: PopUp_color_palette_easy = PopUp_color_palette_easy(x="50%w", y="50%h", anchor="cc", w="40%w", h="40%h")
+
+        self.pop_up_palette_open_next = False
+
         self.pop_up_palette_receiver: ColorPicker = None
+
         self.pop_up_palette_aperto: bool = False
+        self.pop_up_palette_hard_aperto: bool = False
 
         self.user_wants_tooltips = True
 
@@ -611,6 +618,7 @@ class Scena:
         [context.disegnami(logica) for indice, context in self.context_menu.items()]
         
         self.pop_up_palette.disegnami(logica)
+        self.pop_up_palette_hard.disegnami(logica)
 
         if self.user_wants_tooltips:
             # gestione tooltip
@@ -669,17 +677,40 @@ class Scena:
 
 
         elif self.pop_up_palette.conferma_uscita:
-            self.pop_up_palette_aperto = False
 
-            self.pop_up_palette_receiver.open_call = False
-            self.pop_up_palette_receiver.receive_popup_answer(self.pop_up_palette.end_connection())
-            self.pop_up_palette_receiver = None
+            if not self.pop_up_palette.open_next:
+                self.pop_up_palette_aperto = False
+                
+                self.pop_up_palette_receiver.open_call = False
+                self.pop_up_palette_receiver.receive_popup_answer(self.pop_up_palette.end_connection())
+                self.pop_up_palette_receiver = None
+
+            if self.pop_up_palette.open_next:
+                self.pop_up_palette_aperto = True
+
+                self.pop_up_palette_hard.active = True
+                self.pop_up_palette_hard.start_connection(self.pop_up_palette_receiver.send_popup_request())
 
             self.pop_up_palette.conferma_uscita = False
             self.pop_up_palette.packet_out = None
 
+
+        elif self.pop_up_palette.open_next and self.pop_up_palette_hard.conferma_uscita:
+            self.pop_up_palette.open_next = False
+            self.pop_up_palette_aperto = False
+            
+            self.pop_up_palette_receiver.open_call = False
+            self.pop_up_palette_receiver.receive_popup_answer(self.pop_up_palette_hard.end_connection())
+            self.pop_up_palette_receiver = None
+
+            self.pop_up_palette_hard.conferma_uscita = False
+            self.pop_up_palette_hard.packet_out = None
         
-        self.pop_up_palette.eventami(eventi, logica)
+
+        if self.pop_up_palette.active:
+            self.pop_up_palette.eventami(eventi, logica)
+        if self.pop_up_palette_hard.active:
+            self.pop_up_palette_hard.eventami(eventi, logica)
 
         for event in eventi:
             # Check if a key was pressed

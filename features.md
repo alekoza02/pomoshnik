@@ -11,6 +11,7 @@
     - Grid
         - Equidistant
         - Per value
+    - ColorPicker (literally)
 ---
 - Plots
     - Data import

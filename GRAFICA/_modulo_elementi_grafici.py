@@ -2555,7 +2555,7 @@ class PopUp():
         self.packet_in = None
         self.packet_out = None
 
-        self.context_menu: ContextMenu = ContextMenu(x=x, y=y, anchor=anchor, w=w, h=h)
+        self.context_menu: ContextMenu = ContextMenu(x=x, y=y, anchor=anchor, w=w, h=h, scrollable=False)
         self.context_menu.update_window_change()
 
     
@@ -2588,7 +2588,110 @@ class PopUp():
 
 
 
-class PopUp_color_palette(PopUp):
+class PopUp_color_palette_easy(PopUp):
+    def __init__(self, x, y, anchor, w, h):
+        super().__init__(x, y, anchor, w, h)
+
+        self.open_next = False
+        self.update_return_color = False
+        self.pos_indicatore_x, self.pos_indicatore_y = 0, 0
+
+        colori = [
+            [255, 0, 0], [255, 128, 0], [255, 255, 0], [0, 255, 0], [0, 255, 255], [0, 128, 255], [128, 0, 255], [0, 0, 0],
+            [255, 50, 50], [255, 153, 50], [255, 255, 50], [50, 255, 50], [50, 255, 255], [50, 153, 255], [153, 50, 255], [60, 60, 60],
+            [255, 100, 100], [255, 181, 100], [255, 255, 100], [100, 255, 100], [100, 255, 255], [100, 181, 255], [181, 100, 255], [120, 120, 120],
+            [255, 150, 150], [255, 206, 150], [255, 255, 150], [150, 255, 150], [150, 255, 255], [150, 206, 255], [206, 150, 255], [180, 180, 180],
+            [255, 200, 200], [255, 231, 200], [255, 255, 200], [200, 255, 200], [200, 255, 255], [200, 231, 255], [231, 200, 255], [255, 255, 255],
+        ]
+
+        self.recent = [[0, 0, 0] for i in range(9)]
+        self.frequent = [[0, 0, 0] for i in range(9)]
+
+        for x in range(8):
+            for y in range(5):
+                adder = 0
+                if x == 7:
+                    adder = 1
+
+                self.context_menu.add_element(f"bottone{x}_{y}", Bottone_Push(x=f"{11 * (x + adder) + 1}%w", y=f"{6 * y + 2}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=colori[y * 8 + x]))
+                self.context_menu.elements[f"bottone{x}_{y}"].contorno = 0
+        
+        for x in range(9):
+            self.context_menu.add_element(f"recent{x}_{y}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{35}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.recent[x]))
+            self.context_menu.elements[f"recent{x}_{y}"].contorno = 0
+        
+        for x in range(9):
+            self.context_menu.add_element(f"frequent{x}_{y}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{44}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.frequent[x]))
+            self.context_menu.elements[f"frequent{x}_{y}"].contorno = 0
+        
+        self.context_menu.add_element("cancel", Bottone_Push(x="100%w", y="100%h", anchor="rd", w="12.5%w", h="7.5%h", text="\\#dc143c{Cancel}", function=BottoniCallbacks.change_state))
+        self.context_menu.add_element("more_option", Bottone_Push(x="80%w", y="100%h", anchor="rd", w="17%w", h="7.5%h", text="\\#aaff00{More options}", function=BottoniCallbacks.change_state))
+
+        self.context_menu.update_window_change()
+
+        self.main_color = [0, 0, 0]
+
+
+    def disegnami(self, logica):
+
+        if self.active:
+            ...
+
+        super().disegnami(logica)
+
+
+    def eventami(self, eventi, logica: 'Logica'):
+        
+        if self.active:
+            self.context_menu.eventami(eventi, logica)
+
+            for indice, bottone in self.context_menu.elements.items():
+                if "bottone" in indice:
+                    if bottone.flag_foo:
+                        bottone.flag_foo = False
+                        self.main_color = bottone.bg
+                        self.update_return_color = True
+                        super().eventami(eventi, logica, True)
+
+            if self.context_menu.elements["cancel"].flag_foo:
+                self.context_menu.elements["cancel"].flag_foo = False
+                self.update_return_color = False
+                super().eventami(eventi, logica, True)
+            
+            elif self.context_menu.elements["more_option"].flag_foo:
+                self.context_menu.elements["more_option"].flag_foo = False
+                self.open_next = True
+                super().eventami(eventi, logica, True)
+            
+            else:
+                self.update_return_color = True
+                super().eventami(eventi, logica)
+
+
+    def start_connection(self, input):
+        super().start_connection(input)
+        self.main_color = self.packet_in
+        self.original = self.packet_in
+
+    
+    def end_connection(self):
+
+        if self.update_return_color:
+            self.packet_out = self.main_color
+        else:
+            self.packet_out = self.packet_in
+
+        self.update_return_color = False
+        return super().end_connection()
+    
+        
+    def update_window_change(self):
+        self.context_menu.update_window_change()
+        [ele.update_window_change() for index, ele in self.context_menu.elements.items()]
+
+
+
+class PopUp_color_palette_hard(PopUp):
     def __init__(self, x, y, anchor, w, h):
         super().__init__(x, y, anchor, w, h)
 
@@ -2637,47 +2740,48 @@ class PopUp_color_palette(PopUp):
 
     def eventami(self, eventi, logica: 'Logica'):
         
-        self.context_menu.eventami(eventi, logica)
+        if self.active:
+            self.context_menu.eventami(eventi, logica)
 
-        if self.context_menu.elements["entrata_hex"].selezionato:
-            self.main_color = MateUtils.hex2rgb(self.context_menu.elements["entrata_hex"].get_text(real_time=True))      # per display del colore attuale
+            if self.context_menu.elements["entrata_hex"].selezionato:
+                self.main_color = MateUtils.hex2rgb(self.context_menu.elements["entrata_hex"].get_text(real_time=True))      # per display del colore attuale
 
-            self.context_menu.elements["entrata_R"].change_text(f"{self.main_color[0]}")
-            self.context_menu.elements["entrata_G"].change_text(f"{self.main_color[1]}")
-            self.context_menu.elements["entrata_B"].change_text(f"{self.main_color[2]}")
-            self.rgb_to_xy(self.main_color)
-        
-        elif self.context_menu.elements["entrata_R"].selezionato or self.context_menu.elements["entrata_G"].selezionato or self.context_menu.elements["entrata_B"].selezionato:
-            self.main_color = [MateUtils.inp2int(self.context_menu.elements["entrata_R"].get_text(real_time=True)), MateUtils.inp2int(self.context_menu.elements["entrata_G"].get_text(real_time=True)), MateUtils.inp2int(self.context_menu.elements["entrata_B"].get_text(real_time=True))]      # per display del colore attuale
+                self.context_menu.elements["entrata_R"].change_text(f"{self.main_color[0]}")
+                self.context_menu.elements["entrata_G"].change_text(f"{self.main_color[1]}")
+                self.context_menu.elements["entrata_B"].change_text(f"{self.main_color[2]}")
+                self.rgb_to_xy(self.main_color)
+            
+            elif self.context_menu.elements["entrata_R"].selezionato or self.context_menu.elements["entrata_G"].selezionato or self.context_menu.elements["entrata_B"].selezionato:
+                self.main_color = [MateUtils.inp2int(self.context_menu.elements["entrata_R"].get_text(real_time=True)), MateUtils.inp2int(self.context_menu.elements["entrata_G"].get_text(real_time=True)), MateUtils.inp2int(self.context_menu.elements["entrata_B"].get_text(real_time=True))]      # per display del colore attuale
 
-            self.context_menu.elements["entrata_hex"].change_text(MateUtils.rgb2hex(self.main_color))
-            self.rgb_to_xy(self.main_color)
-
-
-        for event in eventi:
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 or logica.dragging:
-                if self.context_menu.elements["color_array"].bounding_box.collidepoint(logica.mouse_pos):
-                    self.pos_indicatore_x = logica.mouse_pos[0] - self.context_menu.elements["color_array"].x
-                    self.pos_indicatore_y = logica.mouse_pos[1] - self.context_menu.elements["color_array"].y
-                    self.update_text_from_coords()
-                
-                elif self.context_menu.elements["slider_RGB"].do_stuff:
-                    self.update_text_from_coords()
+                self.context_menu.elements["entrata_hex"].change_text(MateUtils.rgb2hex(self.main_color))
+                self.rgb_to_xy(self.main_color)
 
 
-        if self.context_menu.elements["ok"].flag_foo:
-            self.context_menu.elements["ok"].flag_foo = False
-            self.update_return_color = True
-            super().eventami(eventi, logica, True)
+            for event in eventi:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 or logica.dragging:
+                    if self.context_menu.elements["color_array"].bounding_box.collidepoint(logica.mouse_pos):
+                        self.pos_indicatore_x = logica.mouse_pos[0] - self.context_menu.elements["color_array"].x
+                        self.pos_indicatore_y = logica.mouse_pos[1] - self.context_menu.elements["color_array"].y
+                        self.update_text_from_coords()
+                    
+                    elif self.context_menu.elements["slider_RGB"].keep_updating:
+                        self.update_text_from_coords()
 
-        elif self.context_menu.elements["cancel"].flag_foo:
-            self.context_menu.elements["cancel"].flag_foo = False
-            self.update_return_color = False
-            super().eventami(eventi, logica, True)
-        
-        else:
-            self.update_return_color = True
-            super().eventami(eventi, logica)
+
+            if self.context_menu.elements["ok"].flag_foo:
+                self.context_menu.elements["ok"].flag_foo = False
+                self.update_return_color = True
+                super().eventami(eventi, logica, True)
+
+            elif self.context_menu.elements["cancel"].flag_foo:
+                self.context_menu.elements["cancel"].flag_foo = False
+                self.update_return_color = False
+                super().eventami(eventi, logica, True)
+            
+            else:
+                self.update_return_color = False
+                super().eventami(eventi, logica)
 
 
     def start_connection(self, input):
@@ -2716,17 +2820,17 @@ class PopUp_color_palette(PopUp):
         resto = rgb - int(rgb)
         resto *= free_delta
 
-        if 0 < rgb and rgb < 1:
+        if 0 < rgb and rgb <= 1:
             risultato = np.array([free_delta, resto, 0]) + baseline
-        elif 1 < rgb and rgb < 2:
+        elif 1 < rgb and rgb <= 2:
             risultato = np.array([free_delta - resto, free_delta, 0]) + baseline
-        elif 2 < rgb and rgb < 3:
+        elif 2 < rgb and rgb <= 3:
             risultato = np.array([0, free_delta, resto]) + baseline
-        elif 3 < rgb and rgb < 4:
+        elif 3 < rgb and rgb <= 4:
             risultato = np.array([0, free_delta - resto, free_delta]) + baseline
-        elif 4 < rgb and rgb < 5:
+        elif 4 < rgb and rgb <= 5:
             risultato = np.array([resto, 0, free_delta]) + baseline
-        elif 5 < rgb and rgb < 6:
+        elif 5 < rgb and rgb <= 6:
             risultato = np.array([free_delta, 0, free_delta - resto]) + baseline
         else:
             return
@@ -2762,7 +2866,7 @@ class PopUp_color_palette(PopUp):
 
         for x in range(w):
             # controls Hue
-            mat[x, :, :] = PopUp_color_palette.interpolation(x / w) 
+            mat[x, :, :] = PopUp_color_palette_hard.interpolation(x / w) 
 
         for y in range(h):
             # controls Saturation
