@@ -3,6 +3,8 @@ import numpy as np
 from MATEMATICA._modulo_mate_utils import MateUtils
 import pyperclip
 import os
+import json
+import time
 from PIL import Image
 from math import ceil
 
@@ -2587,6 +2589,84 @@ class PopUp():
                 self.prima_entrata_bb = False
 
 
+    def _COLOR_save_frequent(self, color):
+        # Se il file esiste, lo carichiamo, altrimenti inizializziamo un dizionario vuoto
+        if os.path.exists('GRAFICA/cache_color.json'):
+            with open('GRAFICA/cache_color.json', "r") as f:
+                colori = json.load(f)
+        else:
+            colori = {}
+
+        hex_color = MateUtils.rgb2hex(color)
+
+        # Aggiorniamo il conteggio del colore
+        if hex_color in colori:
+            colori[hex_color] += 1
+        else:
+            colori[hex_color] = 1
+
+        # Salviamo i dati aggiornati nel file
+        with open('GRAFICA/cache_color.json', "w") as f:
+            json.dump(colori, f, indent=4)
+
+
+    @staticmethod
+    def _COLOR_load():
+        """Returns a generator of the top 10 most used colors."""
+        if not os.path.exists('GRAFICA/cache_color.json'):
+            return []  # Return an empty iterator if file doesn't exist
+
+        with open('GRAFICA/cache_color.json', "r") as f:
+            colori = json.load(f)
+
+        if not colori:
+            return []  # Return an empty iterator if no colors are stored
+
+        # Sort colors by frequency in descending order
+        sorted_colors = sorted(colori.items(), key=lambda x: x[1], reverse=True)
+
+        return sorted_colors
+    
+
+    def _COLOR_save_recent(self, color):
+        # Se il file esiste, lo carichiamo, altrimenti inizializziamo un dizionario vuoto
+        if os.path.exists('GRAFICA/cache_color_recent.json'):
+            with open('GRAFICA/cache_color_recent.json', "r") as f:
+                colori = json.load(f)
+        else:
+            colori = {}
+
+        hex_color = MateUtils.rgb2hex(color)
+
+        if len(colori) > 8:
+            colori = {v: k for k, v in colori.items()}
+            colori.popitem()
+            colori = {v: k for k, v in colori.items()}
+
+        colori[hex_color] = 1
+
+        # Salviamo i dati aggiornati nel file
+        with open('GRAFICA/cache_color_recent.json', "w") as f:
+            json.dump(colori, f, indent=4)
+
+
+    @staticmethod
+    def _COLOR_load_recent():
+        """Returns a generator of the top 10 most used colors."""
+        if not os.path.exists('GRAFICA/cache_color_recent.json'):
+            return []  # Return an empty iterator if file doesn't exist
+
+        with open('GRAFICA/cache_color_recent.json', "r") as f:
+            colori = json.load(f)
+
+        if not colori:
+            return []  # Return an empty iterator if no colors are stored
+
+        # Sort colors by frequency in descending order
+        sorted_colors = sorted(colori.items(), key=lambda x: x[1], reverse=True)
+
+        return sorted_colors
+
 
 class PopUp_color_palette_easy(PopUp):
     def __init__(self, x, y, anchor, w, h):
@@ -2595,6 +2675,7 @@ class PopUp_color_palette_easy(PopUp):
         self.open_next = False
         self.update_return_color = False
         self.pos_indicatore_x, self.pos_indicatore_y = 0, 0
+        self.init = True
 
         colori = [
             [255, 0, 0], [255, 128, 0], [255, 255, 0], [0, 255, 0], [0, 255, 255], [0, 128, 255], [128, 0, 255], [0, 0, 0],
@@ -2617,12 +2698,12 @@ class PopUp_color_palette_easy(PopUp):
                 self.context_menu.elements[f"bottone{x}_{y}"].contorno = 0
         
         for x in range(9):
-            self.context_menu.add_element(f"recent{x}_{y}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{35}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.recent[x]))
-            self.context_menu.elements[f"recent{x}_{y}"].contorno = 0
+            self.context_menu.add_element(f"recent{x}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{35}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.recent[x]))
+            self.context_menu.elements[f"recent{x}"].contorno = 0
         
         for x in range(9):
-            self.context_menu.add_element(f"frequent{x}_{y}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{44}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.frequent[x]))
-            self.context_menu.elements[f"frequent{x}_{y}"].contorno = 0
+            self.context_menu.add_element(f"frequent{x}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{44}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.frequent[x]))
+            self.context_menu.elements[f"frequent{x}"].contorno = 0
         
         self.context_menu.add_element("cancel", Bottone_Push(x="100%w", y="100%h", anchor="rd", w="12.5%w", h="7.5%h", text="\\#dc143c{Cancel}", function=BottoniCallbacks.change_state))
         self.context_menu.add_element("more_option", Bottone_Push(x="80%w", y="100%h", anchor="rd", w="17%w", h="7.5%h", text="\\#aaff00{More options}", function=BottoniCallbacks.change_state))
@@ -2641,8 +2722,35 @@ class PopUp_color_palette_easy(PopUp):
 
 
     def eventami(self, eventi, logica: 'Logica'):
-        
+
         if self.active:
+
+            if self.init:
+                self.init = False
+
+                colori = PopUp._COLOR_load()
+                colori_recent = PopUp._COLOR_load_recent()
+                controlled_colors = 0
+                controlled_colors_recent = 0
+
+                for index, bottone in self.context_menu.elements.items():
+                    if "frequent" in index:
+                        try:
+                            colore = colori[controlled_colors]
+                            controlled_colors += 1
+                            bottone.bg = MateUtils.hex2rgb(colore[0])
+                        except IndexError as e:
+                            ...
+                    elif "recent" in index:
+                        try:
+                            colore = colori_recent[controlled_colors_recent]
+                            controlled_colors_recent += 1
+                            bottone.bg = MateUtils.hex2rgb(colore[0])
+                        except IndexError as e:
+                            ...
+
+
+
             self.context_menu.eventami(eventi, logica)
 
             for indice, bottone in self.context_menu.elements.items():
@@ -2670,6 +2778,7 @@ class PopUp_color_palette_easy(PopUp):
 
     def start_connection(self, input):
         super().start_connection(input)
+        self.init = True
         self.main_color = self.packet_in
         self.original = self.packet_in
 
@@ -2678,6 +2787,8 @@ class PopUp_color_palette_easy(PopUp):
 
         if self.update_return_color:
             self.packet_out = self.main_color
+            self._COLOR_save_frequent(self.packet_out)
+            self._COLOR_save_recent(self.packet_out)
         else:
             self.packet_out = self.packet_in
 
@@ -2801,6 +2912,8 @@ class PopUp_color_palette_hard(PopUp):
         if self.update_return_color:
             self.main_color = MateUtils.hex2rgb(self.context_menu.elements["entrata_hex"].get_text())                  # per il return
             self.packet_out = self.main_color
+            self._COLOR_save_frequent(self.packet_out)
+            self._COLOR_save_recent(self.packet_out)
         else:
             self.packet_out = self.packet_in
 
