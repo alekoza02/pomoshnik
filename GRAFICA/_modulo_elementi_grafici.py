@@ -2589,75 +2589,44 @@ class PopUp():
                 self.prima_entrata_bb = False
 
 
-    def _COLOR_save_frequent(self, color):
+    def _COLOR_save(self, color, index):
         # Se il file esiste, lo carichiamo, altrimenti inizializziamo un dizionario vuoto
-        if os.path.exists('GRAFICA/cache_color.json'):
-            with open('GRAFICA/cache_color.json', "r") as f:
-                colori = json.load(f)
+        if os.path.exists('GRAFICA/cache_colors.json'):
+            with open('GRAFICA/cache_colors.json', "r") as f:
+                dati = json.load(f)
         else:
-            colori = {}
+            dati = {}
 
         hex_color = MateUtils.rgb2hex(color)
 
-        # Aggiorniamo il conteggio del colore
-        if hex_color in colori:
-            colori[hex_color] += 1
-        else:
-            colori[hex_color] = 1
+        if index == "recent":
+            colori = dati[index]
+            hex_color = MateUtils.rgb2hex(color)
+            if not hex_color in colori:
+                colori[MateUtils.rgb2hex(color)] = -1
+                colori = {k: v + 1 for k, v in colori.items() if v < 8}
+                dati[index] = colori
+
+        elif index == "frequent":
+            if hex_color in dati[index]:
+                dati[index][hex_color] += 1
+            else:
+                dati[index][hex_color] = 1
 
         # Salviamo i dati aggiornati nel file
-        with open('GRAFICA/cache_color.json', "w") as f:
-            json.dump(colori, f, indent=4)
+        with open('GRAFICA/cache_colors.json', "w") as f:
+            json.dump(dati, f, indent=4)
 
 
-    @staticmethod
-    def _COLOR_load():
+    def _COLOR_load(self, index):
         """Returns a generator of the top 10 most used colors."""
-        if not os.path.exists('GRAFICA/cache_color.json'):
+        if not os.path.exists('GRAFICA/cache_colors.json'):
             return []  # Return an empty iterator if file doesn't exist
 
-        with open('GRAFICA/cache_color.json', "r") as f:
-            colori = json.load(f)
+        with open('GRAFICA/cache_colors.json', "r") as f:
+            data = json.load(f)
 
-        if not colori:
-            return []  # Return an empty iterator if no colors are stored
-
-        # Sort colors by frequency in descending order
-        sorted_colors = sorted(colori.items(), key=lambda x: x[1], reverse=True)
-
-        return sorted_colors
-    
-
-    def _COLOR_save_recent(self, color):
-        # Se il file esiste, lo carichiamo, altrimenti inizializziamo un dizionario vuoto
-        if os.path.exists('GRAFICA/cache_color_recent.json'):
-            with open('GRAFICA/cache_color_recent.json', "r") as f:
-                colori = json.load(f)
-        else:
-            colori = {}
-
-        hex_color = MateUtils.rgb2hex(color)
-
-        if len(colori) > 8:
-            colori = {v: k for k, v in colori.items()}
-            colori.popitem()
-            colori = {v: k for k, v in colori.items()}
-
-        colori[hex_color] = 1
-
-        # Salviamo i dati aggiornati nel file
-        with open('GRAFICA/cache_color_recent.json', "w") as f:
-            json.dump(colori, f, indent=4)
-
-
-    @staticmethod
-    def _COLOR_load_recent():
-        """Returns a generator of the top 10 most used colors."""
-        if not os.path.exists('GRAFICA/cache_color_recent.json'):
-            return []  # Return an empty iterator if file doesn't exist
-
-        with open('GRAFICA/cache_color_recent.json', "r") as f:
-            colori = json.load(f)
+        colori = data[index]
 
         if not colori:
             return []  # Return an empty iterator if no colors are stored
@@ -2728,8 +2697,8 @@ class PopUp_color_palette_easy(PopUp):
             if self.init:
                 self.init = False
 
-                colori = PopUp._COLOR_load()
-                colori_recent = PopUp._COLOR_load_recent()
+                colori = self._COLOR_load("frequent")
+                colori_recent = self._COLOR_load("recent")
                 controlled_colors = 0
                 controlled_colors_recent = 0
 
@@ -2772,7 +2741,6 @@ class PopUp_color_palette_easy(PopUp):
                 super().eventami(eventi, logica, True)
             
             else:
-                self.update_return_color = True
                 super().eventami(eventi, logica)
 
 
@@ -2787,8 +2755,8 @@ class PopUp_color_palette_easy(PopUp):
 
         if self.update_return_color:
             self.packet_out = self.main_color
-            self._COLOR_save_frequent(self.packet_out)
-            self._COLOR_save_recent(self.packet_out)
+            self._COLOR_save(self.packet_out, "frequent")
+            self._COLOR_save(self.packet_out, "recent")
         else:
             self.packet_out = self.packet_in
 
@@ -2891,7 +2859,6 @@ class PopUp_color_palette_hard(PopUp):
                 super().eventami(eventi, logica, True)
             
             else:
-                self.update_return_color = False
                 super().eventami(eventi, logica)
 
 
@@ -2912,8 +2879,8 @@ class PopUp_color_palette_hard(PopUp):
         if self.update_return_color:
             self.main_color = MateUtils.hex2rgb(self.context_menu.elements["entrata_hex"].get_text())                  # per il return
             self.packet_out = self.main_color
-            self._COLOR_save_frequent(self.packet_out)
-            self._COLOR_save_recent(self.packet_out)
+            self._COLOR_save(self.packet_out, "frequent")
+            self._COLOR_save(self.packet_out, "recent")
         else:
             self.packet_out = self.packet_in
 
