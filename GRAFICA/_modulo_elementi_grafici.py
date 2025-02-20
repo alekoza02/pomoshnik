@@ -2667,12 +2667,12 @@ class PopUp_color_palette_easy(PopUp):
                 self.context_menu.elements[f"bottone{x}_{y}"].contorno = 0
         
         for x in range(9):
-            self.context_menu.add_element(f"recent{x}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{35}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.recent[x]))
-            self.context_menu.elements[f"recent{x}"].contorno = 0
+            self.context_menu.add_element(f"bottone_recent{x}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{35}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.recent[x]))
+            self.context_menu.elements[f"bottone_recent{x}"].contorno = 0
         
         for x in range(9):
-            self.context_menu.add_element(f"frequent{x}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{44}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.frequent[x]))
-            self.context_menu.elements[f"frequent{x}"].contorno = 0
+            self.context_menu.add_element(f"bottone_frequent{x}", Bottone_Push(x=f"{11 * x + 1}%w", y=f"{44}%w", anchor="lu", w="10%w", h="5%w", disable=True, function=BottoniCallbacks.change_state, bg=self.frequent[x]))
+            self.context_menu.elements[f"bottone_frequent{x}"].contorno = 0
         
         self.context_menu.add_element("cancel", Bottone_Push(x="100%w", y="100%h", anchor="rd", w="12.5%w", h="7.5%h", text="\\#dc143c{Cancel}", function=BottoniCallbacks.change_state))
         self.context_menu.add_element("more_option", Bottone_Push(x="80%w", y="100%h", anchor="rd", w="17%w", h="7.5%h", text="\\#aaff00{More options}", function=BottoniCallbacks.change_state))
