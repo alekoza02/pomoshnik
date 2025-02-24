@@ -2257,6 +2257,7 @@ class ContextMenu(BaseElement):
 
         if self.root:
             self.PRIVATE_tooltip_label = Label_Text(x="0.5%w", y="99.5%h", anchor="ld", w="-*w", h="-*h", text="\\h{Tooltip initialized}")
+            self.PRIVATE_tooltip_label.font = Font(round(self.font_size_update * 0.8), self.PRIVATE_tooltip_label.latex_font)
             self.add_element("PRIV_tooltip", self.PRIVATE_tooltip_label)
     
 

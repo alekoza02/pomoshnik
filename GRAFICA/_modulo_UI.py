@@ -88,7 +88,7 @@ class UI:
         self.logica = Logica()
         self.event_manager = EventManager()
         
-        font_size = self.h_screen / 85
+        font_size = self.h_screen / 70
         if font_size in [2, 4, 9, 11, 16]:
             font_size -= 1
         
@@ -114,6 +114,7 @@ class UI:
         ctypes.windll.user32.SetProcessDPIAware()
         screen_info = pygame.display.Info()
         scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        # print(f"DPI schermo: {scale_factor * 150}")
 
         # impostazione dimensione schermi e rapporti
         self.w_screen: int = int(screen_info.current_w * scale_factor)
