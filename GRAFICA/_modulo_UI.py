@@ -96,8 +96,33 @@ class UI:
         self.costruttore.scene["main"].disegna_scena(self.logica)
 
         self.cpu_sample: list[int] = [0 for i in range(100)]
+        
+        
+        # Icon and window title
+        pygame.display.set_icon(pygame.image.load("TEXTURES/desktopp.ico"))
+        pygame.display.set_caption("POMOSHNIK")
+
+        hwnd = pygame.display.get_wm_info()["window"]
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(ctypes.c_int(1)), 4)
+        self.cambio_opacit()
 
     
+    def cambio_opacit(self) -> None:
+        '''
+        Modifica l'opacità della finestra principale
+        '''
+        # Get the window handle using GetActiveWindow
+        hwnd = ctypes.windll.user32.GetActiveWindow()
+
+        # Set the window style to allow transparency
+        win32style = ctypes.windll.user32.GetWindowLongW(hwnd, ctypes.c_int(-20))  # -20 corresponds to GWL_EXSTYLE
+        ctypes.windll.user32.SetWindowLongW(hwnd, ctypes.c_int(-20), ctypes.c_long(win32style | 0x80000))  # 0x80000 corresponds to WS_EX_LAYERED
+
+        # Set the opacity level
+        ctypes.windll.user32.SetLayeredWindowAttributes(hwnd, 0, int(255 * 0.95), 2)  # 0x000000 corresponds to color key
+
+
+
     def go_fullscreen(self):
         self.MAIN = pygame.display.set_mode((self.w_screen, self.h_screen), pygame.FULLSCREEN)
         self.fullscreen = True
