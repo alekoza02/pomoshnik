@@ -1,16 +1,20 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter 
 from MATEMATICA._modulo_mate_utils import MateUtils
-from rdkit import Chem
 from numba import njit
-from rdkit.Chem import AllChem
-from rdkit.Chem import Draw
-from rdkit.Chem import rdChemReactions as Reactions
-from rdkit import RDLogger
 import os
 from scipy.optimize import curve_fit
 
-RDLogger.DisableLog('rdApp.*') 
+from config import IS_WINDOWS, IS_LINUX
+
+if IS_WINDOWS:
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+    from rdkit.Chem import Draw
+    from rdkit.Chem import rdChemReactions as Reactions
+    from rdkit import RDLogger
+
+# RDLogger.DisableLog('rdApp.*') 
 
 
 NON_ESEGUIRE = False
@@ -2599,6 +2603,10 @@ class PomoPlot:
         divisore : str, optional
             Divisore delle colonne all'interno del file. Se non specificato, lo cerca di ricavare in autonomia, by default None
         """
+
+        if IS_LINUX and type(path) == tuple:
+            return 
+
         self.data_path = path
         self.divisore = divisore
         
@@ -2606,7 +2614,7 @@ class PomoPlot:
             for new_path in [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]:
                 self.import_plot_data(new_path, divisore, separatore_decimale, image, retry_on_fail)
             return
-        
+
 
         # strange format types (.tif)
         if self.data_path.endswith((".tif", ".tiff")):

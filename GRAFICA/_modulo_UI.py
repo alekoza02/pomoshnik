@@ -12,6 +12,8 @@ from time import strftime
 from GRAFICA._modulo_event_manager import EventManager
 from GRAFICA._modulo_costruttore_scene import Costruttore
 
+from config import IS_WINDOWS, IS_LINUX
+
 
 class Logica:
     def __init__(self) -> None:
@@ -99,12 +101,13 @@ class UI:
         
         
         # Icon and window title
-        pygame.display.set_icon(pygame.image.load("TEXTURES/desktopp.ico"))
-        pygame.display.set_caption("POMOSHNIK")
+        if IS_WINDOWS:
+            pygame.display.set_icon(pygame.image.load("TEXTURES/desktopp.ico"))
+            pygame.display.set_caption("POMOSHNIK")
 
-        hwnd = pygame.display.get_wm_info()["window"]
-        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(ctypes.c_int(1)), 4)
-        self.cambio_opacit()
+            hwnd = pygame.display.get_wm_info()["window"]
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(ctypes.c_int(1)), 4)
+            self.cambio_opacit()
 
     
     def cambio_opacit(self) -> None:
@@ -136,9 +139,14 @@ class UI:
     def init_screen_data(self):
         
         # DPI aware
-        ctypes.windll.user32.SetProcessDPIAware()
+        
+        if IS_WINDOWS:
+            ctypes.windll.user32.SetProcessDPIAware()
+            scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+        else:
+            scale_factor = 1
+
         screen_info = pygame.display.Info()
-        scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
         # print(f"DPI schermo: {scale_factor * 150}")
 
         # impostazione dimensione schermi e rapporti
@@ -320,7 +328,7 @@ class UI:
                 case 10: simbolo_corretto = "󰂅" if battery.power_plugged else "󰁹";  # 100%
 
 
-            self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\h{ " + f"{simbolo_corretto} {battery.percent:>3}%" + " }")
+            self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\h{ " + f"{simbolo_corretto} {int(battery.percent):>3}%" + " }")
 
             if battery.percent < 20 and battery.percent >= 10:
                 self.costruttore.scene["main"].context_menu["main"].elements["battery"].change_text(r"\#ffdd60{" + self.costruttore.scene["main"].context_menu["main"].elements["battery"].testo + "}")
