@@ -233,7 +233,7 @@ class Costruttore:
         s.context_menu["item3"].add_window("wind1", Collapsable_Window(x="1%w", y="10px", w="98%w", h="270px", anchor="lu", bg=[20, 20, 20], text="Labels text", closed=1))
         s.context_menu["item3"].add_window("wind2", Collapsable_Window(w="98%w", h="250px", anchor=("lu ld (0px) (10px)", s.context_menu["item3"].windows["wind1"]), bg=[20, 20, 20], text="Font", closed=1))
         s.context_menu["item3"].add_window("wind3", Collapsable_Window(w="98%w", h="320px", anchor=("lu ld (0px) (10px)", s.context_menu["item3"].windows["wind2"]), bg=[20, 20, 20], text="Text colors", closed=1))
-        s.context_menu["item3"].add_window("wind4", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item3"].windows["wind3"]), bg=[20, 20, 20], text="Projection labels", closed=1))
+        s.context_menu["item3"].add_window("wind4", Collapsable_Window(w="98%w", h="280px", anchor=("lu ld (0px) (10px)", s.context_menu["item3"].windows["wind3"]), bg=[20, 20, 20], text="Projection labels", closed=1))
         
         s.context_menu["item3"].add_element("text_title", Entrata("20%w", "100px", "lu", "75%w", "30px", text=self.settings.text_title, title="Title", tooltip="Imposta il titolo del grafico.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
         s.context_menu["item3"].add_element("text_label_x", Entrata("20%w", "150px", "lu", "75%w", "30px", text=self.settings.text_label_x, title="Label X", tooltip="Imposta il label dell'asse X.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
@@ -252,6 +252,8 @@ class Costruttore:
         
         s.context_menu["item3"].add_element("show_coords_projection", Bottone_Toggle("95%w", "950px", "ru", "30px", "30px", text="Mostra proiezione coords", state=True, type_checkbox=True, text_on_right=False, tooltip="Mostra la proiezione del punto selezionato sull'asse X con un linea verticale."), window="wind4")
         s.context_menu["item3"].add_element("show_coords_value", Bottone_Toggle("95%w", "990px", "ru", "30px", "30px", text="Mostra valore coords", state=True, type_checkbox=True, text_on_right=False, tooltip="Mostra il valore della coordinata del punto selezionato.\n\\#777777{Attenzione: per modificare l'arrotondamento di uno dei valori, modifica l'approssimazione di quel determinato asse.}"), window="wind4")
+        s.context_menu["item3"].add_element("toggle_coordinate_x", Bottone_Toggle("95%w", "1050px", "ru", "30px", "30px", text="Mostra coord. X", state=True, type_checkbox=True, text_on_right=False, tooltip="Mostra la coordinata X del punto selezionato.\n\\#777777{Attenzione: per modificare l'arrotondamento di uno dei valori, modifica l'approssimazione di quel determinato asse.}"), window="wind4")
+        s.context_menu["item3"].add_element("toggle_coordinate_y", Bottone_Toggle("95%w", "1090px", "ru", "30px", "30px", text="Mostra coord. Y", state=True, type_checkbox=True, text_on_right=False, tooltip="Mostra la coordinata Y del punto selezionato.\n\\#777777{Attenzione: per modificare l'arrotondamento di uno dei valori, modifica l'approssimazione di quel determinato asse.}"), window="wind4")
         # # ITEM 3 AX LABELS -----------------------------------------------
         
 

@@ -198,6 +198,9 @@ class PomoPlot:
 
         self.UI_show_coords_projection: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["show_coords_projection"]
         self.UI_show_coords_value: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["show_coords_value"]
+        
+        self.UI_show_coords_X: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["toggle_coordinate_x"]
+        self.UI_show_coords_Y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["toggle_coordinate_y"]
 
         self.UI_second_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["second_y_axis"]
         self.UI_invert_x_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["invert_x_axis"]
@@ -392,6 +395,9 @@ class PomoPlot:
         
         self.show_coords_projection = self.UI_show_coords_projection.state_toggle
         self.show_coords_value = self.UI_show_coords_value.state_toggle
+
+        self.show_coords_X = self.UI_show_coords_X.state_toggle
+        self.show_coords_Y = self.UI_show_coords_Y.state_toggle
 
         self.round_ticks_x = self.UI_round_ticks_x.get_text()
         self.round_ticks_y = self.UI_round_ticks_y.get_text()
@@ -1955,7 +1961,8 @@ class PomoPlot:
                     coords = [[plot.data2plot[index, 0], plot.data2plot[index, 1] - (13 * self.scale_factor_viewport + plot.scatter_width)] for index in plot.display_coords]
                     
                     if self.show_coords_value:
-                        text = [f"({plot.data[index, 0]:.{self.round_ticks_x}f}, {plot.data[index, 1]:.{self.round_ticks_y}f})" for index in plot.display_coords]
+                        use_par = self.show_coords_Y and self.show_coords_X
+                        text = [f"{"(" if use_par else ""}{f'{plot.data[index, 0]:.{self.round_ticks_x}f}' if self.show_coords_X else ""}{", " if use_par else ""}{f'{plot.data[index, 1]:.{self.round_ticks_y}f}' if self.show_coords_Y else ""}{")" if use_par else ""}" for index in plot.display_coords]
                         self.screen._add_text(text, coords, anchor=["cd" for i in plot.display_coords], size=1 * self.scale_factor_viewport, color=[self.label_title_color for i in plot.display_coords], rotation=[0 for i in plot.display_coords])
                     
                     if self.show_coords_projection:
