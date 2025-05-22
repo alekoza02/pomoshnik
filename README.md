@@ -6,10 +6,7 @@ Some examples of plots done using the Pomoshnik:
 ![example2](PLOTS/examples/example3.png)
 ![example3](PLOTS/examples/example8.png)
 ![example4](PLOTS/examples/example1.png)
+![example4](PLOTS/examples/example9.png)
 ![example5](PLOTS/examples/example2.png)
 ![example6](PLOTS/examples/example4.png)
 ![example7](PLOTS/examples/example7.png)
-
-New tools are being developed to unify the workflow:
-
-![example7](PLOTS/examples/example5.png)

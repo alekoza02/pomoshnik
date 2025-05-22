@@ -184,6 +184,7 @@ class Costruttore:
         s.context_menu["item2"].add_window("wind2", Collapsable_Window(w="98%w", h="320px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind1"]), bg=[20, 20, 20], text="Function settings", closed=1))
         s.context_menu["item2"].add_window("wind3", Collapsable_Window(w="98%w", h="200px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind2"]), bg=[20, 20, 20], text="Gradient", closed=1))
         s.context_menu["item2"].add_window("wind4", Collapsable_Window(w="98%w", h="150px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind3"]), bg=[20, 20, 20], text="Column selection", closed=1))
+        s.context_menu["item2"].add_window("wind5", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind4"]), bg=[20, 20, 20], text="Scale / convert", closed=1))
     
 
         s.context_menu["item2"].add_element("scatter_size", Entrata("55%w", "225px", "lu", "10%w", "30px", text=self.settings.scatter_size, title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50, tooltip="Imposta la dimensione dei pallini. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 50} | Std: 4}"), window="wind1")
@@ -202,11 +203,14 @@ class Costruttore:
         s.context_menu["item2"].add_element("gradient", Bottone_Toggle("40%w", "770px", "ru", "30px", "30px", 0, text="Gradient", text_on_right=0, tooltip="Abilita la visualizzazione del gradiente dell'area sottostante. \n\\#dc143c{Quest'opzione è molto pesante!} \\#777777{Considera di accenderla solo prima di renderizzare l'immagine}"), window="wind3")
         s.context_menu["item2"].add_element("grad_mode", RadioButton("90%w", "770px", "ru", "35%w", "80px", axis="y", cb_n=2, cb_s=[0, 1], cb_t=["Horizontal", "Vertical"], cb_tooltips=["Imposta il tipo di gradiente in: ORIZZONTALE. Più il valore Y si avvicina a 0, più il colore tende al trasparente.\n\\#777777{Nel caso di più plot con gradiente ORIZZONTALE attivo, solo il gradiente dell'ultimo grafico sarà renderizzato.}", "Imposta il tipo di gradiente in: VERTICALE. Più il \\DeltaY si avvicina a 0, più il colore tende al trasparente.\n\\#777777{Nel caso di più plot con gradiente VERTICALE attivo, è possibile sovrapporre aree più piccole su quelle più grandi.}"], type_checkbox=False, w_button="35%w", h_button="40px"), window="wind3")
         
-        s.context_menu["item2"].add_element("add_second_axis", Bottone_Toggle(w="30px", h="30px", anchor=("lu ld (10px) (30px)", s.context_menu["item2"].windows["wind4"]), state=0, text="Add to the second Y axis", tooltip="Aggiunge il plot al buffer di plot da renderizzare usando la scala del secondo asse Y.\n\\#ffaa00{NOTA: Necessario abilitare 'Toggle 2° Y axis' per vedere l'effetto.}"))
-        
         s.context_menu["item2"].add_element("column_x", Entrata("25%w", "970px", "cu", "5.5%w", "30px", text="0", title="X column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101, tooltip="Imposta la colonna selezionata di dati come valori X da riportare nel grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 101} | Std: 0}\n\\#777777{Valore massimo riportabile è il numero di colonne nel file.} \\#dc143c{TUTTI e 3 valori DEVONO essere diversi.}"), window="wind4")
         s.context_menu["item2"].add_element("column_y", Entrata("60%w", "970px", "cu", "5.5%w", "30px", text="0", title="Y column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101, tooltip="Imposta la colonna selezionata di dati come valori Y da riportare nel grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 101} | Std: 1}\n\\#777777{Valore massimo riportabile è il numero di colonne nel file.} \\#dc143c{TUTTI e 3 valori DEVONO essere diversi.}"), window="wind4")
         s.context_menu["item2"].add_element("column_ey", Entrata("95%w", "970px", "cu", "5.5%w", "30px", text="0", title="Ey column", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=101, tooltip="Imposta la colonna selezionata di dati come errori di Y da riportare nel grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 101} | Std: 2}\n\\#777777{Valore massimo riportabile è il numero di colonne nel file.} \\#dc143c{TUTTI e 3 valori DEVONO essere diversi.}"), window="wind4")
+
+        s.context_menu["item2"].add_element("conversion_column", Entrata("75%w", "1130px", "lu", "20%w", "30px", text="0", title="Column to convert", num_valore_minimo=0, num_valore_massimo=999, lunghezza_max=4, solo_numeri=True, tooltip="Selezione la colonna interessata ad esser scalata / modificata. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 9999} | Std: 0}"), window="wind5")
+        s.context_menu["item2"].add_element("conversion_expression", Entrata("27%w", "1165px", "lu", "68%w", "30px", text="x = x", title="Expression:", tooltip="Imposta l'espressione di conversione. Utilizza la 'x' come variabile.\n\\#777777{Esempio 'x = x' non modifica nulla, 'x = x * 2' raddoppia tutti i valori.}"), window="wind5")
+        
+        s.context_menu["item2"].add_element("add_second_axis", Bottone_Toggle(w="30px", h="30px", anchor=("lu ld (10px) (30px)", s.context_menu["item2"].windows["wind5"]), state=0, text="Add to the second Y axis", tooltip="Aggiunge il plot al buffer di plot da renderizzare usando la scala del secondo asse Y.\n\\#ffaa00{NOTA: Necessario abilitare 'Toggle 2° Y axis' per vedere l'effetto.}"))
 
         ################
 
@@ -293,7 +297,7 @@ class Costruttore:
         
         s.context_menu["item4"].add_element("offset_x_label_y", Entrata("75%w", "1330px", "lu", "20%w", "30px", text="45", title="Offset Y of ticks X axis:", lunghezza_max=4, solo_numeri=True, tooltip="Imposta un offset in pixel della posizione dei tick label dell'asse X in verticale. \\i{\\#aaffaa{Min: -999} | \\#ffaaaa{Max: 9999} | Std: 45}"), window="wind6")
         s.context_menu["item4"].add_element("offset_y_label_x", Entrata("75%w", "1365px", "lu", "20%w", "30px", text="-27", title="Offset X of ticks Y axis:", lunghezza_max=4, solo_numeri=True, tooltip="Imposta un offset in pixel della posizione dei tick label dell'asse Y in orizzontale. \\i{\\#aaffaa{Min: -999} | \\#ffaaaa{Max: 9999} | Std: -27}"), window="wind6")
-        
+
         s.context_menu["item4"].add_element("size_ticks", Entrata("75%w", "1520px", "lu", "20%w", "30px", text="1.5", title="Font size ticks Y axis:", lunghezza_max=4, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=3, tooltip="Imposta la dimensione del font dei tick label. Viene usata una scala custom. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 3} | Std: 1.5}"), window="wind7")
         # # ITEM 4 AXES ----------------------------------------------------
 

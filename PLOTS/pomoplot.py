@@ -4,6 +4,7 @@ from MATEMATICA._modulo_mate_utils import MateUtils
 from numba import njit
 import os
 from scipy.optimize import curve_fit
+from copy import deepcopy
 
 from config import IS_WINDOWS, IS_LINUX
 
@@ -180,6 +181,9 @@ class PomoPlot:
         self.UI_gradient: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["gradient"]
         self.UI_grad_mode: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item2"].elements["grad_mode"]
 
+        self.UI_conversion_column: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["conversion_column"]
+        self.UI_conversion_expression: 'Entrata' = UI.costruttore.scene["main"].context_menu["item2"].elements["conversion_expression"]
+
         self.UI_add_second_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["add_second_axis"]
         
         self.UI_font_size_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_title"]
@@ -351,6 +355,15 @@ class PomoPlot:
         self.column_y = self.UI_column_y.get_text()
         self.column_ey = self.UI_column_ey.get_text()
         
+        try:
+            if self.conversion_column != self.UI_conversion_column.get_text():
+                self.UI_conversion_expression.change_text(f"{self.active_plot.scales[int(self.UI_conversion_column.get_text())]}")
+        except AttributeError:
+            ...
+
+        self.conversion_column = self.UI_conversion_column.get_text()
+        self.conversion_expression = self.UI_conversion_expression.get_text()
+        
         self.spacing_x = self.UI_spacing_x.get_text()
         self.spacing_y = self.UI_spacing_y.get_text()
         
@@ -496,6 +509,7 @@ class PomoPlot:
                         self.UI_column_x.change_text(f"{self.active_plot.column_x}")
                         self.UI_column_y.change_text(f"{self.active_plot.column_y}")
                         self.UI_column_ey.change_text(f"{self.active_plot.column_ey}")
+                        self.UI_conversion_expression.change_text(f"{self.active_plot.scales[int(self.conversion_column)]}")
                         self.UI_scatter_toggle.state_toggle = self.active_plot.scatter
                         self.UI_function_toggle.state_toggle = self.active_plot.function
                         self.UI_dashed_toggle.state_toggle = self.active_plot.dashed
@@ -546,6 +560,7 @@ class PomoPlot:
                 self.active_plot.nome = self.plot_name
                 self.active_plot.gradiente = self.gradient
                 self.active_plot.second_ax = self.add_second_axis
+                self.active_plot.scales[int(self.conversion_column)] = self.conversion_expression
             
                 try:
                     mode_grad = [i for i, ele in enumerate(self.grad_mode.cb_s) if ele][0]
@@ -2076,7 +2091,7 @@ class PomoPlot:
             if status and self.plot_mode == 0:
 
                 try:
-                    plot.data2plot = plot.data.copy()
+                    plot.data2plot = plot.transformed_data.copy()
 
                     if sum(self.norma_perc.buttons_state) > 0:
                         plot.data2plot[:, plot.column_y] -= np.min(plot.data2plot[:, plot.column_y])
@@ -2353,6 +2368,32 @@ class PomoPlot:
         )
 
 
+    def _apply_column_conversion(self, plot):
+        
+        indices = [plot.column_x, plot.column_y, plot.column_ey] if plot.errorbar else [plot.column_x, plot.column_y]
+        plot.transformed_data = deepcopy(plot.data)
+
+        for active_index in indices:
+            x = plot.data[:, active_index]
+            expression = plot.scales[active_index]
+
+            local_env = {'x': x, 'np': np}
+            try:
+                exec(expression, {}, local_env)
+                self.UI_conversion_expression.color_text = np.array([200, 200, 200])
+            except:
+                self.UI_conversion_expression.color_text = np.array([255, 0, 0])
+    
+            
+            x = local_env['x']
+
+            x[np.isnan(x)] = 0.0
+            x[np.isinf(x)] = 0.0
+
+            plot.transformed_data[:, active_index] = x
+            
+
+
     def _get_native_data_bounds(self):
         self.spazio_coordinate_native = np.array([1e38, 1e38, -1e38, -1e38, 1e38, -1e38]) # Xmin, Ymin, Xmax, Ymax, 2Ymin, 2Ymax
         
@@ -2360,42 +2401,43 @@ class PomoPlot:
         for plot, status in zip(self.plots, self.scroll_plots.ele_mask):
 
             try:
-
+                self._apply_column_conversion(plot)
+                
                 if status and self.plot_mode == 0 and not plot.second_ax:
                     at_least_one = True
 
                     if plot.errorbar and plot.data.shape[1] > 2:
 
                         # trova le coordinate minime tra tutti i grafici + errori
-                        self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.data[:, plot.column_x]))
-                        self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(plot.data[:, plot.column_y] - plot.data[:, plot.column_ey]))
-                        self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, plot.column_x]))
-                        self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.data[:, plot.column_y] + plot.data[:, plot.column_ey]))
+                        self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.transformed_data[:, plot.column_x]))
+                        self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(plot.transformed_data[:, plot.column_y] - plot.transformed_data[:, plot.column_ey]))
+                        self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.transformed_data[:, plot.column_x]))
+                        self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.transformed_data[:, plot.column_y] + plot.transformed_data[:, plot.column_ey]))
 
                     else:
                         # trova le coordinate minime tra tutti i grafici
-                        self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.data[:, plot.column_x]))
-                        self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(plot.data[:, plot.column_y]))
-                        self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, plot.column_x]))
-                        self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.data[:, plot.column_y]))
+                        self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.transformed_data[:, plot.column_x]))
+                        self.spazio_coordinate_native[1] = np.minimum(self.spazio_coordinate_native[1], np.min(plot.transformed_data[:, plot.column_y]))
+                        self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.transformed_data[:, plot.column_x]))
+                        self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], np.max(plot.transformed_data[:, plot.column_y]))
                 
                 elif status and self.plot_mode == 0 and plot.second_ax:
                     at_least_one = True
 
-                    if plot.errorbar and plot.data.shape[1] > 2:
+                    if plot.errorbar and plot.transformed_data.shape[1] > 2:
 
                         # trova le coordinate minime tra tutti i grafici + errori
-                        self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.data[:, plot.column_x]))
-                        self.spazio_coordinate_native[4] = np.minimum(self.spazio_coordinate_native[4], np.min(plot.data[:, plot.column_y] - plot.data[:, plot.column_ey]))
-                        self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, plot.column_x]))
-                        self.spazio_coordinate_native[5] = np.maximum(self.spazio_coordinate_native[5], np.max(plot.data[:, plot.column_y] + plot.data[:, plot.column_ey]))
+                        self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.transformed_data[:, plot.column_x]))
+                        self.spazio_coordinate_native[4] = np.minimum(self.spazio_coordinate_native[4], np.min(plot.transformed_data[:, plot.column_y] - plot.transformed_data[:, plot.column_ey]))
+                        self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.transformed_data[:, plot.column_x]))
+                        self.spazio_coordinate_native[5] = np.maximum(self.spazio_coordinate_native[5], np.max(plot.transformed_data[:, plot.column_y] + plot.transformed_data[:, plot.column_ey]))
 
                     else:
                         # trova le coordinate minime tra tutti i grafici
-                        self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.data[:, plot.column_x]))
-                        self.spazio_coordinate_native[4] = np.minimum(self.spazio_coordinate_native[4], np.min(plot.data[:, plot.column_y]))
-                        self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.data[:, plot.column_x]))
-                        self.spazio_coordinate_native[5] = np.maximum(self.spazio_coordinate_native[5], np.max(plot.data[:, plot.column_y]))
+                        self.spazio_coordinate_native[0] = np.minimum(self.spazio_coordinate_native[0], np.min(plot.transformed_data[:, plot.column_x]))
+                        self.spazio_coordinate_native[4] = np.minimum(self.spazio_coordinate_native[4], np.min(plot.transformed_data[:, plot.column_y]))
+                        self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], np.max(plot.transformed_data[:, plot.column_x]))
+                        self.spazio_coordinate_native[5] = np.maximum(self.spazio_coordinate_native[5], np.max(plot.transformed_data[:, plot.column_y]))
 
                 elif status and self.plot_mode == 1:
                     at_least_one = True
@@ -2406,8 +2448,8 @@ class PomoPlot:
                     self.spazio_coordinate_native[2] = np.maximum(self.spazio_coordinate_native[2], plot.max_x) * plot.spacing_x
                     self.spazio_coordinate_native[3] = np.maximum(self.spazio_coordinate_native[3], plot.max_y) * plot.spacing_y
 
-            except IndexError:
-                ...
+            except IndexError as e:
+                print(e)
 
 
         if self.invert_x_axis and self.plot_mode == 0:                    
@@ -2463,7 +2505,7 @@ class PomoPlot:
                 self.spazio_coordinate_native[3] += plot.spacing_y / 2
 
                 if self.mantain_proportions:
-                    dimensioni = plot.data.shape
+                    dimensioni = plot.transformed_data.shape
 
                     if self.zoom_boundaries[1] < 0:
                         self.zoom_boundaries[1] = 0
@@ -2479,7 +2521,7 @@ class PomoPlot:
                     indice_fine_x = dimensioni[0] * self.zoom_boundaries[2]
                     indice_fine_y = dimensioni[1] * (1 - self.zoom_boundaries[1])
                         
-                    fa = plot.data[int(indice_inizio_x) : int(indice_fine_x), int(indice_inizio_y) : int(indice_fine_y), :]
+                    fa = plot.transformed_data[int(indice_inizio_x) : int(indice_fine_x), int(indice_inizio_y) : int(indice_fine_y), :]
 
                     delta_x = np.max(fa[:, :, 0]) - np.min(fa[:, :, 0])
                     delta_y = np.max(fa[:, :, 1]) - np.min(fa[:, :, 1])
@@ -2812,6 +2854,10 @@ class _Single1DPlot:
 
         self.data = data
 
+        self.channels = np.shape(self.data)[1]
+        self.scales = ["x = x * 10" for i in range(self.channels)]
+
+        self.transformed_data = None
         self.data2plot: np.ndarray[float] = None
 
         self.column_x = 0
