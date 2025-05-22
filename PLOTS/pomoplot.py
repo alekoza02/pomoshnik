@@ -202,6 +202,7 @@ class PomoPlot:
         self.UI_show_coords_X: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["toggle_coordinate_x"]
         self.UI_show_coords_Y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["toggle_coordinate_y"]
 
+        self.UI_first_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["first_y_axis"]
         self.UI_second_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["second_y_axis"]
         self.UI_invert_x_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["invert_x_axis"]
         self.UI_round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_x"]
@@ -339,6 +340,7 @@ class PomoPlot:
         
         self.overlap = self.UI_overlap.state_toggle
         
+        self.first_y_axis = self.UI_first_y_axis.state_toggle
         self.second_y_axis = self.UI_second_y_axis.state_toggle
         self.invert_x_axis = self.UI_invert_x_axis.state_toggle
 
@@ -1787,8 +1789,9 @@ class PomoPlot:
         if self.labels[1].font_size_update != float(new_dim_x) * self.scale_factor_viewport:
             self.labels[1].change_font_size(float(new_dim_x) * self.scale_factor_viewport)
     
-        if self.labels[2].font_size_update != float(new_dim_y) * self.scale_factor_viewport:
-            self.labels[2].change_font_size(float(new_dim_y) * self.scale_factor_viewport)
+        if self.first_y_axis:
+            if self.labels[2].font_size_update != float(new_dim_y) * self.scale_factor_viewport:
+                self.labels[2].change_font_size(float(new_dim_y) * self.scale_factor_viewport)
         
         if self.second_y_axis:
             if self.labels[3].font_size_update != float(new_dim_2y) * self.scale_factor_viewport:
@@ -1807,10 +1810,11 @@ class PomoPlot:
         self.labels[1].disegnami(logica, 0, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
         # Y label
-        self.labels[2].change_text(f"{self.text_label_y}")
-        self.labels[2].recalc_geometry(f"{self.screen.x}px", f"{self.screen.y + self.max_plot_square[1] + self.max_plot_square[3] / 2 - self.labels[2].font.font_pyg_r.size(self.labels[2].testo_diplayed[0])[0] / 2}px", new_w="-*w", new_h="-*h", anchor_point="lu")
-        self.labels[2].color_text = self.label_y_color
-        self.labels[2].disegnami(logica, 90, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
+        if self.first_y_axis:
+            self.labels[2].change_text(f"{self.text_label_y}")
+            self.labels[2].recalc_geometry(f"{self.screen.x}px", f"{self.screen.y + self.max_plot_square[1] + self.max_plot_square[3] / 2 - self.labels[2].font.font_pyg_r.size(self.labels[2].testo_diplayed[0])[0] / 2}px", new_w="-*w", new_h="-*h", anchor_point="lu")
+            self.labels[2].color_text = self.label_y_color
+            self.labels[2].disegnami(logica, 90, self.screen.tavolozza, DANG_offset_x=-self.screen.x, DANG_offset_y=-self.screen.y)
         
         # 2Y label
         if self.second_y_axis:
@@ -1864,16 +1868,17 @@ class PomoPlot:
             labels_info_rotation.append(0)
 
 
-        for index, coord in enumerate(self.coords_of_ticks[1]):
-            if self.show_grid_y:
-                self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_y, self.scale_factor_viewport)
-            self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_y, 4 * self.scale_factor_viewport)
+        if self.first_y_axis:
+            for index, coord in enumerate(self.coords_of_ticks[1]):
+                if self.show_grid_y:
+                    self.screen._add_line([[coords[0], coord], [coords[2], coord]], self.ax_color_y, self.scale_factor_viewport)
+                self.screen._add_line([[coords[0], coord], [coords[0] - self.pixel_len_subdivisions * self.scale_factor_viewport, coord]], self.ax_color_y, 4 * self.scale_factor_viewport)
 
-            labels_info_text.append(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y}{formattatore_y}}")
-            labels_info_pos.append([coords[0] + float(self.offset_ticks_ax_x) * self.scale_factor_viewport, coord])
-            labels_info_anchor.append("rc")
-            labels_info_color.append(self.tick_color_y)
-            labels_info_rotation.append(0)
+                labels_info_text.append(f"{self.value_of_ticks[1][index]:.{self.round_ticks_y}{formattatore_y}}")
+                labels_info_pos.append([coords[0] + float(self.offset_ticks_ax_x) * self.scale_factor_viewport, coord])
+                labels_info_anchor.append("rc")
+                labels_info_color.append(self.tick_color_y)
+                labels_info_rotation.append(0)
         
 
         if self.second_y_axis and self.plot_mode == 0:
@@ -1905,7 +1910,8 @@ class PomoPlot:
 
 
         # si posizione sull'area del plot e setta un offset pari a self.offset_x_label o self.offset_y_label
-        self.screen._add_line([[coords[0] - self.offset_x_label, coords[1]], [coords[0] - self.offset_x_label, coords[3]]], self.ax_color_y, 4 * self.scale_factor_viewport)
+        if self.first_y_axis:
+            self.screen._add_line([[coords[0] - self.offset_x_label, coords[1]], [coords[0] - self.offset_x_label, coords[3]]], self.ax_color_y, 4 * self.scale_factor_viewport)
         self.screen._add_line([[coords[0], coords[3] + self.offset_y_label], [coords[2], coords[3] + self.offset_y_label]], self.ax_color_x, 4 * self.scale_factor_viewport)
     
                     
