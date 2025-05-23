@@ -362,7 +362,7 @@ class PomoPlot:
             ...
 
         self.conversion_column = self.UI_conversion_column.get_text()
-        self.conversion_expression = self.UI_conversion_expression.get_text()
+        self.conversion_expression = self.UI_conversion_expression.get_text(real_time=True)
         
         self.spacing_x = self.UI_spacing_x.get_text()
         self.spacing_y = self.UI_spacing_y.get_text()
@@ -2381,17 +2381,15 @@ class PomoPlot:
             try:
                 exec(expression, {}, local_env)
                 self.UI_conversion_expression.color_text = np.array([200, 200, 200])
+                x = local_env['x']
+
+                x[np.isnan(x)] = 0.0
+                x[np.isinf(x)] = 0.0
+
+                plot.transformed_data[:, active_index] = x
+            
             except:
                 self.UI_conversion_expression.color_text = np.array([255, 0, 0])
-    
-            
-            x = local_env['x']
-
-            x[np.isnan(x)] = 0.0
-            x[np.isinf(x)] = 0.0
-
-            plot.transformed_data[:, active_index] = x
-            
 
 
     def _get_native_data_bounds(self):
@@ -2855,7 +2853,7 @@ class _Single1DPlot:
         self.data = data
 
         self.channels = np.shape(self.data)[1]
-        self.scales = ["x = x * 10" for i in range(self.channels)]
+        self.scales = ["x = x" for i in range(self.channels)]
 
         self.transformed_data = None
         self.data2plot: np.ndarray[float] = None
