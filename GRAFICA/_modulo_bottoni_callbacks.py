@@ -37,7 +37,7 @@ class BottoniCallbacks:
     
 
     @staticmethod
-    def save_file(bottone: 'Bottone_Push', extension=".png"):
+    def save_image(bottone: 'Bottone_Push', extension=".png"):
         bottone.paths.append(filedialog.asksaveasfilename(title="Salva file", defaultextension=extension))
         
 

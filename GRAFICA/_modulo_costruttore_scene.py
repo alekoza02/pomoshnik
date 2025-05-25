@@ -335,7 +335,7 @@ class Costruttore:
 
         # # ITEM 7 EXPORT --------------------------------------------------
         s.context_menu["item7"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Export}"))
-        s.context_menu["item7"].add_element("save_single_plot", Bottone_Push("50%w", "80px", "cu", "70%w", "40px", function=self.bott_calls.save_file, text="Salva grafico", tooltip="Salva il grafico in formato .png\n\\#777777{La dimensione X viene fissata a 4000px, mentre la dimensione Y viene aggiustata per mantenere la scala.}"))
+        s.context_menu["item7"].add_element("save_single_plot", Bottone_Push("50%w", "80px", "cu", "70%w", "40px", function=self.bott_calls.save_image, text="Salva grafico", tooltip="Salva il grafico in formato .png\n\\#777777{La dimensione X viene fissata a 4000px, mentre la dimensione Y viene aggiustata per mantenere la scala.}"))
         # # ITEM 7 EXPORT --------------------------------------------------
 
 
