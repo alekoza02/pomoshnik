@@ -1,5 +1,5 @@
 {
-    "starting_tab": 4,
+    "starting_tab": 5,
     "x_plot_area": "0.05",
     "y_plot_area": "0.1",
     "w_plot_area": "0.9",
@@ -54,8 +54,8 @@
     "show_legend": false,
     "x_legend": 0.75,
     "y_legend": 0.3,
-    "font_size_legend": 48,
-    "blur_strenght": 6,
+    "font_size_legend": "48",
+    "blur_strenght": "6",
     "show_legend_background": false,
     "transparent_background": true,
     "show_icons": true,
