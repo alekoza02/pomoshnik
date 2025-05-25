@@ -2472,6 +2472,10 @@ class Slider(BaseElement):
         self.indicatore = Entrata(anchor=("lc rc (30px) (0)", self), w="-*w", h="-*h", title="", text=f"-------", lunghezza_max=6, solo_numeri=True, num_valore_minimo=min_value, num_valore_massimo=max_value, tooltip="Indicatore relativo al valore dello slider.")
 
 
+    def set_value(self, value):
+        self.value = float(value)
+
+
     def get_value(self):
         return (self.max_value - self.min_value) * self.value + self.min_value
 

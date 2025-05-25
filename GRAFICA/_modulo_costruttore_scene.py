@@ -19,22 +19,8 @@ class Colors:
 
 
 
-class SettingsProfile:
-    def __init__(self, filename=None):
-        if not filename is None:
-            import json
-            with open(filename, 'r') as f:
-                data = json.load(f)
-
-            # Set attributes dynamically
-            for key, value in data.items():
-                setattr(self, key, value)
-
-
 class Costruttore:
     def __init__(self, screen, width, height, font_size) -> None:
-
-        self.settings = SettingsProfile('GRAFICA/settings.json')
 
         # init_sound = pygame.mixer.Sound("./TEXTURES/AUDIO_SC2/Battlecruiser_Pissed04.ogg")
         # init_sound.play()
@@ -123,7 +109,9 @@ class Costruttore:
         s.context_menu["main"].add_element("cpu", Label_Text(anchor=("rd ld (-0.7%w) (0px)", s.context_menu["main"].elements["fps"]), w="-*w", h="-*h", text="." * 13))
 
 
-        s.context_menu["main"].add_element("exit", Bottone_Push(x="100%w", y="0px", w="50px", h="50px", anchor="ru", text="X", function=self.bott_calls.exit, tooltip="Esci dal programma. \\#aaffaa{Shortcut: ESC + SPACE}"))
+        s.context_menu["main"].add_element("exit", Bottone_Push(x="100%w", y="0px", w="40px", h="40px", anchor="ru", text="X", function=self.bott_calls.exit, tooltip="Esci dal programma. \\#aaffaa{Shortcut: ESC + SPACE}"))
+        s.context_menu["main"].add_element("open", Bottone_Push(x="0px", y="0px", w="3%w", h="40px", anchor="lu", text="Open", function=self.bott_calls.change_state, tooltip="Apre un file *.pomogale\\#aaffaa{Shortcut: CTRL + O}"))
+        s.context_menu["main"].add_element("save", Bottone_Push(x="3%w 5px", y="0px", w="3%w", h="40px", anchor="lu", text="Save", function=self.bott_calls.change_state, tooltip="Salva il tutto in un file *.pomogale\\#aaffaa{Shortcut: CTRL + S}"))
         
         # # ----------------------------------------------------------------------------------------------------
 
@@ -157,11 +145,11 @@ class Costruttore:
         
         s.context_menu["item1"].add_element("plot_mode", RadioButton("50%w", "120px", "cd", "35%w", "50px", "x", cb_n=2, cb_s=[1, 0], cb_t=["1D", "2D"], cb_tooltips=["Modifica la modalità di visualizzazione in 1D: \\i{y = f(x)}", "Modifica la modalità di visualizzazione in 2D: \\i{immagine}"], w_button="17.5%w", h_button="50px", type_checkbox=False, always_one_active=True))
         
-        s.context_menu["item1"].add_element("w_plot_area", Entrata("75%w", "220px", "lu", "20%w", "30px", text=self.settings.w_plot_area, title="larghezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999, tooltip="Indica la larghezza massima occupata dal grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 1} | Std: 0.8}\n\\#777777{La larghezza massima è riferita alla dimensione del lato del quadrato massimo inscritto dentro alla zona di disegno.}"), window="wind1")
-        s.context_menu["item1"].add_element("h_plot_area", Entrata("75%w", "255px", "lu", "20%w", "30px", text=self.settings.h_plot_area, title="altezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999, tooltip="Indica l'altezza massima occupata dal grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 1} | Std: 0.8}\n\\#777777{L'altezza massima è riferita alla dimensione del lato del quadrato massimo inscritto dentro alla zona di disegno.}"), window="wind1")
+        s.context_menu["item1"].add_element("w_plot_area", Entrata("75%w", "220px", "lu", "20%w", "30px", text="0.975", title="larghezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999, tooltip="Indica la larghezza massima occupata dal grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 1} | Std: 0.8}\n\\#777777{La larghezza massima è riferita alla dimensione del lato del quadrato massimo inscritto dentro alla zona di disegno.}"), window="wind1")
+        s.context_menu["item1"].add_element("h_plot_area", Entrata("75%w", "255px", "lu", "20%w", "30px", text="0.8", title="altezza plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999, tooltip="Indica l'altezza massima occupata dal grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 1} | Std: 0.8}\n\\#777777{L'altezza massima è riferita alla dimensione del lato del quadrato massimo inscritto dentro alla zona di disegno.}"), window="wind1")
         s.context_menu["item1"].add_element("size_plot_area", Entrata("75%w", "220px", "lu", "20%w", "30px", text="0.8", title="dimensione plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999, tooltip="Indica la dimensione massima occupata dal grafico (proporzioni fissate). \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 1} | Std: 0.8}\n\\#777777{Il valore massimo è riferito alla dimensione del lato del quadrato massimo inscritto dentro alla zona di disegno.}"), window="wind1")
-        s.context_menu["item1"].add_element("x_plot_area", Entrata("75%w", "305px", "lu", "20%w", "30px", text=self.settings.x_plot_area, title="X plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999, tooltip="Indica la posizione X del lato superiore dal grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 1} | Std: 0.1}\n\\#777777{La posizione X massima è riferita alla dimensione del lato del quadrato massimo inscritto dentro alla zona di disegno.}"), window="wind1")
-        s.context_menu["item1"].add_element("y_plot_area", Entrata("75%w", "340px", "lu", "20%w", "30px", text=self.settings.y_plot_area, title="Y plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999, tooltip="Indica la posizione Y del lato sinistro dal grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 1} | Std: 0.15}\n\\#777777{La posizione Y massima è riferita alla dimensione del lato del quadrato massimo inscritto dentro alla zona di disegno.}"), window="wind1")
+        s.context_menu["item1"].add_element("x_plot_area", Entrata("75%w", "305px", "lu", "20%w", "30px", text="0.05", title="X plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999, tooltip="Indica la posizione X del lato superiore dal grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 1} | Std: 0.1}\n\\#777777{La posizione X massima è riferita alla dimensione del lato del quadrato massimo inscritto dentro alla zona di disegno.}"), window="wind1")
+        s.context_menu["item1"].add_element("y_plot_area", Entrata("75%w", "340px", "lu", "20%w", "30px", text="0.1", title="Y plot area", lunghezza_max=5, solo_numeri=True, num_valore_minimo=0.001, num_valore_massimo=0.999, tooltip="Indica la posizione Y del lato sinistro dal grafico. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 1} | Std: 0.15}\n\\#777777{La posizione Y massima è riferita alla dimensione del lato del quadrato massimo inscritto dentro alla zona di disegno.}"), window="wind1")
         
         s.context_menu["item1"].add_element("mantain_prop", Bottone_Toggle("25%w", "415px", "cc", "30px", "30px", False, True, "Mantain axis proportions", tooltip="Forza il mantenimento della scala 1:1 tra gli assi X e Y. \\i{Std: 0.15}\n\\#777777{Potrebbe essere necessario modificare lo spacing degli assi per vedere l'effetto.}"), window="wind1")
         
@@ -187,13 +175,13 @@ class Costruttore:
         s.context_menu["item2"].add_window("wind5", Collapsable_Window(w="98%w", h="180px", anchor=("lu ld (0px) (10px)", s.context_menu["item2"].windows["wind4"]), bg=[20, 20, 20], text="Scale / convert", closed=1))
     
 
-        s.context_menu["item2"].add_element("scatter_size", Entrata("55%w", "225px", "lu", "10%w", "30px", text=self.settings.scatter_size, title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50, tooltip="Imposta la dimensione dei pallini. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 50} | Std: 4}"), window="wind1")
+        s.context_menu["item2"].add_element("scatter_size", Entrata("55%w", "225px", "lu", "10%w", "30px", text="4", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=50, tooltip="Imposta la dimensione dei pallini. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 50} | Std: 4}"), window="wind1")
         s.context_menu["item2"].add_element("scatter_border", Entrata("95%w", "225px", "ru", "10%w", "30px", text="0", title="width", lunghezza_max=2, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=9, tooltip="Imposta lo spessore dei pallini. Questo genererà pallini sempre più sottili con numeri più piccoli. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 9} | Std: 0}\n\\#777777{Valore pari a 0 verrà interpretato come pallino pieno}"), window="wind1")
-        s.context_menu["item2"].add_element("function_size", Entrata("75%w", "450px", "lu", "10%w", "30px", text=self.settings.function_size, title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32, tooltip="Imposta la dimensione del tratto. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 32} | Std: 1}"), window="wind2")
+        s.context_menu["item2"].add_element("function_size", Entrata("75%w", "450px", "lu", "10%w", "30px", text="2", title="size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=1, num_valore_massimo=32, tooltip="Imposta la dimensione del tratto. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 32} | Std: 1}"), window="wind2")
         s.context_menu["item2"].add_element("dashed_density", Entrata("75%w", "550px", "lu", "10%w", "30px", text="21", title="N° traits", lunghezza_max=3, solo_numeri=True, num_valore_minimo=3, num_valore_massimo=101, tooltip="Imposta il numero di alternanze di tratteggio. \\i{\\#aaffaa{Min: 3} | \\#ffaaaa{Max: 101} | Std: 99}\n\\#777777{Consigliabile usare numeri dispari, numeri pari possono portare a comportamenti imprevedibili.}"), window="wind2")
 
-        s.context_menu["item2"].add_element("scatter_toggle", Bottone_Toggle("40%w", "225px", "ru", "30px", "30px", text="Toggle scatter", type_checkbox=True, text_on_right=False, state=self.settings.scatter_toggle, tooltip="Abilita la visualizzazione dei pallini nel plot attivo."), window="wind1")
-        s.context_menu["item2"].add_element("function_toggle", Bottone_Toggle("40%w", "450px", "ru", "30px", "30px", text="Toggle function", type_checkbox=True, text_on_right=False, state=self.settings.function_toggle, tooltip="Abilita la visualizzazione del tratto unico nel plot attivo."), window="wind2")
+        s.context_menu["item2"].add_element("scatter_toggle", Bottone_Toggle("40%w", "225px", "ru", "30px", "30px", text="Toggle scatter", type_checkbox=True, text_on_right=False, state=False, tooltip="Abilita la visualizzazione dei pallini nel plot attivo."), window="wind1")
+        s.context_menu["item2"].add_element("function_toggle", Bottone_Toggle("40%w", "450px", "ru", "30px", "30px", text="Toggle function", type_checkbox=True, text_on_right=False, state=True, tooltip="Abilita la visualizzazione del tratto unico nel plot attivo."), window="wind2")
         s.context_menu["item2"].add_element("errorbar", Bottone_Toggle("40%w", "500px", "ru", "30px", "30px", text="Toggle errors", type_checkbox=True, text_on_right=False, state=True, tooltip="Se il plot importato possiede \\b{ALMENO} 3 colonne di dati, abilita la visualizzazione delle barre di errori.\n\\#777777{Il bottone avrà un leggero colore rosso o verde. Questo indicherà se è presente la 3° colonna di dati o meno.}"), window="wind2")
         s.context_menu["item2"].add_element("dashed", Bottone_Toggle("40%w", "550px", "ru", "30px", "30px", text="Dashed line", type_checkbox=True, text_on_right=False, state=True, tooltip="Abilita la visualizzazione di una linea tratteggiata al posto del tratto continuo.\n\\#777777{Richiede 'Toggle function' abilitato per funzionare.}"), window="wind2")
         
@@ -239,15 +227,15 @@ class Costruttore:
         s.context_menu["item3"].add_window("wind3", Collapsable_Window(w="98%w", h="320px", anchor=("lu ld (0px) (10px)", s.context_menu["item3"].windows["wind2"]), bg=[20, 20, 20], text="Text colors", closed=1))
         s.context_menu["item3"].add_window("wind4", Collapsable_Window(w="98%w", h="280px", anchor=("lu ld (0px) (10px)", s.context_menu["item3"].windows["wind3"]), bg=[20, 20, 20], text="Projection labels", closed=1))
         
-        s.context_menu["item3"].add_element("text_title", Entrata("20%w", "100px", "lu", "75%w", "30px", text=self.settings.text_title, title="Title", tooltip="Imposta il titolo del grafico.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
-        s.context_menu["item3"].add_element("text_label_x", Entrata("20%w", "150px", "lu", "75%w", "30px", text=self.settings.text_label_x, title="Label X", tooltip="Imposta il label dell'asse X.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
-        s.context_menu["item3"].add_element("text_label_y", Entrata("20%w", "185px", "lu", "75%w", "30px", text=self.settings.text_label_y, title="Y", tooltip="Imposta il label dell'asse Y.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
-        s.context_menu["item3"].add_element("text_label_2y", Entrata("20%w", "220px", "lu", "75%w", "30px", text=self.settings.text_label_2y, title="2°Y", tooltip="Imposta il label del secondo asse Y.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
+        s.context_menu["item3"].add_element("text_title", Entrata("20%w", "100px", "lu", "75%w", "30px", text="Title", title="Title", tooltip="Imposta il titolo del grafico.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
+        s.context_menu["item3"].add_element("text_label_x", Entrata("20%w", "150px", "lu", "75%w", "30px", text="X axis", title="Label X", tooltip="Imposta il label dell'asse X.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
+        s.context_menu["item3"].add_element("text_label_y", Entrata("20%w", "185px", "lu", "75%w", "30px", text="Y axis", title="Y", tooltip="Imposta il label dell'asse Y.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
+        s.context_menu["item3"].add_element("text_label_2y", Entrata("20%w", "220px", "lu", "75%w", "30px", text="2Y axis", title="2°Y", tooltip="Imposta il label del secondo asse Y.\n\\#777777{Il testo sarà sempre centrato, per ulteriori impostazioni cercare più in basso.}"), window="wind1")
         
-        s.context_menu["item3"].add_element("font_size_title", Entrata("75%w", "355px", "lu", "20%w", "30px", text=self.settings.font_size_title, title="Title font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
-        s.context_menu["item3"].add_element("font_size_label_x", Entrata("75%w", "405px", "lu", "20%w", "30px", text=self.settings.font_size_label_x, title="Label font size X", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
-        s.context_menu["item3"].add_element("font_size_label_y", Entrata("75%w", "440px", "lu", "20%w", "30px", text=self.settings.font_size_label_y, title="Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
-        s.context_menu["item3"].add_element("font_size_label_2y", Entrata("75%w", "475px", "lu", "20%w", "30px", text=self.settings.font_size_label_2y, title="2°Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
+        s.context_menu["item3"].add_element("font_size_title", Entrata("75%w", "355px", "lu", "20%w", "30px", text="64", title="Title font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
+        s.context_menu["item3"].add_element("font_size_label_x", Entrata("75%w", "405px", "lu", "20%w", "30px", text="48", title="Label font size X", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
+        s.context_menu["item3"].add_element("font_size_label_y", Entrata("75%w", "440px", "lu", "20%w", "30px", text="48", title="Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
+        s.context_menu["item3"].add_element("font_size_label_2y", Entrata("75%w", "475px", "lu", "20%w", "30px", text="48", title="2°Y", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del carattere del label. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}"), window="wind2")
         
         s.context_menu["item3"].add_element("label_title_color", ColorPicker("50%w", "650px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore titolo", tooltip="Seleziona il colore della scritta del titolo."), window="wind3")
         s.context_menu["item3"].add_element("label_x_color", ColorPicker("50%w", "720px", "cc", "30%w", "40px", [255, 255, 255], bg=[50, 50, 50], text="Colore label X", tooltip="Seleziona il colore della scritta del label X."), window="wind3")
@@ -275,9 +263,9 @@ class Costruttore:
         s.context_menu["item4"].add_element("second_y_axis", Bottone_Toggle("50%w", "140px", "cd", "25%w", "50px", False, False, "2° Y axis", tooltip="Abilita la visualizzazione del secondo asse Y. Per i plot 2D abilita la barra di colore con i valori in Z.\n\\#777777{Per visualizzare un plot sul secondo asse, aggiungerlo nella sezione 'Impostazioni plot'}"), window="wind1")
         s.context_menu["item4"].add_element("invert_x_axis", Bottone_Toggle("80%w", "140px", "cd", "25%w", "50px", False, False, "Invert X", tooltip="Inverte la visualizzazione dell'asse X. Inverte sia la visualizzazione dei punti che il loro valore riportato."), window="wind1")
 
-        s.context_menu["item4"].add_element("round_x", Entrata("75%w", "250px", "lu", "20%w", "30px", text=self.settings.round_x, title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12, tooltip="Imposta l'approssimazione dopo la virgola dei valori relativi all'asse X. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 12} | Std: 2}"), window="wind2")
-        s.context_menu["item4"].add_element("round_y", Entrata("75%w", "285px", "lu", "20%w", "30px", text=self.settings.round_y, title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12, tooltip="Imposta l'approssimazione dopo la virgola dei valori relativi all'asse Y. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 12} | Std: 2}"), window="wind2")
-        s.context_menu["item4"].add_element("round_2y", Entrata("75%w", "320px", "lu", "20%w", "30px", text=self.settings.round_2y, title="2°Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12, tooltip="Imposta l'approssimazione dopo la virgola dei valori relativi al secondo asse Y. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 12} | Std: 2}"), window="wind2")
+        s.context_menu["item4"].add_element("round_x", Entrata("75%w", "250px", "lu", "20%w", "30px", text="0", title="Round ticks X:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12, tooltip="Imposta l'approssimazione dopo la virgola dei valori relativi all'asse X. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 12} | Std: 2}"), window="wind2")
+        s.context_menu["item4"].add_element("round_y", Entrata("75%w", "285px", "lu", "20%w", "30px", text="0", title="Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12, tooltip="Imposta l'approssimazione dopo la virgola dei valori relativi all'asse Y. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 12} | Std: 2}"), window="wind2")
+        s.context_menu["item4"].add_element("round_2y", Entrata("75%w", "320px", "lu", "20%w", "30px", text="0", title="2°Y:", lunghezza_max=3, solo_numeri=True, num_valore_minimo=0, num_valore_massimo=12, tooltip="Imposta l'approssimazione dopo la virgola dei valori relativi al secondo asse Y. \\i{\\#aaffaa{Min: 0} | \\#ffaaaa{Max: 12} | Std: 2}"), window="wind2")
         
         s.context_menu["item4"].add_element("show_grid_x", Bottone_Toggle("95%w", "425px", "ru", "30px", "30px", text="Mostra griglia X", state=True, type_checkbox=True, text_on_right=False, tooltip="Abilita la visualizzazione della griglia X: si intendono i prolungamenti dei tick dei valori da ogni asse."), window="wind3")
         s.context_menu["item4"].add_element("show_grid_y", Bottone_Toggle("95%w", "460px", "ru", "30px", "30px", text="Mostra griglia Y", state=True, type_checkbox=True, text_on_right=False, tooltip="Abilita la visualizzazione della griglia Y: si intendono i prolungamenti dei tick dei valori da ogni asse."), window="wind3")
@@ -313,8 +301,8 @@ class Costruttore:
 
         s.context_menu["item5"].add_element("show_legend", Bottone_Toggle("95%w", "80px", "ru", "30px", "30px", text="\\#dfffdf{\\b{Mostra legenda}}", state=False, type_checkbox=True, text_on_right=False, tooltip="Abilita la renderizzazione della legenda.\n\\#dc143c{Attenzione: è necessario abilitare la legenda per modificare le impostazioni.}"))
 
-        s.context_menu["item5"].add_element("x_legend", Slider("25%w", "260px", "lu", "40%w", "30px", title="X legend", initial_value=self.settings.x_legend, min_value=-0.5, max_value=1.5, tooltip="Imposta la posizione X del centro della legenda. \\i{\\#aaffaa{Min: -0.5} | \\#ffaaaa{Max: 1.5} | Std: 0.5}\n\\#777777{Valori tra 0 e 1 posizionano la legenda dentro al grafico, ma è possibile uscire da questi limiti.}"), window="wind1")
-        s.context_menu["item5"].add_element("y_legend", Slider("25%w", "295px", "lu", "40%w", "30px", title="Y legend", initial_value=self.settings.y_legend, min_value=-0.5, max_value=1.5, tooltip="Imposta la posizione Y del centro della legenda. \\i{\\#aaffaa{Min: -0.5} | \\#ffaaaa{Max: 1.5} | Std: 0.5}\n\\#777777{Valori tra 0 e 1 posizionano la legenda dentro al grafico, ma è possibile uscire da questi limiti.}"), window="wind1")
+        s.context_menu["item5"].add_element("x_legend", Slider("25%w", "260px", "lu", "40%w", "30px", title="X legend", initial_value=0.75, min_value=-0.5, max_value=1.5, tooltip="Imposta la posizione X del centro della legenda. \\i{\\#aaffaa{Min: -0.5} | \\#ffaaaa{Max: 1.5} | Std: 0.5}\n\\#777777{Valori tra 0 e 1 posizionano la legenda dentro al grafico, ma è possibile uscire da questi limiti.}"), window="wind1")
+        s.context_menu["item5"].add_element("y_legend", Slider("25%w", "295px", "lu", "40%w", "30px", title="Y legend", initial_value=0., min_value=-0.5, max_value=1.5, tooltip="Imposta la posizione Y del centro della legenda. \\i{\\#aaffaa{Min: -0.5} | \\#ffaaaa{Max: 1.5} | Std: 0.5}\n\\#777777{Valori tra 0 e 1 posizionano la legenda dentro al grafico, ma è possibile uscire da questi limiti.}"), window="wind1")
 
         s.context_menu["item5"].add_element("font_size_legend", Entrata("85%w", "195px", "lu", "10%w", "30px", text="48", title="Legend font size", lunghezza_max=3, solo_numeri=True, num_valore_minimo=8, num_valore_massimo=128, tooltip="Imposta la dimensione del font della legenda. \\i{\\#aaffaa{Min: 8} | \\#ffaaaa{Max: 128} | Std: 48}\n\\#777777{Nota: Cambia solo la dimensione del testo, non del simbolo.}"), window="wind1")
         
@@ -413,9 +401,7 @@ class Costruttore:
         s.context_menu["item11"].add_element("dimensione_molecola", Entrata("82.5%w", "170px", "lu", "15%w", "40px", "1000", "Dimensione", tooltip="Imposta la dimensione della molecola in pixel. \\i{\\#aaffaa{Min: /} | \\#ffaaaa{Max: /} | Std: 1000}"))
         # # ITEM 11 METADATA -----------------------------------------------
 
-        starting = 5
         stato_iniziale_tab = [False for _ in range(11)]
-        stato_iniziale_tab[starting] = True        
         tooltips_modes = [
             "GEOMETRIA\n\\#777777{Impostazioni di dimensioni e proporzionalità. Scelta di tipologia di grafici.}",
             "GRAFICI\n\\#777777{Impostazioni del grafico attivo.}",
@@ -433,7 +419,7 @@ class Costruttore:
         s.context_menu["main"].add_element("modes", RadioButton(x="73.5%w", y="40%h", anchor="ru", w="2.4%w", h="55%h", bg=array([30, 30, 30]), axis="y", cb_n=11, cb_s=stato_iniziale_tab, cb_t=tooltips_modes, cb_tooltips=["" for _ in range(11)], type_checkbox=False, w_button="2.4%w", h_button="2.4%w"))
         [bottone.load_texture(f"item{index + 1}") for index, bottone in enumerate(s.context_menu["main"].elements["modes"].toggles)]
         
-        s.context_menu["main"].add_element("tools", RadioButton(x="0px", y="5%h", anchor="lu", w="2.4%w", h=f"{2.5*3}%w", bg=array([30, 30, 30]), axis="y", cb_n=3, cb_s=[0, 0, 0], cb_t=["" for _ in range(3)], cb_tooltips=["ZOOM della regione interessata. Proporzioni NON mantenute", "PAN della zona, nel caso 2D non esce dai margini dell'immagine", "Inserimento coordinate, consultare \\i{'LABELS > Projection labels'} per più informazioni."], type_checkbox=False, w_button="2.4%w", h_button="2.4%w"))
+        s.context_menu["main"].add_element("tools", RadioButton(x="0px", y="10%h", anchor="lu", w="2.4%w", h=f"{2.5*3}%w", bg=array([30, 30, 30]), axis="y", cb_n=3, cb_s=[0, 0, 0], cb_t=["" for _ in range(3)], cb_tooltips=["ZOOM della regione interessata. Proporzioni NON mantenute", "PAN della zona, nel caso 2D non esce dai margini dell'immagine", "Inserimento coordinate, consultare \\i{'LABELS > Projection labels'} per più informazioni."], type_checkbox=False, w_button="2.4%w", h_button="2.4%w"))
         [bottone.load_texture(f"tool{index + 1}") for index, bottone in enumerate(s.context_menu["main"].elements["tools"].toggles)]
 
         s.context_menu["main"].add_element("reset_zoom", Bottone_Push(anchor=("cu cd (0px) (10px)", s.context_menu["main"].elements["tools"]), w="2.4%w", h="2.4%w", function=BottoniCallbacks.change_state, tooltip="Resetta lo zoom e pan del grafico."))
@@ -595,6 +581,15 @@ class Costruttore:
                 self.scene["main"].context_menu["item1"].elements["overlap"].hide_plus_children(False)
                 
 
+        def open_project(user_call=False):
+            if user_call:
+                s.context_menu["main"].elements["open"].flag_foo = True
+
+
+        def save_project(user_call=False):
+            if user_call:
+                s.context_menu["main"].elements["save"].flag_foo = True
+
 
         s.functions.append(set_active_tab)
         s.functions.append(hide_plot_attributes_based_on_plot_mode)
@@ -605,6 +600,8 @@ class Costruttore:
         s.functions.append(remove_selected_element)
         s.functions.append(hide_UI_plot_area_size_based_on_proportions)
         s.functions.append(hide_metadata_based_on_metadata_lenght)
+        s.functions.append(save_project)
+        s.functions.append(open_project)
 
 
 class Scena:
@@ -739,3 +736,11 @@ class Scena:
                 # Check if 'T' was pressed AND Ctrl is held
                 if event.key == pygame.K_t and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     self.user_wants_tooltips = not self.user_wants_tooltips 
+
+                if event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    foo = self.functions[9]
+                    foo(True)
+
+                if event.key == pygame.K_o and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    foo = self.functions[10]
+                    foo(True)

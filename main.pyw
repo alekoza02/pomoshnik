@@ -45,7 +45,7 @@ def main():
 
 if __name__ == "__main__":
 
-    PROFILATORE = 1
+    PROFILATORE = 0
     from time import perf_counter; start_time = perf_counter() 
 
     if PROFILATORE:

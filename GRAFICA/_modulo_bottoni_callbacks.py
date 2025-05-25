@@ -44,3 +44,13 @@ class BottoniCallbacks:
     @staticmethod
     def change_state(bottone: 'Bottone_Push'):
         bottone.flag_foo = not bottone.flag_foo
+
+
+    @staticmethod
+    def save_file():
+        return filedialog.asksaveasfilename(title="Salva file", defaultextension=".json")
+    
+    
+    @staticmethod
+    def open_file():
+        return filedialog.askopenfilename()

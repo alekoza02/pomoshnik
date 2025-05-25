@@ -5,6 +5,7 @@ from numba import njit
 import os
 from scipy.optimize import curve_fit
 from copy import deepcopy
+import json
 
 from config import IS_WINDOWS, IS_LINUX
 
@@ -15,7 +16,7 @@ if IS_WINDOWS:
     from rdkit.Chem import rdChemReactions as Reactions
     from rdkit import RDLogger
 
-# RDLogger.DisableLog('rdApp.*') 
+    RDLogger.DisableLog('rdApp.*') 
 
 
 NON_ESEGUIRE = False
@@ -25,19 +26,48 @@ if NON_ESEGUIRE:
     from GRAFICA._modulo_elementi_grafici import Label_Text, Screen, Entrata, Bottone_Toggle, Scroll, ColorPicker, Bottone_Push, RadioButton, Slider
 
 from GRAFICA._modulo_elementi_grafici import Label_Text, Screen
+from GRAFICA._modulo_bottoni_callbacks import BottoniCallbacks
+
 
 GREEN = "\033[32m"
 RED = '\033[31m'
 RESET = '\033[0m'
 
+
+class SettingsProfile:
+    def __init__(self, filename=None):
+        self.open_project(filename)
+
+    
+    def save_project(self, structure, filename=""):
+        with open(filename, 'w') as f:
+            json.dump(structure, f, indent=0)
+    
+    
+    def open_project(self, filename=""):
+        if not filename is None:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+
+            # Set attributes dynamically
+            for key, value in data.items():
+                if type(value) == list:
+                    value = np.array([float(i) for i in value])
+                setattr(self, key, value)
+
+
+
 class PomoPlot:
-    def __init__(self):
+    def __init__(self, project='default'):
+
+        if project == 'default':
+            self.settings = SettingsProfile("./SETTINGS/default.json")
+
         self.screen: 'Screen' = None
 
         # ------------------------------------------------------------------------------
         # ZONA GEOMETRIA
         # ------------------------------------------------------------------------------
-        # self.plots: list[_Single1DPlot] = [_Single1DPlot(i) for i in ["fase0", "fase1", "fase2", "fase3"]]
         self.plots: list[_Single1DPlot] = []
         self.active_plot: _Single1DPlot = None
         
@@ -57,22 +87,8 @@ class PomoPlot:
         # crea le coordinate dell'area di solo plot in termini di valori nativi
         self.spazio_coordinate_native: np.ndarray[float] = np.array([-1., -1., 1., 1., -1., 1.]) 
         
-        # ------------------------------------------------------------------------------
-        # ZONA LABEL
-        # ------------------------------------------------------------------------------
-        # offset dei label in PIXEL
-
-        self.show_bounding_box: bool = True
-
-        self.n_subdivisions_x: int = 5
-        self.n_subdivisions_y: int = 5
-        self.n_subdivisions_x_small: int = 5
-        self.n_subdivisions_y_small: int = 5
         self.pixel_len_subdivisions: int = 20
-        self.pixel_len_subdivisions_small: int = 7
-        self.subdivision_x_centerd: bool = False
-        self.subdivision_y_centerd: bool = False
-    
+        
         self.offset_x_label: int = 0 
         self.offset_y_label: int = 0 
         self.offset_x_tick_value: int = self.pixel_len_subdivisions + 10 
@@ -80,8 +96,6 @@ class PomoPlot:
         
         self.minimal_offset_data_x = 0.05
         self.minimal_offset_data_y = 0.05
-
-        self.ticks_type: bool = True # True -> automatic, False -> geometry based
 
         self.coords_of_ticks: list[list] = [[], [], []]
         self.min_ticks = 3
@@ -106,8 +120,104 @@ class PomoPlot:
         self.spessore_scala_2Dplot = 5
 
 
+    def save_settings(self, path):
+
+        def array_to_str_list(array):
+            return [str(i) for i in array]
+
+
+        active_tab = [index for index, element in enumerate(self.UI_active_tab.buttons_state) if element]
+        if len(active_tab) > 0:
+            active_tab = int(active_tab[0])
+        else:
+            active_tab = -1
+
+
+        dati = {
+            "starting_tab": active_tab,
+            "x_plot_area": str(self.x_plot_area),
+            "y_plot_area": str(self.y_plot_area),
+            "w_plot_area": str(self.w_plot_area),
+            "h_plot_area": str(self.h_plot_area),
+            "size_plot_area": str(self.size_plot_area),
+            "mantain_proportions": str(self.mantain_proportions),
+            "plot_area_color": array_to_str_list(self.plot_area_color),
+            "canvas_area_color": array_to_str_list(self.canvas_area_color),
+            "overlap": str(self.overlap),
+            "scatter_size": str(self.scatter_size),
+            "function_size": str(self.function_size),
+            "scatter_toggle": str(self.scatter_toggle),
+            "function_toggle": str(self.function_toggle),
+            "text_title": str(self.text_title),
+            "text_label_x": str(self.text_label_x),
+            "text_label_y": str(self.text_label_y),
+            "text_label_2y": str(self.text_label_2y),
+            "font_size_title": str(self.font_size_title),
+            "font_size_label_x": str(self.font_size_label_x),
+            "font_size_label_y": str(self.font_size_label_y),
+            "font_size_label_2y": str(self.font_size_label_2y),
+            "label_title_color": array_to_str_list(self.label_title_color),
+            "label_x_color": array_to_str_list(self.label_x_color),
+            "label_y_color": array_to_str_list(self.label_y_color),
+            "label_2y_color": array_to_str_list(self.label_2y_color),
+            "show_coords_projection": bool(self.show_coords_projection),
+            "show_coords_value": bool(self.show_coords_value),
+            "show_coords_X": bool(self.show_coords_X),
+            "show_coords_Y": bool(self.show_coords_Y),
+            "first_y_axis": bool(self.first_y_axis),
+            "second_y_axis": bool(self.second_y_axis),
+            "invert_x_axis": bool(self.invert_x_axis),
+            "round_x": str(self.round_ticks_x),
+            "round_y": str(self.round_ticks_y),
+            "round_2y": str(self.round_ticks_2y),
+            "ax_color_x": array_to_str_list(self.ax_color_x),
+            "ax_color_y": array_to_str_list(self.ax_color_y),
+            "ax_color_2y": array_to_str_list(self.ax_color_2y),
+            "tick_color_x": array_to_str_list(self.tick_color_x),
+            "tick_color_y": array_to_str_list(self.tick_color_y),
+            "tick_color_2y": array_to_str_list(self.tick_color_2y),
+            "offset_ticks_ax_x": str(self.offset_ticks_ax_x),
+            "offset_ticks_ax_y": str(self.offset_ticks_ax_y),
+            "size_ticks": str(self.size_ticks),
+            "formatting_x": bool(self.formatting_x),
+            "formatting_y": bool(self.formatting_y),
+            "formatting_2y": bool(self.formatting_2y),
+            "show_grid_x": bool(self.show_grid_x),
+            "show_grid_y": bool(self.show_grid_y),
+            "show_grid_2y": bool(self.show_grid_2y),
+            "show_bounding_box": bool(self.show_bounding_box),
+            "show_legend": bool(self.show_legend),
+            "x_legend": str(self.x_legend),
+            "y_legend": str(self.y_legend),
+            "font_size_legend": str(self.font_size_legend),
+            "blur_strenght": str(self.blur_strenght),
+            "show_legend_background": bool(self.show_legend_background),
+            "transparent_background": bool(self.transparent_background),
+            "show_icons": bool(self.show_icons),
+            "match_color_text": bool(self.match_color_text),
+            "legend_bg_color": array_to_str_list(self.legend_bg_color),
+            "color_text": array_to_str_list(self.color_text),
+            "text_2D_plot": str(self.text_2D_plot),\
+            "size_scale_marker2D": str(self.size_scale_marker2D),
+            "min_x_interpolation": str(self.min_x_interpolation),
+            "max_x_interpolation": str(self.max_x_interpolation),
+            "curve_function": str(self.curve_function),
+            "param_0": str(self.param_0),
+            "param_1": str(self.param_1),
+            "param_2": str(self.param_2),
+            "param_3": str(self.param_3),
+            "intersection_interpolation": bool(self.intersection_interpolation),
+            "show_guess": bool(self.show_guess),
+        }
+        
+        self.settings.save_project(dati, path)
+
+
     def link_ui(self, UI: 'UI'):
-        """Richiesta UI pomoshnik, si puù modificare manualmente per adattarla alla propria UI. Serve per intereagire con il grafico"""
+        """Richiesta UI pomoshnik, si può modificare manualmente per adattarla alla propria UI. Serve per intereagire con il grafico"""
+        
+        self.UI_pointer = UI
+
         self.scale_factor_viewport = 1
 
         # NEEDED, GENERATED HERE, NOT IMPORTED
@@ -124,25 +234,32 @@ class PomoPlot:
         #############################################################################
 
         self.UI_active_tab: 'RadioButton' = UI.costruttore.scene["main"].context_menu["main"].elements["modes"]
+        stati = [False for i in self.UI_active_tab.buttons_state]
+        if self.settings.starting_tab >= 0:
+            stati[self.settings.starting_tab] = True
+        self.UI_active_tab.set_state(stati)
 
         self.UI_tools: 'RadioButton' = UI.costruttore.scene["main"].context_menu["main"].elements["tools"]
         self.UI_reset_tools: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["reset_zoom"]
+        
+        self.UI_save: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["save"]
+        self.UI_open: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["open"]
 
-        self.UI_x_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["x_plot_area"]
-        self.UI_y_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["y_plot_area"]
-        self.UI_w_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["w_plot_area"]
-        self.UI_h_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["h_plot_area"]
-        self.UI_size_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["size_plot_area"]
-        self.UI_mantain_proportions: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["mantain_prop"]
+        self.UI_x_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["x_plot_area"]; self.UI_x_plot_area.change_text(self.settings.x_plot_area)
+        self.UI_y_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["y_plot_area"]; self.UI_y_plot_area.change_text(self.settings.y_plot_area)
+        self.UI_w_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["w_plot_area"]; self.UI_w_plot_area.change_text(self.settings.w_plot_area)
+        self.UI_h_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["h_plot_area"]; self.UI_h_plot_area.change_text(self.settings.h_plot_area)
+        self.UI_size_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["size_plot_area"]; self.UI_size_plot_area.change_text(self.settings.size_plot_area)
+        self.UI_mantain_proportions: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["mantain_prop"]; self.UI_mantain_proportions.state_toggle = self.settings.mantain_proportions
         
         self.UI_tema_chiaro: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item1"].elements["tema_chiaro"]
         self.UI_tema_scuro: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item1"].elements["tema_scuro"]
         
-        self.UI_plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["plot_area_bg"]
-        self.UI_canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["canvas_area_bg"]
+        self.UI_plot_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["plot_area_bg"]; self.UI_plot_area_color.set_color(self.settings.plot_area_color)
+        self.UI_canvas_area_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item1"].elements["canvas_area_bg"]; self.UI_canvas_area_color.set_color(self.settings.canvas_area_color)
         
         self.UI_norma_perc: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item1"].elements["norma_perc"]
-        self.UI_overlap: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["overlap"]
+        self.UI_overlap: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item1"].elements["overlap"]; # NOT WORKING self.UI_overlap.state_toggle = self.settings.overlap
         
 
         self.UI_plot_mode: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item1"].elements["plot_mode"]
@@ -186,67 +303,68 @@ class PomoPlot:
 
         self.UI_add_second_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item2"].elements["add_second_axis"]
         
-        self.UI_font_size_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_title"]
-        self.UI_font_size_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_x"]
-        self.UI_font_size_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_y"]
-        self.UI_font_size_label_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_2y"]
+        self.UI_font_size_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_title"]; self.UI_font_size_title.change_text(self.settings.font_size_title)
+        self.UI_font_size_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_x"]; self.UI_font_size_label_x.change_text(self.settings.font_size_label_x)
+        self.UI_font_size_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_y"]; self.UI_font_size_label_y.change_text(self.settings.font_size_label_y)
+        self.UI_font_size_label_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["font_size_label_2y"]; self.UI_font_size_label_2y.change_text(self.settings.font_size_label_2y)
         
-        self.UI_text_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_title"]
-        self.UI_text_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_x"]
-        self.UI_text_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_y"]
-        self.UI_text_label_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_2y"]
-        self.UI_label_title_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_title_color"]
-        self.UI_label_x_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_x_color"]
-        self.UI_label_y_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_y_color"]
-        self.UI_label_2y_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_2y_color"]
+        self.UI_text_title: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_title"]; self.UI_text_title.change_text(self.settings.text_title)
+        self.UI_text_label_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_x"]; self.UI_text_label_x.change_text(self.settings.text_label_x)
+        self.UI_text_label_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_y"]; self.UI_text_label_y.change_text(self.settings.text_label_y)
+        self.UI_text_label_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item3"].elements["text_label_2y"]; self.UI_text_label_2y.change_text(self.settings.text_label_2y)
+        self.UI_label_title_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_title_color"]; self.UI_label_title_color.set_color(self.settings.label_title_color)
+        self.UI_label_x_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_x_color"]; self.UI_label_x_color.set_color(self.settings.label_x_color)
+        self.UI_label_y_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_y_color"]; self.UI_label_y_color.set_color(self.settings.label_y_color)
+        self.UI_label_2y_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item3"].elements["label_2y_color"]; self.UI_label_2y_color.set_color(self.settings.label_2y_color)
 
-        self.UI_show_coords_projection: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["show_coords_projection"]
-        self.UI_show_coords_value: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["show_coords_value"]
+        self.UI_show_coords_projection: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["show_coords_projection"]; self.UI_show_coords_projection.state_toggle = self.settings.show_coords_projection
+        self.UI_show_coords_value: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["show_coords_value"]; self.UI_show_coords_value.state_toggle = self.settings.show_coords_value
         
-        self.UI_show_coords_X: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["toggle_coordinate_x"]
-        self.UI_show_coords_Y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["toggle_coordinate_y"]
+        self.UI_show_coords_X: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["toggle_coordinate_x"]; self.UI_show_coords_X.state_toggle = self.settings.show_coords_X
+        self.UI_show_coords_Y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item3"].elements["toggle_coordinate_y"]; self.UI_show_coords_Y.state_toggle = self.settings.show_coords_Y
 
-        self.UI_first_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["first_y_axis"]
-        self.UI_second_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["second_y_axis"]
-        self.UI_invert_x_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["invert_x_axis"]
-        self.UI_round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_x"]
-        self.UI_round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_y"]
-        self.UI_round_ticks_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_2y"]
+        self.UI_first_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["first_y_axis"]; self.UI_first_y_axis.state_toggle = self.settings.first_y_axis
+        self.UI_second_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["second_y_axis"]; self.UI_second_y_axis.state_toggle = self.settings.second_y_axis
+        self.UI_invert_x_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["invert_x_axis"]; self.UI_invert_x_axis.state_toggle = self.settings.invert_x_axis
+        self.UI_round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_x"]; self.UI_round_ticks_x.get_text(self.settings.round_x)
+        self.UI_round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_y"]; self.UI_round_ticks_y.get_text(self.settings.round_y)
+        self.UI_round_ticks_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_2y"]; self.UI_round_ticks_2y.get_text(self.settings.round_2y)
         
-        self.UI_ax_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_x"]
-        self.UI_ax_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_y"]
-        self.UI_ax_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_2y"]
-        self.UI_tick_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_x"]
-        self.UI_tick_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_y"]
-        self.UI_tick_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_2y"]
+        self.UI_ax_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_x"]; self.UI_ax_color_x.set_color(self.settings.ax_color_x)
+        self.UI_ax_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_y"]; self.UI_ax_color_y.set_color(self.settings.ax_color_y)
+        self.UI_ax_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_2y"]; self.UI_ax_color_2y.set_color(self.settings.ax_color_2y)
+        self.UI_tick_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_x"]; self.UI_tick_color_x.set_color(self.settings.tick_color_x)
+        self.UI_tick_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_y"]; self.UI_tick_color_y.set_color(self.settings.tick_color_y)
+        self.UI_tick_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["tick_color_2y"]; self.UI_tick_color_2y.set_color(self.settings.tick_color_2y)
         
-        self.UI_offset_ticks_ax_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["offset_y_label_x"]
-        self.UI_offset_ticks_ax_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["offset_x_label_y"]
+        self.UI_offset_ticks_ax_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["offset_y_label_x"]; self.UI_offset_ticks_ax_x.change_text(self.settings.offset_ticks_ax_x)
+        self.UI_offset_ticks_ax_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["offset_x_label_y"]; self.UI_offset_ticks_ax_y.change_text(self.settings.offset_ticks_ax_y)
         
-        self.UI_size_ticks: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["size_ticks"]
+        self.UI_size_ticks: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["size_ticks"]; self.UI_size_ticks.change_text(self.settings.size_ticks)
         
-        self.UI_formatting_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_x"]
-        self.UI_formatting_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_y"]
+        self.UI_formatting_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_x"]; self.UI_formatting_x.state_toggle = self.settings.formatting_x
+        self.UI_formatting_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_y"]; self.UI_formatting_y.state_toggle = self.settings.formatting_y
+        self.UI_formatting_2y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["formatting_2y"]; self.UI_formatting_2y.state_toggle = self.settings.formatting_2y
         
-        self.UI_show_grid_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_x"]
-        self.UI_show_grid_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_y"]
-        self.UI_show_grid_2y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_2y"]
-        self.UI_show_bounding_box: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_bounding_box"]
+        self.UI_show_grid_x: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_x"]; self.UI_show_grid_x.state_toggle = self.settings.show_grid_x
+        self.UI_show_grid_y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_y"]; self.UI_show_grid_y.state_toggle = self.settings.show_grid_y
+        self.UI_show_grid_2y: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_grid_2y"]; self.UI_show_grid_2y.state_toggle = self.settings.show_grid_2y
+        self.UI_show_bounding_box: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["show_bounding_box"]; self.UI_show_bounding_box.state_toggle = self.settings.show_bounding_box
         
-        self.UI_show_legend: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend"]
-        self.UI_x_legend: 'Slider' = UI.costruttore.scene["main"].context_menu["item5"].elements["x_legend"]
-        self.UI_y_legend: 'Slider' = UI.costruttore.scene["main"].context_menu["item5"].elements["y_legend"]
-        self.UI_font_size_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["font_size_legend"]
-        self.UI_show_legend_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend_background"]
-        self.UI_legend_bg_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["legend_color_background"]
-        self.UI_transparent_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["transparent_background"]
-        self.UI_blur_strenght: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["blur_strenght"]
-        self.UI_show_icons: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_icons"]
-        self.UI_match_color_text: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["match_color_text"]
-        self.UI_color_text: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["color_text"]
+        self.UI_show_legend: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend"]; self.UI_show_legend.state_toggle = self.settings.show_legend
+        self.UI_x_legend: 'Slider' = UI.costruttore.scene["main"].context_menu["item5"].elements["x_legend"]; self.UI_x_legend.set_value(self.settings.x_legend)
+        self.UI_y_legend: 'Slider' = UI.costruttore.scene["main"].context_menu["item5"].elements["y_legend"]; self.UI_y_legend.set_value(self.settings.y_legend)
+        self.UI_font_size_legend: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["font_size_legend"]; self.UI_font_size_legend.change_text(self.settings.font_size_legend)
+        self.UI_show_legend_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_legend_background"]; self.UI_show_legend_background.state_toggle = self.settings.show_legend_background
+        self.UI_legend_bg_color: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["legend_color_background"]; self.UI_legend_bg_color.set_color(self.settings.legend_bg_color)
+        self.UI_transparent_background: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["transparent_background"]; self.UI_transparent_background.state_toggle = self.settings.transparent_background
+        self.UI_blur_strenght: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["blur_strenght"]; self.UI_blur_strenght.change_text(self.settings.blur_strenght)
+        self.UI_show_icons: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["show_icons"]; self.UI_show_icons.state_toggle = self.settings.show_icons
+        self.UI_match_color_text: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item5"].elements["match_color_text"]; self.UI_match_color_text.state_toggle = self.settings.match_color_text
+        self.UI_color_text: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item5"].elements["color_text"]; self.UI_color_text.set_color(self.settings.color_text)
         
-        self.UI_text_2D_plot: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["text_2D_plot"]
-        self.UI_size_scale_marker2D: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["size_scale_marker2D"]
+        self.UI_text_2D_plot: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["text_2D_plot"]; self.UI_text_2D_plot.change_text(self.settings.text_2D_plot)
+        self.UI_size_scale_marker2D: 'Entrata' = UI.costruttore.scene["main"].context_menu["item5"].elements["size_scale_marker2D"]; self.UI_size_scale_marker2D.change_text(self.settings.size_scale_marker2D)
 
         self.UI_import_single_plot1D: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item6"].elements["import_single_plot1D"]
         self.UI_import_single_plot2D: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item6"].elements["import_single_plot2D"]
@@ -267,18 +385,18 @@ class PomoPlot:
         self.UI_output_derivative: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["output_derivative"]
 
         self.UI_compute_interpolation: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["compute"]
-        self.UI_min_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["min_x"]
-        self.UI_max_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["max_x"]
+        self.UI_min_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["min_x"]; self.UI_min_x_interpolation.change_text(self.settings.min_x_interpolation)
+        self.UI_max_x_interpolation: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["max_x"]; self.UI_max_x_interpolation.change_text(self.settings.max_x_interpolation)
         self.UI_output_interpolation: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["output"]
-        self.UI_intersection_interpolation: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item9"].elements["intersection"]
+        self.UI_intersection_interpolation: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item9"].elements["intersection"]; self.UI_intersection_interpolation.state_toggle = self.settings.intersection_interpolation
 
-        self.UI_curve_function: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["curve_function"]
-        self.UI_param_0: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_0"]
-        self.UI_param_1: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_1"]
-        self.UI_param_2: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_2"]
-        self.UI_param_3: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_3"]
+        self.UI_curve_function: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["curve_function"]; self.UI_curve_function.change_text(self.settings.curve_function)
+        self.UI_param_0: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_0"]; self.UI_param_0.change_text(self.settings.param_0)
+        self.UI_param_1: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_1"]; self.UI_param_1.change_text(self.settings.param_1)
+        self.UI_param_2: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_2"]; self.UI_param_2.change_text(self.settings.param_2)
+        self.UI_param_3: 'Entrata' = UI.costruttore.scene["main"].context_menu["item9"].elements["param_3"]; self.UI_param_3.change_text(self.settings.param_3)
         self.UI_compute_custom_curve: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["compute_custom_curve"]
-        self.UI_show_guess: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item9"].elements["show_guess"]
+        self.UI_show_guess: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item9"].elements["show_guess"]; self.UI_show_guess.state_toggle = self.settings.show_guess
 
         self.UI_l_param_0: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["l_param_0"]
         self.UI_l_param_1: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["l_param_1"]
@@ -341,7 +459,7 @@ class PomoPlot:
         self.canvas_area_color = self.UI_canvas_area_color.get_color()
 
         self.mantain_proportions = self.UI_mantain_proportions.state_toggle
-        
+
         self.overlap = self.UI_overlap.state_toggle
         
         self.first_y_axis = self.UI_first_y_axis.state_toggle
@@ -427,6 +545,7 @@ class PomoPlot:
         
         self.formatting_x = self.UI_formatting_x.state_toggle
         self.formatting_y = self.UI_formatting_y.state_toggle
+        self.formatting_2y = self.UI_formatting_2y.state_toggle
         
         self.show_grid_x = self.UI_show_grid_x.state_toggle
         self.show_grid_y = self.UI_show_grid_y.state_toggle
@@ -618,6 +737,17 @@ class PomoPlot:
         self.import_multip_plot2D.paths = []
 
         logica.dropped_paths = []
+
+        # salvataggio file
+        if self.UI_save.flag_foo:
+            self.UI_save.flag_foo = False
+            self.save_pomoplot()
+        
+        
+        if self.UI_open.flag_foo:
+            self.UI_open.flag_foo = False
+            self.open_pomoplot()
+
 
         # salvataggio screenshot
         if len(self.save_single_plot.paths) > 0:
@@ -835,6 +965,17 @@ class PomoPlot:
             self.UI_tick_color_x.set_color([0, 0, 0])
             self.UI_tick_color_y.set_color([0, 0, 0])
             self.UI_tick_color_2y.set_color([0, 0, 0])
+
+
+    def save_pomoplot(self):
+        path = BottoniCallbacks.save_file()
+        self.save_settings(path)
+
+    
+    def open_pomoplot(self):
+        path = BottoniCallbacks.open_file()
+        self.settings = SettingsProfile(path)
+        self.link_ui(self.UI_pointer)
 
 
     def linear_interpolation(self) -> str:
@@ -1144,7 +1285,7 @@ class PomoPlot:
                     coords_ticks_2y += self.max_plot_square[1]
 
                     # preparo l'asse e il render
-                    formattatore_2y = "e" if self.formatting_y else "f"
+                    formattatore_2y = "e" if self.formatting_2y else "f"
                     self.offset_2y_tick_value: int = (self.pixel_len_subdivisions + 25) * self.scale_factor_viewport
                     labels_info_text = []
                     labels_info_pos = []
@@ -1859,7 +2000,7 @@ class PomoPlot:
 
         formattatore_x = "e" if self.formatting_x else "f"
         formattatore_y = "e" if self.formatting_y else "f"
-        formattatore_2y = "e" if self.formatting_y else "f"
+        formattatore_2y = "e" if self.formatting_2y else "f"
 
         self.offset_x_tick_value: int = (self.pixel_len_subdivisions + 7) * self.scale_factor_viewport
         self.offset_y_tick_value: int = (self.pixel_len_subdivisions + 25) * self.scale_factor_viewport
