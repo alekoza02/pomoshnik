@@ -41,7 +41,8 @@ class SettingsProfile:
     
     def save_project(self, structure, filename=""):
         with open(filename, 'w') as f:
-            json.dump(structure, f, indent=0)
+            print(structure)
+            json.dump(structure, f, indent=4)
     
     
     def open_project(self, filename=""):
@@ -54,8 +55,12 @@ class SettingsProfile:
                 if type(value) == list:
                     value = np.array([float(i) for i in value])
                 setattr(self, key, value)
-
-
+            
+                if key == 'plots':
+                    plots = [_Single1DPlot("Dummy", np.array([[0, 0]]), "") for i in range(len(value))]
+                    [plot.update_attributes(plot_data) for plot, plot_data in zip(plots, value.values())]
+                    setattr(self, key, plots)
+            
 
 class PomoPlot:
     def __init__(self, project='default'):
@@ -208,6 +213,9 @@ class PomoPlot:
             "param_3": str(self.param_3),
             "intersection_interpolation": bool(self.intersection_interpolation),
             "show_guess": bool(self.show_guess),
+            "plots": {
+                index : plot.get_dict_info() for index, plot in enumerate(self.plots)
+            }
         }
         
         self.settings.save_project(dati, path)
@@ -265,6 +273,9 @@ class PomoPlot:
         self.UI_plot_mode: 'RadioButton' = UI.costruttore.scene["main"].context_menu["item1"].elements["plot_mode"]
 
         self.UI_scroll_plots1D: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots1D"]
+        [self.UI_scroll_plots1D.remove_item_index(0) for i in self.UI_scroll_plots1D.elementi]
+        [self.UI_scroll_plots1D.add_element_scroll(plot, False) for plot in self.settings.plots]
+        
         self.UI_scroll_plots2D: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots2D"]
         self.UI_elenco_metadata: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_metadata"]
 
@@ -601,6 +612,17 @@ class PomoPlot:
 
     def update(self, logica: 'Logica'):
 
+        # salvataggio file
+        if self.UI_save.flag_foo:
+            self.UI_save.flag_foo = False
+            self.save_pomoplot()
+        
+        
+        if self.UI_open.flag_foo:
+            self.UI_open.flag_foo = False
+            self.open_pomoplot()
+
+
         # cambio grafico attivo
         self.plot_mode = [index for index, state in enumerate(self.UI_plot_mode.cb_s) if state][0]
 
@@ -737,17 +759,6 @@ class PomoPlot:
         self.import_multip_plot2D.paths = []
 
         logica.dropped_paths = []
-
-        # salvataggio file
-        if self.UI_save.flag_foo:
-            self.UI_save.flag_foo = False
-            self.save_pomoplot()
-        
-        
-        if self.UI_open.flag_foo:
-            self.UI_open.flag_foo = False
-            self.open_pomoplot()
-
 
         # salvataggio screenshot
         if len(self.save_single_plot.paths) > 0:
@@ -3021,6 +3032,48 @@ class _Single1DPlot:
 
         self.function_color = np.array([np.random.randint(50, 180), np.random.randint(50, 200), np.random.randint(50, 200)])
         self.scatter_color = self.function_color + 55
+
+
+    def update_attributes(self, values):
+        for key, value in values.items():
+            if key == 'data' or key == 'display_coords':
+                value = np.array(value)
+            if key == 'function_color' or key == 'scatter_color':
+                value = [float(i) for i in value]
+
+            setattr(self, key, value)        
+
+
+    def get_dict_info(self):
+
+        def array_to_str_list(array):
+            return [str(i) for i in array]
+
+        values = {
+            "nome": self.nome,
+            "metadata": self.metadata,
+            "data": self.data.tolist(),
+            "channels": self.channels,
+            "scales": self.scales,
+            "column_x": self.column_x,
+            "column_y": self.column_y,
+            "column_ey": self.column_ey,
+            "scatter": self.scatter,
+            "scatter_width": self.scatter_width,
+            "scatter_border": self.scatter_border,
+            "function": self.function,
+            "function_width": self.function_width,
+            "dashed": self.dashed,
+            "dashed_traits": self.dashed_traits,
+            "errorbar": self.errorbar,
+            "gradiente": self.gradiente,
+            "grad_mode": self.grad_mode,
+            "second_ax": self.second_ax,
+            "display_coords": np.array(self.display_coords).tolist(),
+            "function_color": array_to_str_list(self.function_color),
+            "scatter_color": array_to_str_list(self.scatter_color),
+        }
+        return values
 
 
     def __str__(self):

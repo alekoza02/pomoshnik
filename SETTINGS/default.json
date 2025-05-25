@@ -72,5 +72,6 @@
     "param_2": "",
     "param_3": "",
     "intersection_interpolation": false,
-    "show_guess": false
+    "show_guess": false,
+    "plots": {}
 }
