@@ -41,7 +41,6 @@ class SettingsProfile:
     
     def save_project(self, structure, filename=""):
         with open(filename, 'w') as f:
-            print(structure)
             json.dump(structure, f, indent=4)
     
     
@@ -64,6 +63,9 @@ class SettingsProfile:
 
 class PomoPlot:
     def __init__(self, project='default'):
+
+        self.project_path = None
+        self.save_pop_up_timer = 0
 
         if project == 'default':
             self.settings = SettingsProfile("./SETTINGS/default.json")
@@ -253,6 +255,9 @@ class PomoPlot:
         
         self.UI_save: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["save"]
         self.UI_open: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["open"]
+        self.UI_saveas: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["saveas"]
+        self.UI_default: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["main"].elements["default"]
+        self.UI_save_status: 'Label_Text' = UI.costruttore.scene["main"].context_menu["main"].elements["save_status"]
 
         self.UI_x_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["x_plot_area"]; self.UI_x_plot_area.change_text(self.settings.x_plot_area)
         self.UI_y_plot_area: 'Entrata' = UI.costruttore.scene["main"].context_menu["item1"].elements["y_plot_area"]; self.UI_y_plot_area.change_text(self.settings.y_plot_area)
@@ -614,10 +619,32 @@ class PomoPlot:
 
     def update(self, logica: 'Logica'):
 
+        if self.save_pop_up_timer > 2000:
+            self.UI_save_status.change_text(" " * 6)
+        else:
+            self.save_pop_up_timer += logica.dt
+
+
         # salvataggio file
         if self.UI_save.flag_foo:
             self.UI_save.flag_foo = False
+            self.save_pomoplot(self.project_path)
+            self.save_pop_up_timer = 0
+            self.UI_save_status.change_text("\\#77ff77{Saved!}")
+        
+        
+        if self.UI_saveas.flag_foo:
+            self.UI_saveas.flag_foo = False
             self.save_pomoplot()
+            self.save_pop_up_timer = 0
+            self.UI_save_status.change_text("\\#77ff77{Saved!}")
+        
+        
+        if self.UI_default.flag_foo:
+            self.UI_default.flag_foo = False
+            self.save_pomoplot("./SETTINGS/default.json")
+            self.save_pop_up_timer = 0
+            self.UI_save_status.change_text("\\#77ff77{Saved!}")
         
         
         if self.UI_open.flag_foo:
@@ -983,6 +1010,10 @@ class PomoPlot:
     def save_pomoplot(self, path=None):
         if path is None:
             path = BottoniCallbacks.save_file()
+            self.project_path = path
+        else:
+            path = self.project_path
+            
         self.save_settings(path)
 
     

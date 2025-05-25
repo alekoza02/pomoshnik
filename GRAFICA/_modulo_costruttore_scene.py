@@ -110,9 +110,12 @@ class Costruttore:
 
 
         s.context_menu["main"].add_element("exit", Bottone_Push(x="100%w", y="2px", w="40px", h="40px", anchor="ru", text="X", function=self.bott_calls.exit, tooltip="Esci dal programma. \\#aaffaa{Shortcut: ESC + SPACE}"))
-        s.context_menu["main"].add_element("open", Bottone_Push(x="0px", y="2px", w="3%w", h="40px", anchor="lu", text="Open", function=self.bott_calls.change_state, tooltip="Apre un file *.pomogale\\#aaffaa{Shortcut: CTRL + O}"))
-        s.context_menu["main"].add_element("save", Bottone_Push(x="3%w 5px", y="2px", w="3%w", h="40px", anchor="lu", text="Save", function=self.bott_calls.change_state, tooltip="Salva il tutto in un file *.pomogale\\#aaffaa{Shortcut: CTRL + S}"))
-        
+        s.context_menu["main"].add_element("open", Bottone_Push(x="0px", y="2px", w="3%w", h="40px", anchor="lu", text="Open", function=self.bott_calls.change_state, tooltip="Apre un file *.json \\#aaffaa{Shortcut: CTRL + O}"))
+        s.context_menu["main"].add_element("save", Bottone_Push(x="3%w 5px", y="2px", w="3%w", h="40px", anchor="lu", text="Save", function=self.bott_calls.change_state, tooltip="Salva il tutto in un file *.json \\#aaffaa{Shortcut: CTRL + S}"))
+        s.context_menu["main"].add_element("saveas", Bottone_Push(x="6%w 5px", y="2px", w="5%w", h="40px", anchor="lu", text="Save as", function=self.bott_calls.change_state, tooltip="Salva con nome tutto in un file *.json"))
+        s.context_menu["main"].add_element("default", Bottone_Push(x="11%w 5px", y="2px", w="5%w", h="40px", anchor="lu", text="Default", function=self.bott_calls.change_state, tooltip="Salva la configurazione attuale come startup default file *.json\n\\#777777{Nel caso di errore o overwright accidentale, esiste un backup sotto /SETTINGS/default_backup.json}"))
+        s.context_menu["main"].add_element("save_status", Label_Text(anchor=("lc rc (0.7%w) (0px)", s.context_menu["main"].elements["default"]), w="-*w", h="-*h", text=" " * 7))
+
         # # ----------------------------------------------------------------------------------------------------
 
         s.context_menu["main"].add_element("viewport", Screen(x="37.5%w", y="50%h", anchor="cc", w="65%w", h="90%h", latex_font=True, tooltip="Viewport del grafico. Quando viene salvata, l'immagine avrà sempre una larghezza di 4000px"))
