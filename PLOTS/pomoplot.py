@@ -192,8 +192,8 @@ class PomoPlot:
             "show_grid_2y": bool(self.show_grid_2y),
             "show_bounding_box": bool(self.show_bounding_box),
             "show_legend": bool(self.show_legend),
-            "x_legend": str(self.x_legend),
-            "y_legend": str(self.y_legend),
+            "x_legend": str(self.UI_x_legend.value),
+            "y_legend": str(self.UI_y_legend.value),
             "font_size_legend": str(self.font_size_legend),
             "blur_strenght": str(self.blur_strenght),
             "show_legend_background": bool(self.show_legend_background),
@@ -213,6 +213,7 @@ class PomoPlot:
             "param_3": str(self.param_3),
             "intersection_interpolation": bool(self.intersection_interpolation),
             "show_guess": bool(self.show_guess),
+            "plots_state": self.scroll_plots.ele_mask,
             "plots": {
                 index : plot.get_dict_info() for index, plot in enumerate(self.plots)
             }
@@ -274,7 +275,8 @@ class PomoPlot:
 
         self.UI_scroll_plots1D: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots1D"]
         [self.UI_scroll_plots1D.remove_item_index(0) for i in self.UI_scroll_plots1D.elementi]
-        [self.UI_scroll_plots1D.add_element_scroll(plot, False) for plot in self.settings.plots]
+        [self.UI_scroll_plots1D.add_element_scroll(plot, status) for status, plot in zip(self.settings.plots_state, self.settings.plots)]
+
         
         self.UI_scroll_plots2D: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_plots2D"]
         self.UI_elenco_metadata: 'Scroll' = UI.costruttore.scene["main"].context_menu["main"].elements["elenco_metadata"]
@@ -337,9 +339,9 @@ class PomoPlot:
         self.UI_first_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["first_y_axis"]; self.UI_first_y_axis.state_toggle = self.settings.first_y_axis
         self.UI_second_y_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["second_y_axis"]; self.UI_second_y_axis.state_toggle = self.settings.second_y_axis
         self.UI_invert_x_axis: 'Bottone_Toggle' = UI.costruttore.scene["main"].context_menu["item4"].elements["invert_x_axis"]; self.UI_invert_x_axis.state_toggle = self.settings.invert_x_axis
-        self.UI_round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_x"]; self.UI_round_ticks_x.get_text(self.settings.round_x)
-        self.UI_round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_y"]; self.UI_round_ticks_y.get_text(self.settings.round_y)
-        self.UI_round_ticks_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_2y"]; self.UI_round_ticks_2y.get_text(self.settings.round_2y)
+        self.UI_round_ticks_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_x"]; self.UI_round_ticks_x.change_text(self.settings.round_x)
+        self.UI_round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_y"]; self.UI_round_ticks_y.change_text(self.settings.round_y)
+        self.UI_round_ticks_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_2y"]; self.UI_round_ticks_2y.change_text(self.settings.round_2y)
         
         self.UI_ax_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_x"]; self.UI_ax_color_x.set_color(self.settings.ax_color_x)
         self.UI_ax_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_y"]; self.UI_ax_color_y.set_color(self.settings.ax_color_y)
@@ -978,8 +980,9 @@ class PomoPlot:
             self.UI_tick_color_2y.set_color([0, 0, 0])
 
 
-    def save_pomoplot(self):
-        path = BottoniCallbacks.save_file()
+    def save_pomoplot(self, path=None):
+        if path is None:
+            path = BottoniCallbacks.save_file()
         self.save_settings(path)
 
     

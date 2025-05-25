@@ -9,9 +9,14 @@ def main():
         plot = PomoPlot()
         plot.link_ui(app)
         
+        trascorso = 0
         while app.running:
             app.start_cycle()
 
+            trascorso += app.logica.dt
+            if trascorso > 60_000:
+                trascorso = 0
+                plot.save_pomoplot("./SETTINGS/autosave.json")
             plot.plot(app.logica)
 
             app.end_cycle()

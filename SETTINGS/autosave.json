@@ -1,19 +1,27 @@
 {
-    "starting_tab": 5,
+    "starting_tab": 2,
     "x_plot_area": "0.05",
     "y_plot_area": "0.1",
     "w_plot_area": "0.9",
     "h_plot_area": "0.8",
     "size_plot_area": "0.8",
-    "mantain_proportions": true,
-    "plot_area_color": [30, 30, 30],
-    "canvas_area_color": [30, 30, 30],
-    "overlap": false,
+    "mantain_proportions": "False",
+    "plot_area_color": [
+        "255",
+        "255",
+        "255"
+    ],
+    "canvas_area_color": [
+        "255",
+        "255",
+        "255"
+    ],
+    "overlap": "True",
     "scatter_size": "4",
     "function_size": "2",
-    "scatter_toggle": false,
-    "function_toggle": true,
-    "text_title": "Title",
+    "scatter_toggle": "False",
+    "function_toggle": "True",
+    "text_title": "Autosave prove",
     "text_label_x": "X axis",
     "text_label_y": "Y axis",
     "text_label_2y": "2Y axis",
@@ -21,10 +29,26 @@
     "font_size_label_x": "48",
     "font_size_label_y": "48",
     "font_size_label_2y": "48",
-    "label_title_color": [255, 255, 255],
-    "label_x_color": [255, 255, 255],
-    "label_y_color": [255, 255, 255],
-    "label_2y_color": [255, 255, 255],
+    "label_title_color": [
+        "0",
+        "0",
+        "0"
+    ],
+    "label_x_color": [
+        "0",
+        "0",
+        "0"
+    ],
+    "label_y_color": [
+        "0",
+        "0",
+        "0"
+    ],
+    "label_2y_color": [
+        "0",
+        "0",
+        "0"
+    ],
     "show_coords_projection": true,
     "show_coords_value": true,
     "show_coords_X": true,
@@ -35,12 +59,36 @@
     "round_x": "0",
     "round_y": "0",
     "round_2y": "0",
-    "ax_color_x": [70, 70, 70],
-    "ax_color_y": [70, 70, 70],
-    "ax_color_2y": [70, 70, 70],
-    "tick_color_x": [255, 255, 255],
-    "tick_color_y": [255, 255, 255],
-    "tick_color_2y": [255, 255, 255],
+    "ax_color_x": [
+        "193",
+        "193",
+        "193"
+    ],
+    "ax_color_y": [
+        "193",
+        "193",
+        "193"
+    ],
+    "ax_color_2y": [
+        "193",
+        "193",
+        "193"
+    ],
+    "tick_color_x": [
+        "0",
+        "0",
+        "0"
+    ],
+    "tick_color_y": [
+        "0",
+        "0",
+        "0"
+    ],
+    "tick_color_2y": [
+        "0",
+        "0",
+        "0"
+    ],
     "offset_ticks_ax_x": "-27",
     "offset_ticks_ax_y": "45",
     "size_ticks": "1.5",
@@ -52,20 +100,28 @@
     "show_grid_2y": true,
     "show_bounding_box": true,
     "show_legend": false,
-    "x_legend": 0.75,
-    "y_legend": 0.3,
+    "x_legend": "0.75",
+    "y_legend": "0.3",
     "font_size_legend": "48",
     "blur_strenght": "6",
     "show_legend_background": false,
     "transparent_background": true,
     "show_icons": true,
     "match_color_text": true,
-    "legend_bg_color": [250, 250, 250],
-    "color_text": [255, 255, 255],
+    "legend_bg_color": [
+        "250.0",
+        "250.0",
+        "250.0"
+    ],
+    "color_text": [
+        "255.0",
+        "255.0",
+        "255.0"
+    ],
     "text_2D_plot": "1\\mum",
     "size_scale_marker2D": "1000",
-    "min_x_interpolation": "",
-    "max_x_interpolation": "",
+    "min_x_interpolation": "None",
+    "max_x_interpolation": "None",
     "curve_function": "",
     "param_0": "",
     "param_1": "",
