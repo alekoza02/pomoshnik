@@ -642,7 +642,7 @@ class PomoPlot:
         
         if self.UI_default.flag_foo:
             self.UI_default.flag_foo = False
-            self.save_pomoplot("./SETTINGS/default.json")
+            self.save_pomoplot("./SETTINGS/default.json", is_fixed_path=True)
             self.save_pop_up_timer = 0
             self.UI_save_status.change_text("\\#77ff77{Saved!}")
         
@@ -1007,7 +1007,12 @@ class PomoPlot:
             self.UI_tick_color_2y.set_color([0, 0, 0])
 
 
-    def save_pomoplot(self, path=None):
+    def save_pomoplot(self, path=None, is_fixed_path=False):
+        
+        if is_fixed_path:
+            self.save_settings(path)
+            return
+
         if path is None:
             path = BottoniCallbacks.save_file()
             self.project_path = path
