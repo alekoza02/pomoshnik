@@ -40,11 +40,17 @@ class SettingsProfile:
 
     
     def save_project(self, structure, filename=""):
+        if filename == "":
+            return
+        
         with open(filename, 'w') as f:
             json.dump(structure, f, indent=4)
     
     
     def open_project(self, filename=""):
+        if filename == "":
+            return
+        
         if not filename is None:
             with open(filename, 'r') as f:
                 data = json.load(f)
@@ -628,28 +634,30 @@ class PomoPlot:
         # salvataggio file
         if self.UI_save.flag_foo:
             self.UI_save.flag_foo = False
-            self.save_pomoplot(self.project_path)
+            if self.save_pomoplot(self.project_path):
+                self.UI_save_status.change_text("\\#77ff77{Saved!}")
             self.save_pop_up_timer = 0
-            self.UI_save_status.change_text("\\#77ff77{Saved!}")
         
         
         if self.UI_saveas.flag_foo:
             self.UI_saveas.flag_foo = False
-            self.save_pomoplot()
+            if self.save_pomoplot():
+                self.UI_save_status.change_text("\\#77ff77{Saved!}")
             self.save_pop_up_timer = 0
-            self.UI_save_status.change_text("\\#77ff77{Saved!}")
         
         
         if self.UI_default.flag_foo:
             self.UI_default.flag_foo = False
-            self.save_pomoplot("./SETTINGS/default.json", is_fixed_path=True)
+            if self.save_pomoplot("./SETTINGS/default.json", is_fixed_path=True):
+                self.UI_save_status.change_text("\\#77ff77{Saved!}")
             self.save_pop_up_timer = 0
-            self.UI_save_status.change_text("\\#77ff77{Saved!}")
         
         
         if self.UI_open.flag_foo:
             self.UI_open.flag_foo = False
-            self.open_pomoplot()
+            if self.open_pomoplot():
+                self.UI_save_status.change_text("\\#77ff77{Opened!}")
+            self.save_pop_up_timer = 0
 
 
         # cambio grafico attivo
@@ -1011,7 +1019,7 @@ class PomoPlot:
         
         if is_fixed_path:
             self.save_settings(path)
-            return
+            return False
 
         if path is None:
             path = BottoniCallbacks.save_file()
@@ -1020,12 +1028,21 @@ class PomoPlot:
             path = self.project_path
             
         self.save_settings(path)
+        
+        return True
 
     
     def open_pomoplot(self):
         path = BottoniCallbacks.open_file()
+        
+        if path == "":
+            return False 
+        
+        self.project_path = path
         self.settings = SettingsProfile(path)
         self.link_ui(self.UI_pointer)
+        
+        return True
 
 
     def linear_interpolation(self) -> str:
@@ -3075,8 +3092,10 @@ class _Single1DPlot:
 
     def update_attributes(self, values):
         for key, value in values.items():
-            if key == 'data' or key == 'display_coords':
+            if key == 'data':
                 value = np.array(value)
+            if key == 'display_coords':
+                value = np.array(value).tolist()
             if key == 'function_color' or key == 'scatter_color':
                 value = [float(i) for i in value]
 

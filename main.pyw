@@ -14,7 +14,7 @@ def main():
             app.start_cycle()
 
             trascorso += app.logica.dt
-            if trascorso > 6_000:
+            if trascorso > 60_000:
                 trascorso = 0
                 plot.save_pomoplot("./SETTINGS/autosave.json", is_fixed_path=True)
             plot.plot(app.logica)
