@@ -16,7 +16,7 @@ pygame.init()
 font = pygame.font.SysFont("Courier New", 36)
 screen = pygame.display.set_mode((width, height))
 
-batch = Batch(1872, 1620)
+batch = Batch()
 
 # PLOT GENERATION (15_000 points, resolution 1872x1620 pixels @ 700FPS)
 #########################################################################################################
@@ -63,6 +63,8 @@ delimiters[1] = 5000
 delimiters[2] = 10000
 #########################################################################################################
 
+batch.update_canvas_size(1872, 1620)
+
 fps_hist = [0 for i in range(50)]
 computation_time_hist = [0 for i in range(50)]
 
@@ -79,7 +81,8 @@ while running:
     computation_time = batch.render_batch(points, delimiters, colors, radii)
     computation_time_hist.pop(0); computation_time_hist.append(computation_time)
     
-    screen.blit(batch.get_pygame_surface(), (0, 0))                                                                                          
+    batch.apply_array_to_surface()
+    screen.blit(batch.surface, (0, 0))                                                                                          
     
     fps = clock.get_fps()
     fps_hist.pop(0); fps_hist.append(fps)

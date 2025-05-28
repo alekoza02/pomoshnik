@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter 
 from MATEMATICA._modulo_mate_utils import MateUtils
+from C_RENDERER.C_compatibility.batcher import Batch
 from numba import njit
 import os
 from scipy.optimize import curve_fit
@@ -64,6 +65,9 @@ class SettingsProfile:
 class PomoPlot:
     def __init__(self, project='default'):
 
+        self.use_c_renderer = True
+        self.batch_renderer = Batch()
+
         self.project_path = None
         self.save_pop_up_timer = 0
 
@@ -114,7 +118,6 @@ class PomoPlot:
         # ------------------------------------------------------------------------------
         # ZONA COLORI
         # ------------------------------------------------------------------------------
-        self.unused_area_color: list[int] = np.array([40, 40, 40]) # FIX unify
         self.zoom_boundaries = np.array([0., 0., 1., 1.])
 
         self.zero_y = 0
@@ -241,6 +244,8 @@ class PomoPlot:
         
         # NEEDED, IMPORTED
         self.screen = UI.costruttore.scene["main"].context_menu["main"].elements["viewport"]
+        self.batch_renderer.update_canvas_size(self.screen.w, self.screen.h)
+        self.screen.set_screen_as_batch_output_surface(self.batch_renderer)
         self.screen_render = UI.costruttore.scene["main"].context_menu["main"].elements["renderer"]
         #############################################################################
 
@@ -2149,42 +2154,46 @@ class PomoPlot:
     
                 extracted = np.transpose(extracted, (1, 0))
 
-                if plot.function:
-    
-                    if plot.dashed:
-                        self._disegna_spezzata_tratteggiata(plot)
-                    else:
-                        self.screen._add_lines(extracted[:, :2], plot.function_color, plot.function_width * self.scale_factor_viewport)
-    
-                if plot.errorbar and plot.data.shape[1] > 2:
-
-                    for x, y, e in zip(extracted[:, 0], extracted[:, 1], extracted[:, 2]):
-                        self.screen._add_line([[x, y], [x, y + e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
-                        self.screen._add_line([[x, y], [x, y - e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
-                        self.screen._add_line([[x - larg_error, y + e], [x + larg_error, y + e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
-                        self.screen._add_line([[x - larg_error, y - e], [x + larg_error, y - e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
-                        
-                if plot.scatter:
-                    self.screen._add_points(extracted[:, :2], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport, plot.scatter_border * self.scale_factor_viewport)
-
-
-                # Add the logic to transform the index into value and coordinate
-                if len(plot.display_coords) > 0:
-                    coords = [[plot.data2plot[index, 0], plot.data2plot[index, 1] - (13 * self.scale_factor_viewport + plot.scatter_width)] for index in plot.display_coords]
+                if self.use_c_renderer:
+                    self.batch_renderer.render_batch(extracted, 0, plot.scatter_color, 4, [30, 30, 30])
+                else:
                     
-                    if self.show_coords_value:
-                        use_par = self.show_coords_Y and self.show_coords_X
-                        text = [f"{"(" if use_par else ""}{f'{plot.data[index, 0]:.{self.round_ticks_x}f}' if self.show_coords_X else ""}{", " if use_par else ""}{f'{plot.data[index, 1]:.{self.round_ticks_y}f}' if self.show_coords_Y else ""}{")" if use_par else ""}" for index in plot.display_coords]
-                        self.screen._add_text(text, coords, anchor=["cd" for i in plot.display_coords], size=1 * self.scale_factor_viewport, color=[self.label_title_color for i in plot.display_coords], rotation=[0 for i in plot.display_coords])
-                    
-                    if self.show_coords_projection:
-                        if plot.gradiente:
-                            destinazione_proiezione = self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005) + self.max_plot_square[1]
+                    if plot.function:
+        
+                        if plot.dashed:
+                            self._disegna_spezzata_tratteggiata(plot)
                         else:
-                            destinazione_proiezione = self.max_plot_square[3] + self.max_plot_square[1]
+                            self.screen._add_lines(extracted[:, :2], plot.function_color, plot.function_width * self.scale_factor_viewport)
+        
+                    if plot.errorbar and plot.data.shape[1] > 2:
 
-                        for index, coord in enumerate(coords):
-                            self.screen._add_line([[coord[0], coord[1] + (13 * self.scale_factor_viewport + plot.scatter_width)], [coord[0], destinazione_proiezione]], width=1 * self.scale_factor_viewport, color=self.label_title_color)
+                        for x, y, e in zip(extracted[:, 0], extracted[:, 1], extracted[:, 2]):
+                            self.screen._add_line([[x, y], [x, y + e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                            self.screen._add_line([[x, y], [x, y - e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                            self.screen._add_line([[x - larg_error, y + e], [x + larg_error, y + e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                            self.screen._add_line([[x - larg_error, y - e], [x + larg_error, y - e]], plot.function_color, plot.function_width * self.scale_factor_viewport)
+                            
+                    if plot.scatter:
+                        self.screen._add_points(extracted[:, :2], plot.scatter_color, plot.scatter_width * self.scale_factor_viewport, plot.scatter_border * self.scale_factor_viewport)
+
+
+                    # Add the logic to transform the index into value and coordinate
+                    if len(plot.display_coords) > 0:
+                        coords = [[plot.data2plot[index, 0], plot.data2plot[index, 1] - (13 * self.scale_factor_viewport + plot.scatter_width)] for index in plot.display_coords]
+                        
+                        if self.show_coords_value:
+                            use_par = self.show_coords_Y and self.show_coords_X
+                            text = [f"{"(" if use_par else ""}{f'{plot.data[index, 0]:.{self.round_ticks_x}f}' if self.show_coords_X else ""}{", " if use_par else ""}{f'{plot.data[index, 1]:.{self.round_ticks_y}f}' if self.show_coords_Y else ""}{")" if use_par else ""}" for index in plot.display_coords]
+                            self.screen._add_text(text, coords, anchor=["cd" for i in plot.display_coords], size=1 * self.scale_factor_viewport, color=[self.label_title_color for i in plot.display_coords], rotation=[0 for i in plot.display_coords])
+                        
+                        if self.show_coords_projection:
+                            if plot.gradiente:
+                                destinazione_proiezione = self.max_plot_square[3] * (1 - self.minimal_offset_data_y + 0.005) + self.max_plot_square[1]
+                            else:
+                                destinazione_proiezione = self.max_plot_square[3] + self.max_plot_square[1]
+
+                            for index, coord in enumerate(coords):
+                                self.screen._add_line([[coord[0], coord[1] + (13 * self.scale_factor_viewport + plot.scatter_width)], [coord[0], destinazione_proiezione]], width=1 * self.scale_factor_viewport, color=self.label_title_color)
 
 
     def _disegna_spezzata_tratteggiata(self, plot:'_Single1DPlot'):
@@ -2259,8 +2268,6 @@ class PomoPlot:
 
 
     def _disegna_bg(self):
-        # setu-up canvas
-        self.screen._clear_canvas(self.unused_area_color)
         # disegno area di plot BG
         self.screen.tavolozza.fill(self.canvas_area_color)
         # self.screen._add_rectangle(self.max_canvas_square, [255, 100, 100])

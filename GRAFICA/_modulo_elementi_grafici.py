@@ -13,6 +13,7 @@ NON_ESEGUIRE = False
 if NON_ESEGUIRE:    
     from pygame.event import Event
     from _modulo_UI import Logica
+    from C_RENDERER.C_compatibility.batcher import Batch
 
     # formula per ricavare l'altezza del Font: floor(font_size * 0.16209 + 1)
 
@@ -3067,6 +3068,13 @@ class Screen(BaseElement):
         self.tavolozza = pygame.Surface((self.w, self.h))
         self.last_click_pos = (-1, -1)
         self.last_click_pos_changed = False
+        self.is_C_output = False
+
+
+    def set_screen_as_batch_output_surface(self, batch):
+        self.batch: 'Batch' = batch
+        self.tavolozza = self.batch.surface
+        self.is_C_output = True
 
 
     def eventami(self, events, logica: 'Logica'):
@@ -3081,38 +3089,61 @@ class Screen(BaseElement):
 
     
     def update_window_change(self):
-        super().update_window_change()
-        self.tavolozza = pygame.transform.scale(self.tavolozza, (self.w, self.h))
+        if self.is_C_output:
+            self.batch.update_canvas_size(self.w, self.h)
+            self.tavolozza = self.batch.surface
+        else:
+            super().update_window_change()
+            self.tavolozza = pygame.transform.scale(self.tavolozza, (self.w, self.h))
     
 
     def disegnami(self, logica):
-        if self.do_stuff and not self.screenshot_type:
+        if self.is_C_output:
+            self.batch.apply_array_to_surface()
             self.schermo.blit(self.tavolozza, (self.x, self.y))
+        else:
+            if self.do_stuff and not self.screenshot_type:
+                self.schermo.blit(self.tavolozza, (self.x, self.y))
 
 
     def _clear_canvas(self, color=None):
-        if color is None:
-            self.tavolozza.fill(self.bg)
+        if self.is_C_output:
+            ...
         else:
-            self.tavolozza.fill(color)
+            if color is None:
+                self.tavolozza.fill(self.bg)
+            else:
+                self.tavolozza.fill(color)
 
 
     def _add_points(self, points, color, radius=1, width=0):
-        for point in points:
-            pygame.draw.circle(self.tavolozza, color, point[:2], ceil(radius), ceil(width))
+        if self.is_C_output:
+            ...
+        else:
+            for point in points:
+                pygame.draw.circle(self.tavolozza, color, point[:2], ceil(radius), ceil(width))
     
     
     def _add_rectangle(self, coords4, color, width=0):
-        pygame.draw.rect(self.tavolozza, color, coords4, ceil(width))
+        if self.is_C_output:
+            ...
+        else:
+            pygame.draw.rect(self.tavolozza, color, coords4, ceil(width))
     
     
     def _add_line(self, coords2, color, width=1):
-        pygame.draw.line(self.tavolozza, color, coords2[0], coords2[1], ceil(width))
+        if self.is_C_output:
+            ...
+        else:
+            pygame.draw.line(self.tavolozza, color, coords2[0], coords2[1], ceil(width))
 
 
     def _add_lines(self, points, color, size=1):
-        for start, end in zip(points[:-1], points[1:]):
-            pygame.draw.line(self.tavolozza, color, start, end, ceil(size))
+        if self.is_C_output:
+            ...
+        else:
+            for start, end in zip(points[:-1], points[1:]):
+                pygame.draw.line(self.tavolozza, color, start, end, ceil(size))
 
 
     @staticmethod
@@ -3139,30 +3170,73 @@ class Screen(BaseElement):
 
     def _add_text(self, text, pos, size=1, anchor="lu", color=[100, 100, 100], rotation=0):
         
-        if type(text) == list:
+        if self.is_C_output:
+            ...
+        else:
+            if type(text) == list:
 
-            need_reset = False
-            if size != 1:
-                need_reset = True
-                self.font.scala_font(size)
+                need_reset = False
+                if size != 1:
+                    need_reset = True
+                    self.font.scala_font(size)
 
-            for text_i, pos_i, anchor_i, color_i, rotation_i in zip(text, pos, anchor, color, rotation):
+                for text_i, pos_i, anchor_i, color_i, rotation_i in zip(text, pos, anchor, color, rotation):
 
-                pre_rotation = self.font.font_pyg_r.render(text_i, True, color_i)
+                    pre_rotation = self.font.font_pyg_r.render(text_i, True, color_i)
+                    
+                    if rotation_i != 0:
+                        pre_rotation = pygame.transform.rotate(pre_rotation, rotation_i)
+
+                    nl = 0
+                    hl = self.font.font_pixel_dim[0] * len(text_i) / 2
+                    fl = self.font.font_pixel_dim[0] * len(text_i)
+
+                    nh = 0
+                    hh = self.font.font_pixel_dim[1] / 2 
+                    fh = self.font.font_pixel_dim[1] 
+
+
+                    match anchor_i:
+                        case "lu": offset_x, offset_y = nl, nh 
+                        case "cu": offset_x, offset_y = hl, nh
+                        case "ru": offset_x, offset_y = fl, nh
+                        case "lc": offset_x, offset_y = nl, hh
+                        case "cc": offset_x, offset_y = hl, hh
+                        case "rc": offset_x, offset_y = fl, hh
+                        case "ld": offset_x, offset_y = nl, fh
+                        case "cd": offset_x, offset_y = hl, fh
+                        case "rd": offset_x, offset_y = fl, fh
+
+
+                    self.tavolozza.blit(pre_rotation, (pos_i[0] - offset_x, pos_i[1] - offset_y))
                 
-                if rotation_i != 0:
-                    pre_rotation = pygame.transform.rotate(pre_rotation, rotation_i)
+                if need_reset:
+                    need_reset = False
+                    self.font.scala_font(1/size)
+
+            # make it bulk
+            else:
+
+                need_reset = False
+                if size != 1:
+                    need_reset = True
+                    self.font.scala_font(size)
+
+                pre_rotation = self.font.font_pyg_r.render(text, True, color)
+                
+                if rotation != 0:
+                    pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
 
                 nl = 0
-                hl = self.font.font_pixel_dim[0] * len(text_i) / 2
-                fl = self.font.font_pixel_dim[0] * len(text_i)
+                hl = self.font.font_pixel_dim[0] * len(text) / 2
+                fl = self.font.font_pixel_dim[0] * len(text)
 
                 nh = 0
                 hh = self.font.font_pixel_dim[1] / 2 
                 fh = self.font.font_pixel_dim[1] 
 
 
-                match anchor_i:
+                match anchor:
                     case "lu": offset_x, offset_y = nl, nh 
                     case "cu": offset_x, offset_y = hl, nh
                     case "ru": offset_x, offset_y = fl, nh
@@ -3174,93 +3248,73 @@ class Screen(BaseElement):
                     case "rd": offset_x, offset_y = fl, fh
 
 
-                self.tavolozza.blit(pre_rotation, (pos_i[0] - offset_x, pos_i[1] - offset_y))
-            
-            if need_reset:
-                need_reset = False
-                self.font.scala_font(1/size)
-
-        # make it bulk
-        else:
-
-            need_reset = False
-            if size != 1:
-                need_reset = True
-                self.font.scala_font(size)
-
-            pre_rotation = self.font.font_pyg_r.render(text, True, color)
-            
-            if rotation != 0:
-                pre_rotation = pygame.transform.rotate(pre_rotation, rotation)
-
-            nl = 0
-            hl = self.font.font_pixel_dim[0] * len(text) / 2
-            fl = self.font.font_pixel_dim[0] * len(text)
-
-            nh = 0
-            hh = self.font.font_pixel_dim[1] / 2 
-            fh = self.font.font_pixel_dim[1] 
-
-
-            match anchor:
-                case "lu": offset_x, offset_y = nl, nh 
-                case "cu": offset_x, offset_y = hl, nh
-                case "ru": offset_x, offset_y = fl, nh
-                case "lc": offset_x, offset_y = nl, hh
-                case "cc": offset_x, offset_y = hl, hh
-                case "rc": offset_x, offset_y = fl, hh
-                case "ld": offset_x, offset_y = nl, fh
-                case "cd": offset_x, offset_y = hl, fh
-                case "rd": offset_x, offset_y = fl, fh
-
-
-            self.tavolozza.blit(pre_rotation, (pos[0] - offset_x, pos[1] - offset_y))
-            
-            if need_reset:
-                need_reset = False
-                self.font.scala_font(1/size)
+                self.tavolozza.blit(pre_rotation, (pos[0] - offset_x, pos[1] - offset_y))
+                
+                if need_reset:
+                    need_reset = False
+                    self.font.scala_font(1/size)
 
     
     def _paste_array(self, array, position):
-        surface = pygame.surfarray.make_surface(array)
-        self.tavolozza.blit(surface, (position[0],position[1]))
+        if self.is_C_output:
+            ...
+        else:
+            surface = pygame.surfarray.make_surface(array)
+            self.tavolozza.blit(surface, (position[0],position[1]))
     
     
     def _generate_surface(self, array):
-        return pygame.surfarray.make_surface(array)
+        if self.is_C_output:
+            ...
+        else:
+            return pygame.surfarray.make_surface(array)
 
     
     def _blit_surface(self, surface, position, scale=[1, 1]):
-        if scale != [1, 1]:
-            surface = pygame.transform.scale(surface, scale)
-        self.tavolozza.blit(surface, (position[0],position[1]))
+        if self.is_C_output:
+            ...
+        else:
+            if scale != [1, 1]:
+                surface = pygame.transform.scale(surface, scale)
+            self.tavolozza.blit(surface, (position[0],position[1]))
 
 
     def _extract_pixel_values(self, x, y, w, h):
+        if self.is_C_output:
+            ...
+        else:
+            x, y, w, h = int(x), int(y), int(w), int(h)
+
+            pixel_array = pygame.surfarray.array3d(self.tavolozza)
+
+            return pixel_array[x : x+w, y : y+h]
         
-        x, y, w, h = int(x), int(y), int(w), int(h)
-
-        pixel_array = pygame.surfarray.array3d(self.tavolozza)
-
-        return pixel_array[x : x+w, y : y+h]
-    
 
     def _save_screenshot(self, path):
-        try:
-            self.screenshot_type = False
-            self.disegnami(None)
-            self.screenshot_type = True
-            pygame.image.save(self.tavolozza, path)
-            img = Image.open(path)
-            img.save(path, dpi=(300, 300))
+        if self.is_C_output:
+            ...
+        else:
+            try:
+                self.screenshot_type = False
+                self.disegnami(None)
+                self.screenshot_type = True
+                pygame.image.save(self.tavolozza, path)
+                img = Image.open(path)
+                img.save(path, dpi=(300, 300))
 
-        except Exception:
-            pass
-    
+            except Exception:
+                pass
+        
 
     def load_image(self, path:str):
-        self.loaded_image = pygame.image.load(path)
+        if self.is_C_output:
+            ...
+        else:
+            self.loaded_image = pygame.image.load(path)
     
     
     def scale_image(self, scale:tuple):
-        self.loaded_image = pygame.transform.scale(self.loaded_image, scale)
+        if self.is_C_output:
+            ...
+        else:
+            self.loaded_image = pygame.transform.scale(self.loaded_image, scale)

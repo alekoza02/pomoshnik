@@ -6,7 +6,7 @@ import pygame
 
 
 class Batch:
-    def __init__(self, w, h):
+    def __init__(self):
         self.dll = ctypes.CDLL(os.path.abspath("./C_RENDERER/C_bin/array_modifier.dll"))
 
         self.dll.modify_array.argtypes = [
@@ -21,19 +21,31 @@ class Batch:
             ctypes.POINTER(ctypes.c_uint8)        #radii
         ]
 
-        self.update_canvas_size(w, h)
-
     
     def update_canvas_size(self, w, h):
-        self.w = w
-        self.h = h
+        self.w = int(w)
+        self.h = int(h)
 
         self.canvas = np.zeros((self.h, self.w, 3), dtype=np.uint8)
+        self.surface = pygame.Surface((self.w, self.h), depth=24)
         self.ptr_canvas = self.canvas.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8))
+        self.apply_array_to_surface()
 
 
-    def render_batch(self, points, delimiters, colors, radii):
+    def render_batch(self, points, delimiters, colors, radii, bg=None):
         
+        colors_rgba = np.append(colors, 127).astype(np.uint8)
+        bg_rgba = np.append(bg, 255).astype(np.uint8)
+
+        points = points.astype(np.int32)
+        points = points[:, :2]
+        if not points.flags['C_CONTIGUOUS']:
+            points = np.ascontiguousarray(points)
+
+        delimiters = np.array([delimiters], dtype=np.int32)
+        colors = np.array([colors_rgba, bg_rgba], dtype=np.uint8)
+        radii = np.array([radii], dtype=np.uint8)
+
         self.ptr_points = points.ctypes.data_as(ctypes.POINTER(ctypes.c_int32))
         self.ptr_delimiters = delimiters.ctypes.data_as(ctypes.POINTER(ctypes.c_int32))
         self.ptr_colors = colors.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8))
@@ -45,9 +57,5 @@ class Batch:
         return stop - start
 
 
-    def _get_buffer(self):
-        return self.canvas.tobytes()
-    
-
-    def get_pygame_surface(self):
-        return pygame.image.frombuffer(self._get_buffer(), (self.w, self.h), 'RGB')
+    def apply_array_to_surface(self):
+        pygame.pixelcopy.array_to_surface(self.surface, self.canvas.transpose(1, 0, 2))
