@@ -1170,6 +1170,7 @@ class PomoPlot:
             plot = self.plots[self.scroll_plots.ele_selected_index]
 
             x = plot.data[:, plot.column_x]
+            x_result = np.linspace(np.min(plot.data[:, plot.column_x]), np.max(plot.data[:, plot.column_x]), 128)
             y = plot.data[:, plot.column_y]
 
             initial_guess = [self.param_0, self.param_1, self.param_2, self.param_3]
@@ -1177,8 +1178,8 @@ class PomoPlot:
 
             # PREVIEW --------------------------------
             if self.show_guess:
-                y_interpolata_iniziale = curve_func(x, *initial_guess)  
-                guess_curve_fit_data = np.vstack((x, y_interpolata_iniziale))
+                y_interpolata_iniziale = curve_func(x_result, *initial_guess)  
+                guess_curve_fit_data = np.vstack((x_result, y_interpolata_iniziale))
                 guess_curve_fit_data = guess_curve_fit_data.transpose(1, 0)
 
                 contains_invalid = np.isnan(guess_curve_fit_data).any() or np.isinf(guess_curve_fit_data).any()
@@ -1202,9 +1203,9 @@ class PomoPlot:
             params, covariance = curve_fit(curve_func, x, y, p0=initial_guess)
             self.info3.change_text(f"Calcolato correttamente.\n(\\#aaffaa{{curve_fit_{plot.nome}}})")
             
-            y_interpolata_finale = curve_func(x, *params) 
+            y_interpolata_finale = curve_func(x_result, *params) 
 
-            curve_fit_data = np.vstack((x, y_interpolata_finale))
+            curve_fit_data = np.vstack((x_result, y_interpolata_finale))
             curve_fit_data = curve_fit_data.transpose(1, 0)
 
 
