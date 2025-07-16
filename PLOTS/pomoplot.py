@@ -111,9 +111,7 @@ class PomoPlot:
         self.minimal_offset_data_y = 0.05
 
         self.coords_of_ticks: list[list] = [[], [], []]
-        self.min_ticks = 3
-        self.max_ticks = 9
-        self.nice_values = [1, 2, 2.5, 5, 10]
+        self.tick_subdivider = MaxNLocatorClone()
         
         # contiene Title, label X, label Y, label 2Y, Legenda
         self.labels: list['Label_Text'] = [None, None, None, None, None]
@@ -354,6 +352,10 @@ class PomoPlot:
         self.UI_round_ticks_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_y"]; self.UI_round_ticks_y.change_text(self.settings.round_y)
         self.UI_round_ticks_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["round_2y"]; self.UI_round_ticks_2y.change_text(self.settings.round_2y)
         
+        self.UI_ticks_bins_x: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["ticks_bins_x"]; self.UI_ticks_bins_x.change_text(self.settings.ticks_bins_x)
+        self.UI_ticks_bins_y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["ticks_bins_y"]; self.UI_ticks_bins_y.change_text(self.settings.ticks_bins_y)
+        self.UI_ticks_bins_2y: 'Entrata' = UI.costruttore.scene["main"].context_menu["item4"].elements["ticks_bins_2y"]; self.UI_ticks_bins_2y.change_text(self.settings.ticks_bins_2y)
+        
         self.UI_ax_color_x: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_x"]; self.UI_ax_color_x.set_color(self.settings.ax_color_x)
         self.UI_ax_color_y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_y"]; self.UI_ax_color_y.set_color(self.settings.ax_color_y)
         self.UI_ax_color_2y: 'ColorPicker' = UI.costruttore.scene["main"].context_menu["item4"].elements["ax_color_2y"]; self.UI_ax_color_2y.set_color(self.settings.ax_color_2y)
@@ -559,6 +561,10 @@ class PomoPlot:
         self.round_ticks_x = self.UI_round_ticks_x.get_text()
         self.round_ticks_y = self.UI_round_ticks_y.get_text()
         self.round_ticks_2y = self.UI_round_ticks_2y.get_text()  
+        
+        self.ticks_bins_x = self.UI_ticks_bins_x.get_text()
+        self.ticks_bins_y = self.UI_ticks_bins_y.get_text()
+        self.ticks_bins_2y = self.UI_ticks_bins_2y.get_text()  
         
         self.ax_color_x = self.UI_ax_color_x.get_color()
         self.ax_color_y = self.UI_ax_color_y.get_color()
@@ -1328,7 +1334,7 @@ class PomoPlot:
                     self.spazio_coordinate_native[5] = fa_max
                     
                     # calcolo posizione dei tick
-                    ticks_2y = self._find_optimal_ticks([self.spazio_coordinate_native[4], self.spazio_coordinate_native[5]])
+                    ticks_2y = self._find_optimal_ticks([self.spazio_coordinate_native[4], self.spazio_coordinate_native[5]], '2y')
 
                     # fast check for good and bad
                     fix = 1
@@ -2051,12 +2057,12 @@ class PomoPlot:
     def _get_nice_ticks(self):
 
         if self.invert_x_axis and self.plot_mode == 0:
-            ticks_x = self._find_optimal_ticks([self.spazio_coordinate_native[2], self.spazio_coordinate_native[0]])
+            ticks_x = self._find_optimal_ticks([self.spazio_coordinate_native[2], self.spazio_coordinate_native[0]], 'x')
         else:
-            ticks_x = self._find_optimal_ticks([self.spazio_coordinate_native[0], self.spazio_coordinate_native[2]])
+            ticks_x = self._find_optimal_ticks([self.spazio_coordinate_native[0], self.spazio_coordinate_native[2]], 'x')
 
-        ticks_y = self._find_optimal_ticks([self.spazio_coordinate_native[1], self.spazio_coordinate_native[3]])
-        ticks_2y = self._find_optimal_ticks([self.spazio_coordinate_native[4], self.spazio_coordinate_native[5]])
+        ticks_y = self._find_optimal_ticks([self.spazio_coordinate_native[1], self.spazio_coordinate_native[3]], 'y')
+        ticks_2y = self._find_optimal_ticks([self.spazio_coordinate_native[4], self.spazio_coordinate_native[5]], '2y')
 
         self.coords_of_ticks = [ticks_x, ticks_y, ticks_2y]
         self.value_of_ticks = [ticks_x, ticks_y, ticks_2y]
@@ -2459,73 +2465,13 @@ class PomoPlot:
         return values
 
 
-    def _find_optimal_ticks(self, start_values):
- 
-        def power_converter(value):
+    def _find_optimal_ticks(self, start_values, ax='x'):
+        match ax:
+            case 'x': self.tick_subdivider = MaxNLocatorClone(int(self.ticks_bins_x))
+            case 'y': self.tick_subdivider = MaxNLocatorClone(int(self.ticks_bins_y))
+            case '2y': self.tick_subdivider = MaxNLocatorClone(int(self.ticks_bins_2y))
 
-            if value >= 0:
-                return float("1" + "0" * value)            
-            else:
-                return 1 / float("1" + "0" * -value)            
-
-
-        all_combinations = []
-        power_per_tick = []
-
-        delta = start_values[-1] - start_values[0]    
-
-        for n_ticks in range(self.min_ticks, self.max_ticks + 1):
-            
-            spacing = abs(delta / n_ticks)
-
-            run = 1
-            power = 0
-            safe = 0
-
-            while run:
-                if spacing * power_converter(power) // self.nice_values[0] <= 1:
-                    power += 1
-                elif spacing * power_converter(power) // self.nice_values[-1] >= 1:
-                    power -= 1
-
-                if spacing * power_converter(power) // self.nice_values[0] >= 1 and spacing * power_converter(power) // self.nice_values[-1] <= 1:
-                    run = 0
-                
-                safe += 1
-                if safe > 1024:
-                    run = 0
-
-            
-            all_combinations.append([abs(spacing * power_converter(power) - value) for value in self.nice_values])
-            power_per_tick.append(power_converter(-power))
-            
-        best_from_tick = []
-        for single_tick in all_combinations:
-            best_from_tick.append([min(single_tick), single_tick.index(min(single_tick))])
-
-        minimo = np.inf
-        indice_valore = 0
-        indice_tick = 0
-
-        
-        for index, contendente in enumerate(best_from_tick):
-            
-            if contendente[0] <= minimo:
-                minimo = contendente[0]
-                indice_valore = contendente[1]
-                indice_tick = index
-
-
-        new_start = round(start_values[0] / (self.nice_values[indice_valore] * power_per_tick[indice_tick])) * (self.nice_values[indice_valore] * power_per_tick[indice_tick])
-        
-        ris = [round(new_start + self.nice_values[indice_valore] * power_per_tick[indice_tick] * i, 12) for i in range(0, indice_tick + self.min_ticks + 2)]
-            
-        # decido se tenere l'ultimo elemento
-        while len(ris) > 3 and abs(start_values[-1] - ris[-1]) > abs(start_values[-1] - ris[-2]):
-            _ = ris.pop()
-            # print(f"DEBUG: eliminato il punto {_} perchè troppo lontano, {start_values}")
-
-        return ris
+        return list(self.tick_subdivider.tick_values(start_values[0], start_values[1]))
 
     
     def _find_max_square(self):
@@ -3051,6 +2997,42 @@ class PomoPlot:
                 self.import_plot_data(path, ";", separatore_decimale=",", retry_on_fail=False)
             else:
                 print(f"Impossibile caricare il file: {path}\n{e}")
+
+
+
+class MaxNLocatorClone:
+    def __init__(self, nbins=5, steps=None):
+        self.nbins = nbins
+        self.steps = steps if steps is not None else [1, 2, 2.5, 5, 10]
+
+    def _nice_tick_spacing(self, raw_interval):
+        exponent = np.floor(np.log10(raw_interval))
+        fraction = raw_interval / 10**exponent
+
+        best_step = self.steps[-1]
+        for step in self.steps:
+            if fraction <= step:
+                best_step = step
+                break
+
+        return best_step * 10**exponent
+
+    def tick_values(self, vmin, vmax):
+        if vmin == vmax:
+            return np.array([vmin])
+
+        if vmax < vmin:
+            vmin, vmax = vmax, vmin
+
+        raw_interval = (vmax - vmin) / self.nbins
+        nice_interval = self._nice_tick_spacing(raw_interval)
+
+        tick_start = np.floor(vmin / nice_interval) * nice_interval
+        tick_end = np.ceil(vmax / nice_interval) * nice_interval
+
+        ticks = np.arange(tick_start, tick_end + 0.5 * nice_interval, nice_interval)
+        return np.round(ticks, 15)
+
 
 
 class _Single1DPlot:
