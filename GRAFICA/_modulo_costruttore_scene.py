@@ -392,9 +392,12 @@ class Costruttore:
         # # ITEM 9 INTERPOLATION -------------------------------------------
 
 
-        # # ITEM 10 MULTI-PLOTS --------------------------------------------
-        s.context_menu["item10"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{Impostazioni base Multi-Plots}"))
-        # # ITEM 10 MULTI-PLOTS --------------------------------------------
+        # # ITEM 10 AI --------------------------------------------
+        s.context_menu["item10"].add_element("_title_drop_menu_base", Label_Text("50%w", "10px", "cu", "-*w", "-*h", text=r"\#88dd88{AI Chat}"))
+        s.context_menu["item10"].add_element("ai_input", Entrata("95%w", "50px", "ru", "82%w", "-*h", text="", title="Ask:", tooltip="Fai una domanda a Gemini AI"))
+        s.context_menu["item10"].add_element("ai_send", Bottone_Push("95%w", "120px", "ru", "82%w", "40px", text="Send", function=self.bott_calls.change_state, tooltip="Invia domanda a Gemini AI."))
+        s.context_menu["item10"].add_element("ai_receive", Label_Text("5%w", "190px", "lu", "90%w", "-*h", text="Configure your API key."))
+        # # ITEM 10 AI --------------------------------------------
 
 
         # # ITEM 11 METADATA -----------------------------------------------
@@ -432,6 +435,32 @@ class Costruttore:
 
         s.context_menu["main"].add_element("reset_zoom", Bottone_Push(anchor=("cu cd (0px) (10px)", s.context_menu["main"].elements["tools"]), w="2.4%w", h="2.4%w", function=BottoniCallbacks.change_state, tooltip="Resetta lo zoom e pan del grafico."))
         s.context_menu["main"].elements["reset_zoom"].load_texture(f"tool4")
+
+
+        # AI SECTION
+        import configparser
+        import os
+        import google.generativeai as genai
+
+        CONFIG_FILE = ".gemini_key"
+
+        def load_api_key():
+            config = configparser.ConfigParser()
+            if not os.path.exists(CONFIG_FILE):
+                self.scene["main"].context_menu["item10"].elements["ai_receive"].change_text("API key not present.\nLook at README.md to configure")
+                return None
+            else:
+                self.scene["main"].context_menu["item10"].elements["ai_receive"].change_text("Configured and ready to go.\nPlease note, when the answer is generating\nthere might be a lag spike.")
+                config.read(CONFIG_FILE)
+                return config["gemini"]["api_key"]
+
+        key = load_api_key()
+        if not key is None:
+            genai.configure(api_key=key)
+            self.scene["main"].context_menu["item10"].elements["ai_receive"].ai_model = genai.GenerativeModel("gemini-2.5-flash")
+        else:
+            self.scene["main"].context_menu["item10"].elements["ai_send"].hide = True
+        # AI SECTION
 
 
         def hide_plot_attributes_based_on_plot_mode():

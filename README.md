@@ -10,3 +10,11 @@ Some examples of plots done using the Pomoshnik:
 ![example5](PLOTS/examples/example2.png)
 ![example6](PLOTS/examples/example4.png)
 ![example7](PLOTS/examples/example7.png)
+
+# AI
+To configure the AI, generate a file called ``.gemini_key`` and inside paste the following code:
+
+```
+[gemini]
+api_key = YOUR_API_KEY
+```

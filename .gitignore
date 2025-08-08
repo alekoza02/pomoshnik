@@ -1,6 +1,7 @@
 # ale stuff
 prove.ipynb
 cache_colors.json
+.gemini_key
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

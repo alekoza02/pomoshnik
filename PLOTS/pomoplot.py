@@ -6,6 +6,9 @@ import os
 from scipy.optimize import curve_fit
 from copy import deepcopy
 import json
+import re
+import threading
+import time
 
 from config import IS_WINDOWS, IS_LINUX
 
@@ -130,6 +133,11 @@ class PomoPlot:
 
         self.spessore_scala_2Dplot = 5
 
+        # At init
+        self._ai_thread = None
+        self._ai_result = None
+        self._ai_start_time = None
+
 
     def save_settings(self, path):
 
@@ -189,6 +197,9 @@ class PomoPlot:
             "tick_color_2y": array_to_str_list(self.tick_color_2y),
             "offset_ticks_ax_x": str(self.offset_ticks_ax_x),
             "offset_ticks_ax_y": str(self.offset_ticks_ax_y),
+            "ticks_bins_x": str(self.ticks_bins_x),
+            "ticks_bins_y": str(self.ticks_bins_y),
+            "ticks_bins_2y": str(self.ticks_bins_2y),
             "size_ticks": str(self.size_ticks),
             "formatting_x": bool(self.formatting_x),
             "formatting_y": bool(self.formatting_y),
@@ -434,6 +445,10 @@ class PomoPlot:
         self.UI_presets3: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item9"].elements["presets3"]
 
         self.UI_info3: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item9"].elements["info3"]
+        
+        self.UI_ai_input: 'Entrata' = UI.costruttore.scene["main"].context_menu["item10"].elements["ai_input"]
+        self.UI_ai_send: 'Label_Text' = UI.costruttore.scene["main"].context_menu["item10"].elements["ai_send"]
+        self.UI_ai_receive: 'Bottone_Push' = UI.costruttore.scene["main"].context_menu["item10"].elements["ai_receive"]
     
     
     def update_attributes(self):
@@ -664,6 +679,64 @@ class PomoPlot:
             if self.open_pomoplot():
                 self.UI_save_status.change_text("\\#77ff77{Opened!}")
             self.save_pop_up_timer = 0
+
+
+        if self.UI_ai_send.flag_foo:
+            self.UI_ai_send.flag_foo = False
+
+            def worker():
+                answer = self.UI_ai_receive.ai_model.generate_content(
+                    "Respond concisely and precisely. Use as few sentences as possible (MAX 900 chars per answer). "
+                    "Use this syntax 'x\\^{y}' or 'x\\_{y}' for apex and subscript"
+                    + self.UI_ai_input.get_text()
+                )
+                self._ai_result = answer.text
+
+            self._ai_start_time = time.time()
+            self._ai_thread = threading.Thread(target=worker, daemon=True)
+            self._ai_thread.start()
+
+        # If waiting for result
+        if self._ai_thread is not None and self._ai_thread.is_alive():
+            elapsed = int(time.time() - self._ai_start_time)
+            self.UI_ai_receive.change_text(f"\\#ffee88{{Waiting for answer...}} \\#666666{{[elapsed: {elapsed} sec]}}")
+
+        # Process result if ready
+        elif self._ai_result is not None:
+            label_text = self._ai_result
+            print(f"{label_text = }")
+
+            label_text = re.sub(r'\*\*(.+?)\*\*', r'\\b{\1}', label_text)
+            label_text = re.sub(r'(?<!\\)\^', r'\\^', label_text)
+            label_text = re.sub(r'(?<!\\)\_', r'\\_', label_text)
+            label_text = re.sub(r'\$(.+?)\$', r'\1', label_text)
+            label_text = re.sub(r'\\text\{ (.+?) \}', r'\1', label_text)
+            label_text = label_text.replace(r'\times', '*')
+
+            max_len = 42
+            def wrap_no_split(s, n):
+                words = s.split()
+                lines = []
+                current = ""
+                for word in words:
+                    if len(current) + len(word) + (1 if current else 0) > n:
+                        lines.append(current)
+                        current = word
+                    else:
+                        current = word if not current else current + " " + word
+                if current:
+                    lines.append(current)
+                return "\n".join(lines)
+
+            lunghezze = label_text.split("\n")
+            label_text = "\n".join(
+                [wrap_no_split(item, max_len) if len(item) > max_len else item for item in lunghezze]
+            )
+
+            self.UI_ai_receive.change_text(label_text)
+            self._ai_result = None
+            self._ai_thread = None
+            self._ai_start_time = None
 
 
         # cambio grafico attivo
