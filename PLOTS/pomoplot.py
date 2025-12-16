@@ -2861,7 +2861,7 @@ class PomoPlot:
 
 
         # strange format types (.tif)
-        if self.data_path.endswith((".tif", ".tiff")):
+        if self.data_path.endswith((".tif", ".tiff", ".TIF")):
                 
             import tifffile
             with tifffile.TiffFile(self.data_path) as tif:
@@ -3132,6 +3132,7 @@ class _Single2DPlot:
         self.nome = nome
         self.data = data_input
         self.data2plot = data_input
+        self.metadata = ""
 
         self.colore_base2 = np.array([68, 1, 84], dtype=(np.float64))
         self.colore_base1 = np.array([253, 231, 37], dtype=(np.float64))
@@ -3139,6 +3140,9 @@ class _Single2DPlot:
         self.prev_colore_base1 = np.array([253, 231, 37], dtype=(np.float64))
         self.flip_y = False
         self.flip_x = False
+        self.errorbar = False
+        self.channels = np.shape(self.data)[1]
+        self.scales = ["x = x" for i in range(self.channels)]
 
         # calcolo dimensione array
         indici = self.data[:, :2].copy()
@@ -3158,6 +3162,8 @@ class _Single2DPlot:
         self.data = self.data.transpose(1, 0, 2)
         self.data = self.data[:, ::-1, :]
 
+        self.column_x = 0
+        self.column_y = 1
         
         self.spacing_x = abs(self.data[0, 0, 0] - self.data[1, 0, 0])
         self.spacing_y = abs(self.data[0, 0, 1] - self.data[0, 1, 1])
@@ -3173,6 +3179,17 @@ class _Single2DPlot:
         self.min_y = np.min(self.data[:, :, 1])
         self.previous_max_z = np.max(self.data[:, :, 2])
         self.previous_min_z = np.min(self.data[:, :, 2])
+
+
+    def get_dict_info(self):
+
+        def array_to_str_list(array):
+            return [str(i) for i in array]
+
+        values = {
+            "nome": self.nome,
+        }
+        return values
 
 
     def __str__(self):
